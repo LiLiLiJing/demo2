@@ -1,0 +1,78 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>OpenLayers3示例</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <!-- 强制360浏览器用WebKit内核 -->
+	<meta name="renderer" content="webkit" />
+	<meta http-equiv="X-UA-Compatible" content="IE=Edge,chrome=1" />
+    <link type="text/css" rel="stylesheet" href="static/css/base.css" />
+    <!-- 开源库jQuery -->
+    <script type="text/javascript" src="static/libs/jquery.js"></script>
+    <!-- 第三方插件库（复制功能插件） -->
+    <script type="text/javascript" src="static/libs/ZeroClipboard/ZeroClipboard.js"></script>
+    <!-- 源码编辑器样式文件与插件库 -->
+    <link type="text/css" rel="stylesheet" href="static/libs/codemirror/lib/codemirror.css" />
+    <script type="text/javascript" src="static/libs/codemirror/lib/codemirror.js"></script>   
+    <script type="text/javascript" src="static/libs/codemirror/mode/xml/xml.js"></script>
+    <script type="text/javascript" src="static/libs/codemirror/mode/javascript/javascript.js"></script>
+    <script type="text/javascript" src="static/libs/codemirror/mode/css/css.js"></script>
+    <script type="text/javascript" src="static/libs/codemirror/mode/htmlmixed/htmlmixed.js"></script>
+    <script type="text/javascript" src="static/libs/codemirror/addon/edit/matchbrackets.js"></script>
+    <!-- 系统首页功能库 -->
+    <script type="text/javascript" src="static/js/init.js"></script>
+</head>
+<body >
+    <div id="header">
+      <a class="logo">
+        <img src="static/images/logo.png"/>
+        <span>OpenLayers 3 示例集锦</span>    
+      </a>
+      <a href="http://www.openlayers.cn/forum.php" target="_blank" class="help"><span>i</span>论坛求助</a>
+      <a href="http://openlayers.org/en/master/apidoc/" target="_blank" class="help"><span>a</span>OL3 API</a>
+    </div>
+    <div id="content">
+        <div class="leftsidebar_box">
+		    <div class="line"></div>
+		    <dl class="control">
+			    <dt class="first_dt" >数据管理<img src="static/images/left/select_xl01.png"/></dt>
+			    <dd onclick="setCore('uploadpage')">数据上传</dd>
+			    <dd onclick="setCore('uploadpage')" >订单管理</dd>
+		    </dl>
+		    <dl class="data">
+			    <dt>目标检测<img  src="static/images/left/select_xl01.png"/></dt>
+			    <dd onclick="setCore('uploadpage')">飞机检测</dd>
+                <dd onclick="setCore('uploadpage')">油罐检测</dd>
+			    <dd onclick="setCore('uploadpage')">船只检测</dd>
+		    </dl>	
+		    <dl class="drawing">
+			    <dt>地物分类<img src="static/images/left/select_xl01.png"/></dt>
+			    <dd onclick="setCore('uploadpage')">桥梁轮廓</dd>
+		    </dl>
+	    </div>
+
+        <div id="code_wrapper">
+            <div id="code_arrow" class="go_back">
+                <span title="显示代码">›</span>
+                <p title="隐藏代码">‹</p>
+            </div>
+            <div id="code_core">
+                <div class="code_head">
+<!--                     <a id="code_restore" href="javascript:void(0);">还原</a>
+                    <a id="code_run" href="javascript:void(0);">运行</a> -->
+                    <a id="code_copy" class="" href="javascript:void(0);">复制</a>
+                    源代码编辑器
+                </div>
+                <div class="code_body">
+                    <textarea id="codes" rows="10" cols="30" name="codes" > </textarea>
+                </div>
+            </div>
+        </div>
+
+        <div  class="iframe_wrapper" >
+            <iframe id="container_iframe" name="container_iframe"  scrolling="yes" ></iframe>
+        </div>
+    </div>
+</body>
+</html>
