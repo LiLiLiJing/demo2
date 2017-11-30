@@ -22,6 +22,7 @@ from lib.upload_file import uploadfile
 import requests
 import urllib2
 import json
+import  xml.dom.minidom
 
 from pyproj import Proj, transform
 import numpy as np
@@ -38,6 +39,7 @@ THUMBNAIL_EXTENSION = 'png'
 IGNORED_FILES = set(['.gitignore'])
 
 bootstrap = Bootstrap(app)
+GLOBAL_PORT_NUMBER = 31533
 
 # 2017-11-3, the package added for data communication with the geoserver
 from geoserver.catalog import Catalog
@@ -81,6 +83,27 @@ def create_thumbnail(image):
         return False
 
 
+# written at 15:40, on 2017-11-30, test the html5 visualization under flask
+@app.route("/folder-view", methods=['GET', 'POST'])
+def folder_view():
+    print "Calling the folder_view service"
+    return render_template('folder_view.html')
+
+@app.route("/folder-imgsview", methods=['GET', 'POST'])
+def folder_imgsview():
+    print "Calling the folder_imgsview service"
+    return render_template('folder_imgsview.html')
+
+@app.route("/basic-test", methods=['GET', 'POST'])
+def basic_test():
+    print "Calling the basic_test service"
+    return render_template('basic_test.html')
+
+@app.route("/order-index", methods=['GET', 'POST'])
+def order_index():
+    print "Calling the order_index service"
+    return render_template('orderindex.html')
+
 @app.route("/upload", methods=['GET', 'POST'])
 def upload():
     print "Entering upload(), with ", request.method
@@ -120,7 +143,12 @@ def upload():
     if request.method == 'GET':
         # get all file in ./data directory
         #files = [f for f in os.listdir(app.config['UPLOAD_FOLDER']) if os.path.isfile(os.path.join(app.config['UPLOAD_FOLDER'],f)) and f not in IGNORED_FILES ]
-        stores=cat.get_stores()
+        all_stores=cat.get_stores()
+
+        # Appended at 09:39, on 2017-11-14, filtering the gotten stores with permitted types
+        permit_types = ['WorldImage', 'GeoTIFF']
+        stores = [s_obj for s_obj in all_stores if s_obj.type in permit_types]
+
         
         file_display = []
 
@@ -139,7 +167,6 @@ def upload():
 
 @app.route("/delete/<string:filename>", methods=['DELETE'])
 def delete(filename):
-
     try:
         execute_url="curl -v -u admin:geoserver -X DELETE %s/workspaces/%s/coveragestores/%s?recurse=true" \
             % (geoserver_url + "/rest", cat.get_default_workspace().name, filename)
@@ -163,12 +190,13 @@ def get_file(filename):
 
 @app.route('/show/<string:storename>', methods=['GET', 'POST'])
 def show(storename, ):
-    resource = cat.get_resource(storename, workspace=cat.get_default_workspace())
+    # resource = cat.get_resource(storename, workspace=cat.get_default_workspace())
+    resource = cat.get_resource(storename)
     src_proj = resource.projection
 
     store_dict = {}
     store_dict['bbox'] = resource.latlon_bbox
-    store_dict['workspacename'] = cat.get_default_workspace().name
+    store_dict['workspacename'] = resource.workspace.name
     store_dict['storename'] = storename
     store_dict['projection'] = src_proj
 
@@ -177,12 +205,14 @@ def show(storename, ):
 
 @app.route('/showgroup/<string:groupname>', methods=['GET', 'POST'])
 def showgroup(groupname):
-    resource = cat.get_layergroup(name=groupname, workspace=cat.get_default_workspace())
+    workspace_name=groupname.split(':')[0]
+    groupname=groupname.split(':')[1]
+    resource = cat.get_layergroup(name=groupname, workspace=cat.get_workspace(workspace_name))
     src_proj = cat.get_layer(resource.layers[0]).resource.projection
 
     store_dict = {}
     store_dict['bbox'] = resource.bounds
-    store_dict['workspacename'] = cat.get_default_workspace().name
+    store_dict['workspacename'] = workspace_name
     store_dict['storename'] = groupname
     store_dict['projection'] = src_proj
 
@@ -191,14 +221,20 @@ def showgroup(groupname):
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
+    return render_template('login.html')
+
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
     return render_template('index.html')
 
 
 @app.route('/uploadpage', methods=['GET', 'POST'])
 def uploadpage():
-    print '((((((((((((((((((((uploadpage)))))))))))))))))))))'
+    print '((((((((((((((((((((uploadpage))))))))))))))))))))))'
     return render_template('upload.html')
     # return 'templates/upload.html'
+
 
 # 2017-11-7, 09:55, collection of services on processing region collection
 @app.route('/procrequest/<string:storename>', methods=['POST'])
@@ -225,9 +261,43 @@ def get_procrequest(storename):
     min_lat = lats_arr.min(); max_lat = lats_arr.max()
 
     # build the WCS request string
-    imgretrv_url = "%s/ows?service=WCS&version=2.0.0&" % (geoserver_url) \
-        + "request=GetCoverage&coverageId=%s&format=image/geotiff&" % (storename) \
-        + "subset=Lat(%s,%s)&subset=Long(%s,%s)" % (str(min_lat), str(max_lat), str(min_lon), str(max_lon))
+    prsrc = cat.get_resource(storename)
+    prsrc_proj = prsrc.projection
+    prsrc_ws = prsrc.workspace
+
+    wms_request_projs = ['EPSG:404000']
+    if prsrc_proj in wms_request_projs:
+        
+        res=requests.get("%s/wcs?service=WCS&version=2.0.0&" % geoserver_url\
+                         + "request=DescribeCoverage&CoverageId=%s" % storename)
+
+        dom = xml.dom.minidom.parseString(res.text)
+        root = dom.documentElement
+        vectors=root.getElementsByTagName('gml:offsetVector')
+
+        xy_offsets_mat = np.zeros([2, 2], dtype=np.float64)
+        xy_offsets_vec = np.zeros([2, ], dtype=np.float64)
+
+        for v_i, vv in enumerate(vectors):
+            cur_offset_str = vv.firstChild.data
+            cur_offset_arr = np.array(cur_offset_str.split(" "), dtype=np.float64)
+            xy_offsets_mat[v_i, :] = cur_offset_arr
+
+        xy_offsets_vec[:] = np.array([xy_offsets_mat[0, 1], xy_offsets_mat[1, 0]], dtype=np.float64)
+        x_len = (max_lat - min_lat) / xy_offsets_vec[0]
+        y_len = (max_lon - min_lon) / xy_offsets_vec[1]
+        x_len = int(x_len) if x_len>0 else int(x_len*-1)
+        y_len = int(y_len) if y_len>0 else int(y_len*-1)
+        rsrc = cat.get_resource(storename)
+        ws_name = rsrc.workspace.name
+
+        imgretrv_url = '%s/%s/wms?service=WMS&version=1.1.0&request=GetMap&layers=%s:%s&' % (geoserver_url,ws_name,ws_name,storename)\
+                        + 'styles=&bbox=%s,%s,%s,%s&' % (str(min_lon),str(min_lat),str(max_lon),str(max_lat))\
+                        + 'width=%s&height=%s&srs=EPSG:2309&format=image/geotiff' % (str(y_len),str(x_len))
+    else:
+        imgretrv_url = "%s/ows?service=WCS&version=2.0.0&" % (geoserver_url) \
+            + "request=GetCoverage&coverageId=%s&format=image/geotiff&" % (storename) \
+            + "subset=Lat(%s,%s)&subset=Long(%s,%s)" % (str(min_lat), str(max_lat), str(min_lon), str(max_lon))
 
     # then build the name of the resulting store
     cur_time = datetime.datetime.now().strftime("%Y%m%d_%H_%M_%S_%f")
@@ -244,19 +314,18 @@ def get_procrequest(storename):
     attData_arr = attData.split(',')
 
     if attData_arr[1] == 'Mask':
-        request_url = urllib2.Request(url='http://172.18.77.15:31534/bridgemask', headers=headers, \
-            data=json.dumps(post_dict))
+        request_url = urllib2.Request(url='http://172.18.77.15:31534/bridgemask', \
+            headers=headers, data=json.dumps(post_dict))
         resp = urllib2.urlopen(request_url)
 
-        # ret_texts = resp.readlines()
         # now stack the original and the returned layers, make the layer group
         group_name = savstore_nm + '_GRP'
         group_layers = [storename, savstore_nm]
         group_styles = [cat.get_layer(cur_layername).default_style.name \
             for cur_layername in group_layers]
 
-        result_group = cat.create_layergroup(name=group_name, layers=group_layers, styles=group_styles, \
-            bounds=cat.get_layer(storename).resource.native_bbox, \
+        result_group = cat.create_layergroup(name=group_name, layers=group_layers, 
+            styles=group_styles, bounds=cat.get_layer(storename).resource.native_bbox, \
             workspace=cat.get_default_workspace().name)
 
         cat.save(result_group)
@@ -264,8 +333,8 @@ def get_procrequest(storename):
         return 'showgroup/' + group_name
 
     elif attData_arr[1] == 'Detection':
-        request_url = urllib2.Request(url='http://172.18.77.15:31535/planedetect', headers=headers, \
-            data=json.dumps(post_dict))
+        request_url = urllib2.Request(url='http://172.18.77.15:31535/planedetect', 
+            headers=headers, data=json.dumps(post_dict))
         resp = urllib2.urlopen(request_url)
         
         # now stack the original and the returned layers, make the layer group
@@ -274,13 +343,13 @@ def get_procrequest(storename):
         group_styles = [cat.get_layer(cur_layername).default_style.name \
             for cur_layername in group_layers]
 
-        result_group = cat.create_layergroup(name=group_name, layers=group_layers, styles=group_styles, \
-            bounds=cat.get_layer(storename).resource.native_bbox, \
-            workspace=cat.get_default_workspace().name)
+        result_group = cat.create_layergroup(name=group_name, layers=group_layers, \
+            styles=group_styles, bounds=cat.get_layer(storename).resource.native_bbox, \
+            workspace=prsrc_ws.name)
 
         cat.save(result_group)
         
-        return 'showgroup/' + group_name
+        return 'showgroup/%s:%s'%(prsrc_ws.name,group_name)
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=31533)

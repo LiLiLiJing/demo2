@@ -135,14 +135,15 @@ a.help span{
 /*=S 源码部分 */
 #code_wrapper{
 	/*width: 468px;*/
-	/*width: 0;*/
-	height: 100%;
+	/*width: 0;
+	height: 100%;*/
 	background: #fff;
 	position: absolute;
 	z-index: 2;
 	border-left: 1px solid #e5e5e5;
 	border-right: 1px solid #e5e5e5;
-	margin: 0 0 0 220px;
+	margin: 0 0 0 220px; 
+	display: none;
 }
 #code_core{
 	width: 468px;
@@ -214,8 +215,8 @@ a.help span{
 	height: 100%;
 	border: none;
 	z-index: 1;
-	/*margin-left: 220px;*/
-	margin-left: 690px;
+	margin-left: 220px;
+	/*margin-left: 690px;*/
 	position: relative;
 	/*top: 210px;*/
 	top: 0;

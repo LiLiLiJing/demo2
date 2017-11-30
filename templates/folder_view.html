@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Document</title>
+<link href="static/css/pattern_folder.css" type="text/css" rel="stylesheet" />
+<!-- 导入模板引擎 -->
+<script type="text/javascript" src='static/js/template-native.js'></script>
+
+<title>无标题文档</title>
+	<style type="text/css">
+		.header{
+			width:100%;
+			height:80px;
+			background-color:red;
+			}
+		.mainLeft{
+			margin-top:20px;
+			/*width: 200px;*/
+			}
+		.mainLeft span{
+			display:block;
+			width:180px;
+			height:40px;
+			background-color:#000;
+			color:#fff;
+			line-height:40px;
+			text-align:center;
+			border-radius:5px;
+			margin:15px 30px 0px;
+			}
+		.mainLeft span:hover{
+			background-color:red;
+			cursor:pointer;
+			}
+		.mainRight{
+			margin-top:15px;
+			width:1020px;
+			}
+		.mainRight .total{
+			color:#999;
+			margin-left:10px;
+			margin-bottom:5px;
+			}
+		.mainRight h3{
+			margin-top:10px;
+			margin-bottom:5px;
+			}
+		.mainRight .contents{
+			margin-bottom:10px;
+			border:1px solid #ccc;
+			border-radius:4px;
+			width:100px;
+			height:100px;
+			padding-top:5px;
+			position:relative;
+			cursor:pointer;
+			float:left;
+			margin-right:10px;
+			text-align:center;
+			}
+		
+		.mainRight .title1{
+			margin-top:20px;
+			background-color:#0F3;
+			padding-left:30px;
+			color:#fff;
+			font-size:18px;
+			font-weight:600;
+			height:30px;
+			line-height:30px;
+			position:relative;
+			}
+		
+		.mainRight ul li{
+			float:left;
+			margin-right:10px;
+			margin-top:10px;
+			text-align:center;
+			position:relative;
+			}
+		.mainRight ul li input{
+			position:absolute;
+			bottom:2px;
+			right:0;
+			}
+		.mainRight ul li img{
+			width:100px;
+			height:100px;
+			}
+		.contents{
+			
+			}
+		.contents img{
+			width:70px;
+			height:60px;
+			margin-top:5px;
+			}
+		.contents .title{
+			margin-top:5px;
+			}
+		/*.contents .title p{
+			margin:5px 0;
+			}*/
+		.contents:hover{
+			background-color:#ccc;
+			}
+	</style>
+
+
+</head>
+
+<body>
+	<div>
+    	<div class="header">
+        
+        </div>
+        <div class="main">
+        	<div class="mainLeft f_l">
+            	<span>文件夹选项</span>
+                <span>文件夹选项</span>
+                <span>文件夹选项</span>
+                <span class="creat">新建文件夹</span>
+            </div>
+            <div class="mainRight f_l">
+            	<h3>文件夹列表</h3>
+               
+                <div class="contents">
+                	<img src="static/images/wjj.jpg" alt=""/>
+                    <div class="title">
+                    	aaa
+                    </div>
+                </div>
+                <div class="contents">
+                	<img src="static/images/wjj.jpg" alt=""/>
+                    <div class="title">
+                    	aaa
+                    </div>
+                </div>
+                <div class="contents">
+                	<img src="static/images/wjj.jpg" alt=""/>
+                    <div class="title">
+                    	aaa
+                    </div>
+                </div>
+                <div class="contents">
+                	<img src="static/images/wjj.jpg" alt=""/>
+                    <div class="title">
+                    	aaa
+                    </div>
+                </div>
+                <div class="contents">
+                	<img src="static/images/wjj.jpg" alt=""/>
+                    <div class="title">
+                    	aaa
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+
+<script type="text/javascript">
+	
+	//为每个文件夹设置，点击哪个就显示哪个里边的内容
+	var divList = document.getElementsByClassName('contents');
+	//console.log(divList.length);
+	for (var i = 0; i < divList.length; i++) {
+		divList[i].onclick = function () {
+			window.location.href="folder_imgsview.html";
+		}
+	
+	}
+	
+	//创建新的文件夹
+		var creat = document.getElementsByClassName("creat")[0];
+		var newfile,filename="newfile",nameList;
+		creat.onclick = function(){
+			newfile = document.createElement('div');
+			newfile.className = "contents";
+			newfile.innerHTML = '<img src="static/images/wjj.jpg" alt=""/>'+
+			'<div class="title">'+filename
+					'</div>';
+		var mainRight = document.getElementsByClassName('mainRight')[0];
+		mainRight.appendChild(newfile);
+		title[title.length-1].getElementsByTagName("p")[0].onclick=function(){
+				var name = window.prompt("请输入文件名");
+				this.innerText = name;
+				}
+			}
+		//进行文件夹重命名
+		var title = document.getElementsByClassName("title");
+		for(j=0;j < title.length;j++){
+			title[j].onclick=function(){
+				var name = window.prompt("请输入文件名");
+				this.innerText = name;
+				}
+			}
+			
+</script>
+	

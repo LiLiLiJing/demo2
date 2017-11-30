@@ -1,0 +1,156 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>无标题文档</title>
+	<style>
+        * {
+            padding: 0;
+            margin: 0;
+			font: 16px "微软雅黑";
+        }
+		body{
+			background-color:#eee;
+			}
+		img{
+			border:none;
+			width:100px;
+			height:100px;
+			}
+        table {
+            border-collapse: collapse;
+            border-spacing: 0;
+            border: 1px solid #c0c0c0;
+            width: 800px;
+			}
+        th,
+        td {
+            border: 1px solid #d0d0d0;
+            color: #404060;
+            padding: 10px;
+        }
+
+        th {
+            background-color: #09c;
+            color: #fff;
+        }
+		thead .timer{
+			margin-left:15px;
+			}
+        tbody tr {
+            background-color: #f0f0f0;
+        }
+        tbody tr:hover {
+            background-color: #fafafa;
+        }
+		.fl{
+			float:left;
+			}
+		.fr{
+			float:right;
+			}
+		.clearfix::before,
+		.clearfix::after{
+			content:'';
+			display: block;
+			line-height: 0;
+			height: 0;
+			visibility: hidden;
+			clear: both;
+			}
+		tbody .name{
+			position:relative;
+			}
+		tbody .name span{
+			display:inline-block;
+			margin-top:10px;
+			margin-left:10px;
+			}
+		.header{
+			width:100%;
+			height:80px;
+			background-color:red;
+			}
+		.main{
+			width:1000px;
+			margin:20px auto;
+			}
+		.mainleft{
+			width:200px;
+			}
+		.mainleft span{
+			display:block;
+			margin-bottom:30px;
+			width:120px;
+			height:28px;
+			line-height:28px;
+			background-color:#6e6568;
+			text-align:center;
+			border-radius:5px;
+			color:#fff;
+			}
+		.mainleft span:hover{
+			cursor:pointer;
+			background-color:#ccc;
+			color:red;
+			}
+    </style>
+</head>
+
+<body>
+	<div>
+    	<div class="header"></div>
+        <div class="main clearfix">
+        	<div class="mainleft fl">
+            	<span>文件夹选项</span>
+                <span>文件夹选项</span>
+                <span>文件夹选项</span>
+                <span>订单页面</span>
+            </div>
+            <div class="mainright fr">
+            	<table>
+                    <thead>
+                        <tr>
+                            <td colspan="3">
+                                <span class="number">订单编号：94391732455541474</span>
+                                <span class="timer"></span>
+                            </td> 
+                        </tr>
+                    </thead>
+                    <tbody id="tbody">
+                        <tr>
+                            <td width="500px" style="word-wrap:break-word;word-break:break-all;">
+                                <div class="name">
+                                    <img src="static/images/mi6.jpg" class="fl"/>
+                                    
+                                    <span>商品名称：小米6全网通</span>
+                                    
+                                </div>
+                            </td>
+                            <td width="200px">
+                                <div>
+                                    <div>快递信息：顺丰快递</div>
+                                    <div>存储容量：64G</div>
+                                    <div>网络类型：4G+全网通</div>
+                                    <div>机身颜色：亮蓝色</div>
+                                    <div>套餐类型：官方标配</div>    
+                                </div>
+                            </td>
+                            <td width="100px">等待付款</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+	<script>
+	//设置时间，模拟的是获取系统当前时间添加到订单中
+        var timer=new Date();
+        var year =timer.getFullYear ();
+        var month = timer.getMonth();
+        var day = timer.getDate();
+        var timer1 = document.getElementsByClassName("timer")[0]; 
+        timer1.innerHTML = "创建时间："+year +"年"+(month+1)+"月"+day+"日";
+    </script>
