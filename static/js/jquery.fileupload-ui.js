@@ -165,7 +165,7 @@
                     files = getFilesFromResponse(data),
                     template,
                     deferred;
-                    // console.log(data);
+                    console.log(data);
                 if (data.context) {
                     data.context.each(function (index) {
                         var file = files[index] ||
