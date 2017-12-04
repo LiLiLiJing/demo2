@@ -13,7 +13,7 @@ from PIL import Image
 import simplejson
 import traceback
 
-from flask import Flask, request, render_template, redirect, url_for, send_from_directory
+from flask import Flask, request, render_template, redirect, url_for, send_from_directory, Response
 from flask_bootstrap import Bootstrap
 from werkzeug import secure_filename
 
@@ -89,21 +89,91 @@ def folder_view():
     print "Calling the folder_view service"
     return render_template('folder_view.html')
 
+
 @app.route("/folder-imgsview", methods=['GET', 'POST'])
 def folder_imgsview():
     print "Calling the folder_imgsview service"
     return render_template('folder_imgsview.html')
+
 
 @app.route("/basic-test", methods=['GET', 'POST'])
 def basic_test():
     print "Calling the basic_test service"
     return render_template('basic_test.html')
 
+
 @app.route("/order-index", methods=['GET', 'POST'])
 def order_index():
     print "Calling the order_index service"
     return render_template('orderindex.html')
 
+
+# At 10:14, on 2017-12-1, operations for listing workspace, stores and layers, layer-groups
+@app.route("/folder-traverse/<string:operation>", methods=['GET', 'POST'])
+def folder_traverse(operation):
+    operation_splits = operation.split('&')
+    print '*** Splitted Operation Strings *** == ', operation_splits
+
+    if operation_splits[0] == 'listdirs':
+        # show all the workspaces, return in full links
+        all_ws_list = cat.get_workspaces()
+
+        num_ws = len(all_ws_list)
+        ws_info_list = [{'name': '', 'url': '', 'num_objs': 0} for _ in range(num_ws)]
+
+        # get the name, xml, and content count in the target workspace
+        for ws_i, ws_obj in enumerate(all_ws_list):
+            cur_ws_name = ws_obj.name
+            cur_ws_url = ws_obj.href
+
+            cur_ws_resrcs = cat.get_resources(workspace = ws_obj)
+            cur_ws_objcount = len(cur_ws_resrcs)
+
+            ws_info_list[ws_i]['name'] = cur_ws_name
+            ws_info_list[ws_i]['url'] = cur_ws_url
+            ws_info_list[ws_i]['num_objs'] = cur_ws_objcount
+
+        return Response(json.dumps(ws_info_list), mimetype='application/json')
+
+    elif operation_splits[0] == 'showdir':
+        show_wsdir_name = operation_splits[1]
+
+        show_wsdir_xml = cat.get_workspace(name = show_wsdir_name)
+        cur_ws_resrcs = cat.get_resources(workspace = show_wsdir_xml)
+
+        # iterate through the list of resources and get their properties
+        cur_ws_resrccount = len(cur_ws_resrcs)
+        ws_resrcs_list = [{'name': '', 'type': '', 'thumbnail': None} \
+            for _ in range(cur_ws_resrccount)]
+
+        for rs_i, rs_obj in enumerate(cur_ws_resrcs):
+            ws_resrcs_list[rs_i]['name'] = rs_obj.name
+            ws_resrcs_list[rs_i]['type'] = rs_obj.resource_type
+            ws_resrcs_list[rs_i]['thumbnail'] = None
+
+        return Response(json.dumps(ws_resrcs_list), mimetype='application/json')
+
+    elif operation_splits[0] == 'createdir':
+        # create a new workspace
+        wsdir_name = operation_splits[1]
+        wsdir_uri = "/".join([geoserver_url, wsdir_name])
+        wsdir_obj = cat.create_workspace(name = wsdir_name, uri = wsdir_uri)
+
+        return Response(json.dumps({'name': wsdir_obj.name, 'url': wsdir_obj.href}), \
+            mimetype='application/json')
+
+    elif operation_splits[0] == 'deletedir':
+        wsdir_name = operation_splits[1]
+        wsdir_obj = cat.get_workspace(name = wsdir_name)
+        del_status = cat.delete(wsdir_obj)
+
+        return Response(json.dumps(del_status), mimetype='application/json')
+
+    elif operation_splits[0] == 'manipdir':
+        # make maniputations to the folder content
+        pass
+
+# categorized at 10:12, on 2017-12-1, file uploading / deletion operations
 @app.route("/upload", methods=['GET', 'POST'])
 def upload():
     print "Entering upload(), with ", request.method
@@ -158,7 +228,8 @@ def upload():
                 "url": "show/%s"%st.name,
                 "thumbnailUrl": 'thumbnail/%s.png'%st.name,
                 "deleteUrl": 'delete/%s'%st.name,
-                "deleteType": 'DELETE',}
+                "deleteType": 'DELETE',
+                "workspace": st.workspace.name}
 
             file_display.append(dd)
 
@@ -229,11 +300,12 @@ def login():
     return render_template('index.html')
 
 
-@app.route('/uploadpage', methods=['GET', 'POST'])
-def uploadpage():
+@app.route('/uploadpage/<string:ws_name>', methods=['GET', 'POST'])
+def uploadpage(ws_name=""):
     print '((((((((((((((((((((uploadpage))))))))))))))))))))))'
-    return render_template('upload.html')
-    # return 'templates/upload.html'
+
+    store_dict={'workspace': ws_name}
+    return render_template('upload.html', store_dict=store_dict)
 
 
 # 2017-11-7, 09:55, collection of services on processing region collection
