@@ -352,4 +352,4 @@ def get_procrequest(storename):
         return 'showgroup/%s:%s'%(prsrc_ws.name,group_name)
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=31533)
+    app.run(debug=True, host='0.0.0.0', port=31555)
