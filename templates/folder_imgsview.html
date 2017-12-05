@@ -3,9 +3,7 @@
 <head>
 	<meta charset="UTF-8">
 	<title>Document</title>
-<!-- 导入模板引擎 -->
-<script type="text/javascript" src='static/js/template-native.js'></script>
-<script src="http://blueimp.github.io/JavaScript-Templates/js/tmpl.min.js"></script>
+
 <title>无标题文档</title>
 	<style type="text/css">
 		*{
@@ -130,8 +128,8 @@
 			height:100px;
 			}
 	</style>
+
 	
-    
 	
 </head> 
 <body>
@@ -161,7 +159,7 @@
 		var ajax = new XMLHttpRequest();
 
 		// 使用post
-		ajax.open('post','index.html');
+		ajax.open('get','http://172.18.77.15:31555/thumbnail&shenzhen');
 
 		// 必须要设置 请求报文
 		ajax.setRequestHeader("Content-type","application/x-www-form-urlencoded");
@@ -176,18 +174,32 @@
 				
 				var info = JSON.parse(ajax.responseText);
 				console.log(info);
-				/*var obj = {
+				var obj = {
 				items:info
-			};*/
-			//var resultStr = tmpl('template',obj);
+				};
+			console.log(info[0].url);
+			var str ="";
+			str +="<div class='title1'>共有"+info.length+"张图</div>";
+			str += "<ul>"
+
+			for(var i=0;i<info.length;i++){
+				
+				str += '<li>'+
+				"<img src='"+info[i].url+"' >"+
+				"<p>"+info[i].name+"</p>"+
+				"<input type='checkbox' class='check' />"+
+				"</li>";
+			}
+			str +="</ul>";
+			//console.log(str);
+			//var resultStr = tmpl('template-list',obj);
 			//console.log(resultStr);
-			//console.log(obj);
 
 				// 从数组中 取出 不同的值 设置给 不同的 dom元素即可
 				// 描述信息
-			//document.getElementsByClassName('mainRight')[0].innerHTML = resultStr;
+			document.getElementsByClassName('mainRight')[0].innerHTML = str;
 				
-			var ipt = document.getElementsByClassName('ipt2')[0];
+			/*var ipt = document.getElementsByClassName('ipt2')[0];
 			var check = document.getElementsByClassName('check');
 				//console.log(ipt);
 			ipt.onclick=function(){
@@ -198,8 +210,12 @@
                 	check[i].checked="checked";
                 }
                 
-            }
+            }*/
         }
     }		
 </script>
-	
+
+<!-- 导入模板引擎 -->
+<script type="text/javascript" src='static/js/template-native.js'></script>
+<script src="http://blueimp.github.io/JavaScript-Templates/js/tmpl.min.js"></script>
+<script type="text/javascript" src="static/js/jquery.min.js"></script>

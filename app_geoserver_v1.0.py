@@ -13,7 +13,7 @@ from PIL import Image
 import simplejson
 import traceback
 
-from flask import Flask, request, render_template, redirect, url_for, send_from_directory, Response
+from flask import Flask, request, render_template, redirect, url_for, send_from_directory, Response, jsonify
 from flask_bootstrap import Bootstrap
 from werkzeug import secure_filename
 
@@ -109,7 +109,7 @@ def order_index():
 
 
 # At 10:14, on 2017-12-1, operations for listing workspace, stores and layers, layer-groups
-@app.route("/folder-traverse/<string:operation>", methods=['GET', 'POST'])
+@app.route("/folder-traverse&<string:operation>", methods=['GET', 'POST'])
 def folder_traverse(operation):
     operation_splits = operation.split('&')
     print '*** Splitted Operation Strings *** == ', operation_splits
@@ -172,6 +172,20 @@ def folder_traverse(operation):
     elif operation_splits[0] == 'manipdir':
         # make maniputations to the folder content
         pass
+
+@app.route('/thumbnail&<string:workspacename>',methods=['POST','GET'])
+def make_thumbnail(workspacename):
+    url='http://172.18.77.15:8089/geoserver/%s/wms?service=WMS&version=1.1.0&request=GetMap&layers=%s:%s&styles=&bbox=%s,%s,%s,%s&width=80&height=80&srs=%s&format=image/png' 
+    resources=cat.get_resources(workspace=cat.get_workspace(workspacename))
+
+    res_list=[]
+    for r in resources:
+        res_url=url%(r.workspace.name,r.workspace.name,r.name,r.native_bbox[0],r.native_bbox[2],\
+                 r.native_bbox[1],r.native_bbox[3],r.native_bbox[4] if r.native_bbox[4] is not None \
+                 and r.native_bbox[4].startswith('EPSG') else ('EPSG:4326' if float(r.native_bbox[0])<10000 else 'EPSG:2309' ) )
+        res_list.append({"name":r.name,"url":res_url})
+
+    return jsonify(res_list)
 
 # categorized at 10:12, on 2017-12-1, file uploading / deletion operations
 @app.route("/upload", methods=['GET', 'POST'])
