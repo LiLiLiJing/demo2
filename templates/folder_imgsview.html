@@ -3,30 +3,70 @@
 <head>
 	<meta charset="UTF-8">
 	<title>Document</title>
-<link href="static/css/pattern_folder.css" type="text/css" rel="stylesheet" />
 <!-- 导入模板引擎 -->
 <script type="text/javascript" src='static/js/template-native.js'></script>
-
+<script src="http://blueimp.github.io/JavaScript-Templates/js/tmpl.min.js"></script>
 <title>无标题文档</title>
 	<style type="text/css">
+		*{
+			margin:0;
+			padding:0;
+			}
+		a{
+			text-decoration: none;
+			color:black;
+			}
+		img{
+			border:none;
+			}
+		.f_l{
+			float: left;
+			}
+		.f_r{
+			float: right;
+			}
+		/* 清除浮动 */
+		.clearfix::before,
+		.clearfix::after{
+			content:'';
+			display: block;
+			line-height: 0;
+			height: 0;
+			visibility: hidden;
+			clear: both;
+			}
+		a{
+			text-decoration: none;
+			}
+
+		ol,ul{
+			list-style: none;
+			}
 		.header{
 			width:100%;
 			height:80px;
 			background-color:red;
 			}
+		.main{
+			width:80%;
+			margin:0 auto;
+			}
 		.mainLeft{
+			width:20%;
 			margin-top:20px;
+			margin-right:20px;
 			}
 		.mainLeft span{
 			display:block;
-			width:180px;
+			width:100%;
+			max-width:180px;
 			height:40px;
 			background-color:#000;
 			color:#fff;
 			line-height:40px;
 			text-align:center;
 			border-radius:5px;
-			margin:15px 30px 0px;
+			margin-bottom:20px;
 			}
 		.mainLeft span:hover{
 			background-color:red;
@@ -34,33 +74,16 @@
 			}
 		.mainRight{
 			margin-top:15px;
-			width:1020px;
-			}
+			width:70%;
+			}	
 		.mainRight .total{
 			color:#999;
 			margin-left:10px;
 			margin-bottom:5px;
 			}
-		.mainRight h3{
-			margin-top:10px;
-			margin-bottom:5px;
-			}
-		.mainRight .contents{
-			margin-bottom:10px;
-			border:1px solid #ccc;
-			border-radius:4px;
-			width:100px;
-			height:100px;
-			padding-top:5px;
-			position:relative;
-			cursor:pointer;
-			float:left;
-			margin-right:10px;
-			text-align:center;
-			}
-		
+
 		.mainRight .title1{
-			margin-top:20px;
+			margin-top:10px;
 			background-color:#0F3;
 			padding-left:30px;
 			color:#fff;
@@ -69,6 +92,10 @@
 			height:30px;
 			line-height:30px;
 			position:relative;
+			border-radius:2px;
+			}
+		.mainRight .title1 input{
+			border:none;
 			}
 		.mainRight .title1 .ipt1{
 			width:60px;
@@ -102,34 +129,17 @@
 			width:100px;
 			height:100px;
 			}
-		.contents{
-			
-			}
-		.contents img{
-			width:70px;
-			height:60px;
-			margin-top:5px;
-			}
-		.contents .title{
-			margin-top:5px;
-			}
-		/*.contents .title p{
-			margin:5px 0;
-			}*/
-		.contents:hover{
-			background-color:#ccc;
-			}
 	</style>
 	
-
-</head>
-
+    
+	
+</head> 
 <body>
 	<div>
     	<div class="header">
         
         </div>
-        <div class="main">
+        <div class="main clearfix">
         	<div class="mainLeft f_l">
             	<span>文件夹选项</span>
                 <span>文件夹选项</span>
@@ -137,115 +147,59 @@
                 <span class="creat">新建文件夹</span>
             </div>
             <div class="mainRight f_l">
-            	<h3>文件夹列表</h3>
-               
-                <div class="contents">
-                	<img src="static/images/wjj.jpg" alt=""/>
-                    <div class="title">
-                    	aaa
-                    </div>
-                </div>
-                <div class="contents">
-                	<img src="static/images/wjj.jpg" alt=""/>
-                    <div class="title">
-                    	aaa
-                    </div>
-                </div>
-                <div class="contents">
-                	<img src="static/images/wjj.jpg" alt=""/>
-                    <div class="title">
-                    	aaa
-                    </div>
-                </div>
-                <div class="contents">
-                	<img src="static/images/wjj.jpg" alt=""/>
-                    <div class="title">
-                    	aaa
-                    </div>
-                </div>
-                <div class="contents">
-                	<img src="static/images/wjj.jpg" alt=""/>
-                    <div class="title">
-                    	aaa
-                    </div>
-                </div>
+  
             </div>
         </div>
     </div>
 </body>
 </html>
-	<script type="text/javascript">
-		
-		var divList = document.getElementsByClassName('contents');
-		//console.log(divList.length);
+<script type="text/javascript">
+	
+	var divList = document.getElementsByClassName('contents');
+	//console.log(divList.length);
 
-			var ajax = new XMLHttpRequest();
+		var ajax = new XMLHttpRequest();
 
-			// 使用post
-			ajax.open('post','getinfo.php');
+		// 使用post
+		ajax.open('post','getinfo.html');
 
-			// 必须要设置 请求报文
-			ajax.setRequestHeader("Content-type","application/x-www-form-urlencoded");
+		// 必须要设置 请求报文
+		ajax.setRequestHeader("Content-type","application/x-www-form-urlencoded");
 
-			// 发送请求
-			// 点击哪个就向后台发送相应的数据
-			//ajax.send('name'+this.children[1].firstElementChild.innerText);
-			ajax.send();//本代码用来测试用
-			// 注册事件
-			ajax.onreadystatechange = function () {
-				if (ajax.readyState == 4 && ajax.status == 200) {
-					
-					var info = JSON.parse(ajax.responseText);
-					console.log(info);
-					var obj = {
-					items:info
-				};
-				var resultStr = template('template',obj);
-				//console.log(resultStr);
-					
+		// 发送请求
+		// 点击哪个就向后台发送相应的数据
+		//ajax.send('name'+this.children[1].firstElementChild.innerText);
+		ajax.send();//本代码用来测试用
+		// 注册事件
+		ajax.onreadystatechange = function () {
+			if (ajax.readyState == 4 && ajax.status == 200) {
+				
+				var info = JSON.parse(ajax.responseText);
+				console.log(info);
+				/*var obj = {
+				items:info
+			};*/
+			//var resultStr = tmpl('template',obj);
+			//console.log(resultStr);
+			//console.log(obj);
 
-					// 从数组中 取出 不同的值 设置给 不同的 dom元素即可
-					// 描述信息
-				document.getElementsByClassName('mainRight')[0].innerHTML = resultStr;
-					
-				var ipt = document.getElementsByClassName('ipt2')[0];
-				var check = document.getElementsByClassName('check');
-					//console.log(ipt);
-				ipt.onclick=function(){
-					for(var i=0;i<check.length;i++){
-               		 
-                    	
-                    //设置每一个input的checked属性值。
-                    	check[i].checked="checked";
-                    }
-                    
+				// 从数组中 取出 不同的值 设置给 不同的 dom元素即可
+				// 描述信息
+			//document.getElementsByClassName('mainRight')[0].innerHTML = resultStr;
+				
+			var ipt = document.getElementsByClassName('ipt2')[0];
+			var check = document.getElementsByClassName('check');
+				//console.log(ipt);
+			ipt.onclick=function(){
+				for(var i=0;i<check.length;i++){
+           		 
+                	
+                //设置每一个input的checked属性值。
+                	check[i].checked="checked";
                 }
+                
             }
         }
-	
-		//创建新的文件夹
-			var creat = document.getElementsByClassName("creat")[0];
-			var newfile,filename="newfile",nameList;
-			creat.onclick = function(){
-				newfile = document.createElement('div');
-				newfile.className = "contents";
-				newfile.innerHTML = '<img src="static/images/wjj.jpg" alt=""/>'+
-				'<div class="title">'+filename
-						'</div>';
-			var mainRight = document.getElementsByClassName('mainRight')[0];
-			mainRight.appendChild(newfile);
-			title[title.length-1].getElementsByTagName("p")[0].onclick=function(){
-					var name = window.prompt("请输入文件名");
-					this.innerText = name;
-					}
-				}
-			//进行文件夹重命名
-			var title = document.getElementsByClassName("title");
-			for(j=0;j<title.length;j++){
-				title[j].onclick=function(){
-					var name = window.prompt("请输入文件名");
-					this.innerText = name;
-					}
-				}
-	</script>
+    }		
+</script>
 	

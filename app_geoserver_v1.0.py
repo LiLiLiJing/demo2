@@ -300,13 +300,18 @@ def login():
     return render_template('index.html')
 
 
-@app.route('/uploadpage/<string:ws_name>', methods=['GET', 'POST'])
+@app.route('/uploadpage&<string:ws_name>', methods=['GET', 'POST'])
 def uploadpage(ws_name=""):
     print '((((((((((((((((((((uploadpage))))))))))))))))))))))'
 
     store_dict={'workspace': ws_name}
     return render_template('upload.html', store_dict=store_dict)
 
+
+# @app.route('/uploadpage', methods=['GET', 'POST'])
+# def uploadpage():
+#     print '((((((((((((((((((((uploadpage))))))))))))))))))))))'
+#     return render_template('upload.html')
 
 # 2017-11-7, 09:55, collection of services on processing region collection
 @app.route('/procrequest/<string:storename>', methods=['POST'])
