@@ -5,7 +5,7 @@
 	<title>Document</title>
 <!-- 导入模板引擎 -->
 <script type="text/javascript" src='../static/js/template-native.js'></script>
-
+<script type="text/javascript" src="../static/js/jquery-1.11.1.min.js"></script>
 <title>无标题文档</title>
 	<style type="text/css">
 		*{
@@ -42,14 +42,8 @@
 		ol,ul{
 			list-style: none;
 			}
-		/* .header{
-			width:100%;
-			height:80px;
-			background-color:red;
-			} */
 		.main{
 			width:80%;
-			
 			}
 		.mainLeft{
 			width:20%;
@@ -107,73 +101,86 @@
 			
 			border:1px solid rgba(204,204,204,0.7);
 			}
+		.current{
+			background-color:skyblue;
+			}
 	</style>
 	
 </head>
 
 <body>
-	<div>
-    	<div class="header">
-        
-        </div>
         <div class="main clearfix">
         	<div class="mainLeft f_l">
-            	<span>文件夹选项</span>
-                <span>文件夹选项</span>
-                <span>文件夹选项</span>
-                <span class="creat">新建文件夹</span>
+            	<span class="need updata">修改文件</span>
+                <span class="need paint">标注文件</span>
+                <span class="need delete">删除文件夹</span>
+                <span class="need creat">新建文件夹</span>
             </div>
             <div class="mainRight f_l">
-            	<h3>文件夹列表</h3>
-                <div class="contents">
-                	<img src="../static/images/wjj.jpg" alt=""/>
-                    <div class="title">
-                    	shenzhen
-                    </div>
-                </div>
-                <div class="contents">
-                	<img src="../static/images/wjj.jpg" alt=""/>
-                    <div class="title">
-                    	globalairports
-                    </div>
-                </div>
-                <div class="contents">
-                	<img src="../static/images/wjj.jpg" alt=""/>
-                    <div class="title">
-                    	aaa
-                    </div>
-                </div>
-                <div class="contents">
-                	<img src="../static/images/wjj.jpg" alt=""/>
-                    <div class="title">
-                    	aaa
-                    </div>
-                </div>
-                <div class="contents">
-                	<img src="../static/images/wjj.jpg" alt=""/>
-                    <div class="title">
-                    	aaa
-                    </div>
-                </div>
+            	
+                
             </div>
         </div>
-    </div>
 </body>
 </html>
 
 <script type="text/javascript">
-	
-	//为每个文件夹设置，点击哪个就显示哪个里边的内容
+		//页面加载完成根据数据库显示文件
+		$.ajax({
+                url: 'http://172.18.77.15:31555/folder-traverse&listdirs', //请求地址
+                type: 'POST',  //请求方式为post
+                //data: { 'type': geoType, 'geo': geoData, 'att': attData }, //传入参数 
+                dataType: 'json', //返回数据格式
+                //请求成功完成后要执行的方法  
+                success: function (response) {
+                    var str="";
+                    str+='<h3>文件夹列表</h3>';
+                    //var mainRight = document.getElementsByClassName('mainRight')[0];
+                    for(var i=0;i<response.length;i++){
+                    	str+='<div class="contents">'+
+                		'<img src="../static/images/wjj.jpg" alt=""/>'+
+                    	'<div class="title">'+response[i].name+'</div></div>'
+                    }
+                    document.getElementsByClassName('mainRight')[0].innerHTML = str;
+             
+		var need = document.getElementsByClassName("need");
 		var nameList = document.getElementsByClassName("title");
 		//console.log(nameList);
 		var divList = document.getElementsByClassName('contents');
 		for (var i = 0; i < divList.length; i++) {
 			//console.log(nameList[i]);
 			divList[i].onclick = function () { 
-			var name = this.getElementsByClassName("title")[0].innerText;
-			//window.location.href="http://www.baidu.com";
-			window.location.href="http://172.18.77.15:31555/uploadpage&"+name;
+				for (var j = 0; j < divList.length; j++){
+					divList[j].className="contents";
+				}
+				this.className = "contents current";
+				var tag = document.getElementsByClassName("current")[0];
+				var name = tag.children[1].innerText;
+				
+				need[0].onclick=function (){
+					window.location.href="http://172.18.77.15:31555/uploadpage&"+name;
+				}
+				need[1].onclick=function(){
+					window.location.href="http://172.18.77.15:31555/folder-imgsview&"+name;
+				}
+				need[2].onclick=function(){
+					tag.parentNode.removeChild(tag);
+				}
+				
+			}
+			need[3].onclick=function(){
+				newfile = document.createElement('div');
+				newfile.className = "contents";
+				newfile.innerHTML = 
+				'<img src="static/images/wjj.jpg" alt=""/>'+
+				'<div class="title">'+'file'+
+						'</div>';
+				var mainRight = document.getElementsByClassName('mainRight')[0];
+				mainRight.appendChild(newfile);
+				console.log(divList.length);
 			}
 		}
-	
+		   }
+                
+            });
 	</script>

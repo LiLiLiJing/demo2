@@ -34,7 +34,8 @@ app.config['UPLOAD_FOLDER'] = 'data/'
 app.config['THUMBNAIL_FOLDER'] = 'data/thumbnail/'
 app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024 * 1024
 
-ALLOWED_EXTENSIONS = set(['txt', 'gif', 'png', 'tif', 'tiff','jpg', 'jpeg', 'bmp', 'rar', 'zip', '7zip', 'doc', 'docx'])
+ALLOWED_EXTENSIONS = set(['txt', 'gif', 'png', 'tif', 'tiff','jpg', 'jpeg', \
+    'bmp', 'rar', 'zip', '7zip', 'doc', 'docx'])
 THUMBNAIL_EXTENSION = 'png'
 IGNORED_FILES = set(['.gitignore'])
 
@@ -46,6 +47,10 @@ from geoserver.catalog import Catalog
 geoserver_url = "http://172.18.77.15:8089/geoserver"
 cat = Catalog(geoserver_url + "/rest", username="admin", password="geoserver")
 
+# 2017-12-6, 17:28, the connection configurations for the mysql user-job management
+mysql_config = {'user': 'root', 'password': 'weiguang123', \
+                'host': '127.0.0.1', 'database': 'RSISS'}
+
 
 def allowed_file(filename):
     return '.' in filename and \
@@ -56,7 +61,6 @@ def gen_file_name(filename):
     """
     If file was exist already, rename it and return a new name
     """
-
     i = 1
     while os.path.exists(os.path.join(app.config['UPLOAD_FOLDER'], filename)):
         name, extension = os.path.splitext(filename)
@@ -83,6 +87,18 @@ def create_thumbnail(image):
         return False
 
 
+# At 9:52, on 2017-12-7, the web-API for receiving the labeld polygons
+@app.route("/poly-labels&<string:ws_name>&<string:st_name>", methods=['GET', 'POST'])
+def poly_labels_proc(ws_name, st_name):
+    print "Entering poly_labels_proc labeling data processing function: ", request.method
+
+    if request.method == 'POST':
+        label_data = request.form
+
+    elif request.method == 'GET':
+        # retrieve the labeling data from the corresponding store and build the json structure
+        pass
+
 # written at 15:40, on 2017-11-30, test the html5 visualization under flask
 @app.route("/folder-view", methods=['GET', 'POST'])
 def folder_view():
@@ -90,10 +106,11 @@ def folder_view():
     return render_template('folder_view.html')
 
 
-@app.route("/folder-imgsview", methods=['GET', 'POST'])
-def folder_imgsview():
+@app.route("/folder-imgsview&<string:ws_name>", methods=['GET', 'POST'])
+def folder_imgsview(ws_name):
     print "Calling the folder_imgsview service"
-    return render_template('folder_imgsview.html')
+    store_dict = {'workspace': ws_name}
+    return render_template('folder_imgsview.html', store_dict=store_dict)
 
 
 @app.route("/basic-test", methods=['GET', 'POST'])
@@ -106,6 +123,21 @@ def basic_test():
 def order_index():
     print "Calling the order_index service"
     return render_template('orderindex.html')
+
+
+# At 17:30, on 2017-12-6, operations for the mysql user-job managements
+@app.route("/userjob-mng&<string:mngopts>", methods=['GET', 'POST'])
+def userjob_manage(mngopts):
+    if mngopts == '':
+        pass
+
+
+@app.route("/annot-objs", methods=['POST'])
+def annot_objs_onimg():
+    print "Entering method annot_objs_onimg: ", request
+    if request.method == 'POST':
+        st_name = request.form['check']
+        return redirect(url_for('show', storename=st_name))
 
 
 # At 10:14, on 2017-12-1, operations for listing workspace, stores and layers, layer-groups
@@ -173,6 +205,7 @@ def folder_traverse(operation):
         # make maniputations to the folder content
         pass
 
+
 @app.route('/thumbnail&<string:workspacename>',methods=['POST','GET'])
 def make_thumbnail(workspacename):
     url='http://172.18.77.15:8089/geoserver/%s/wms?service=WMS&version=1.1.0&request=GetMap&layers=%s:%s&styles=&bbox=%s,%s,%s,%s&width=80&height=80&srs=%s&format=image/png' 
@@ -186,6 +219,7 @@ def make_thumbnail(workspacename):
         res_list.append({"name":r.name,"url":res_url})
 
     return jsonify(res_list)
+
 
 # categorized at 10:12, on 2017-12-1, file uploading / deletion operations
 @app.route("/upload", methods=['GET', 'POST'])
@@ -273,8 +307,8 @@ def get_file(filename):
     return send_from_directory(os.path.join(app.config['UPLOAD_FOLDER']), filename=filename)
 
 
-@app.route('/show/<string:storename>', methods=['GET', 'POST'])
-def show(storename, ):
+@app.route('/show&<string:storename>', methods=['GET', 'POST'])
+def show(storename):
     # resource = cat.get_resource(storename, workspace=cat.get_default_workspace())
     resource = cat.get_resource(storename)
     src_proj = resource.projection
@@ -322,11 +356,6 @@ def uploadpage(ws_name=""):
     return render_template('upload.html', store_dict=store_dict)
 
 
-# @app.route('/uploadpage', methods=['GET', 'POST'])
-# def uploadpage():
-#     print '((((((((((((((((((((uploadpage))))))))))))))))))))))'
-#     return render_template('upload.html')
-
 # 2017-11-7, 09:55, collection of services on processing region collection
 @app.route('/procrequest/<string:storename>', methods=['POST'])
 def get_procrequest(storename):
@@ -341,7 +370,6 @@ def get_procrequest(storename):
     print 'GeoType: ', geoType
     print 'GeoData: ', geoData
     print 'AttData: ', attData
-    
 
     # now build the WCS request url for retrieving the image in original resolution
     geoData_arr = geoData.split(',')
@@ -441,6 +469,7 @@ def get_procrequest(storename):
         cat.save(result_group)
         
         return 'showgroup/%s:%s'%(prsrc_ws.name,group_name)
+
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=31555)

@@ -13,17 +13,22 @@
         body,html,div,ul,li,iframe,p,img{
             border:none;padding:0;margin:0;
         }
+        ol,ul{
+            list-style: none;
+            }
         #map{
-            width:100%;
+            width:75%;
             height:95%;
+            float:left;
+            margin-left:30px;
         }
         #menu{
-            width:100%;
+            width:90%;
             height:20px;         
             padding:5px 10px;
             font-size:14px;
             font-family:"微软雅黑";
-            left:10px;    
+            margin-left:20px;    
         }
         #dialog-confirm{
             font-size:14px;
@@ -32,7 +37,14 @@
         .ui-widget-header { border: 1px solid #aaaaaa; background: #cccccc url(images/ui-bg_highlight-soft_75_cccccc_1x100.png) 50% 50% repeat-x; color: #222222; font-weight: bold; }
         .ui-widget, .ui-widget input, .ui-widget select{font-size:14px;font-family:"微软雅黑";}
         .ui-widget .ui-widget{font-size:14px; font-family:"微软雅黑"; color: #222222;}
-        
+        #items{
+            width:15%;
+            float:right;
+            margin-right:25px;
+            height:500px;
+            border:1px solid #ccc;
+            text-align:center;
+        }
     </style>
 </head>
 <body>
@@ -40,12 +52,15 @@
           <label>几何图形类型：&nbsp;</label>
           <select id="type">
             <option value="LineString" selected="selected">长方形</option>
+            <option value="Polygon">多边形</option>
+            <option value="None">清除样式</option>
           </select>
     </div> 
     <div id="dialog-confirm" title="图形属性信息设置">
         <label>图形类型(geoType):</label>
         <select id="geoType">
-            <option value="LineString" selected="selected" disabled="disabled">长方形</option>
+            <option value="LineString" selected="selected">长方形</option>
+            <option value="Polygon">多边形</option>
         </select>
         <br />
         <label>信息类别(infoType):</label>
@@ -60,6 +75,9 @@
         <input type="text" value="Detection" id="city" />
     </div>
     <div id="map" > 
+    </div>
+    <div id="items">
+        <ul></ul>
     </div>
     <script type="text/javascript">
         var typeSelect = document.getElementById('type');//绘制类型对象
@@ -140,7 +158,7 @@
                         ]);
                         return geometry;
                     };
-
+                }
                     //实例化交互绘制类对象并添加到地图容器中
                     draw = new ol.interaction.Draw({
                         source: source, //绘制层数据源
@@ -148,24 +166,23 @@
                         geometryFunction: geometryFunction,
                         maxPoints: maxPoints                    
                     });
-                }
-                else {
-                    //实例化交互绘制类对象并添加到地图容器中
-                    draw = new ol.interaction.Draw({
-                        source: vector.getSource(), //绘制层数据源
-                        type: /** @type {ol.geom.GeometryType} */(value)  //何图形类型        
-                    });
-                }
+                    map.addInteraction(draw);
+                //添加绘制结束事件监听，在绘制结束后保存信息到数据库
+                draw.on('drawend', drawEndCallBack,this);
+                
+                
             }
             else {
                 source = null;
                 vector.setSource(source);
+                document.getElementById('items').getElementsByTagName("ul")[0].innerHTML = "";
+                arr=[];
             }
 
-            map.addInteraction(draw);
+            //map.addInteraction(draw);
 
             //添加绘制结束事件监听，在绘制结束后保存信息到数据库
-            draw.on('drawend', drawEndCallBack,this);
+            //draw.on('drawend', drawEndCallBack,this);
         }
 
         /**
@@ -196,22 +213,35 @@
         function saveData(geoType,geoData, attData) {
             //通过ajax请求将数据传到后台文件进行保存处理
             $.ajax({
-                url: 'http://172.18.77.15:31533/procrequest/{{ store_dict["storename"] }}', //请求地址
+                url: 'http://172.18.77.15:31555/poly-labels&aa&{{ store_dict["storename"] }}', //请求地址
                 type: 'POST',  //请求方式为post
                 data: { 'type': geoType, 'geo': geoData, 'att': attData }, //传入参数 
                 dataType: 'text', //返回数据格式
                 //请求成功完成后要执行的方法  
                 success: function (response) {
                     // window.location.href = response
-                    alert(response);
-                    window.open('http://172.18.77.15:31533/' + response)
+                    alert("保存成功");
+                    /*window.open('http://172.18.77.15:31533/' + response)*/
                 },
                 error: function (err) {
                     alert("执行失败");
                 }
             });
         }
-
+        //将提交的数据显示在当前页面上
+        var arr=[];
+        function showData(name){
+            
+            var ul = document.getElementById('items').getElementsByTagName("ul")[0];
+            arr.push(name);
+            ul.innerHTML = "";
+            for(var i=0;i<arr.length;i++){
+                    
+                ul.innerHTML += '<li>'+
+                                arr[i]+
+                            '</li>';
+                }
+        }
         /**
         * 将绘制的几何数据与对话框设置的属性数据提交到后台处理
         */
@@ -222,7 +252,8 @@
             var attData = name + "," + city;
 
             if (geoStr != null) {
-                saveData(geoType, geoStr, attData); //将数据提交到后台处理（保存到数据库中）
+                showData(name);
+                //saveData(geoType, geoStr, attData); //将数据提交到后台处理（保存到数据库中）
                 currentFeature = null;  //置空当前绘制的几何要素
                 geoStr = null; //置空当前绘制图形的geoStr
             }
