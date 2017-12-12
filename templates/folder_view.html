@@ -115,6 +115,7 @@
                 <span class="need paint">标注文件</span>
                 <span class="need delete">删除文件夹</span>
                 <span class="need creat">新建文件夹</span>
+                <span class="need lala">******</span>
             </div>
             <div class="mainRight f_l">
             	
@@ -166,7 +167,9 @@
 				need[2].onclick=function(){
 					tag.parentNode.removeChild(tag);
 				}
-				
+				need[4].onclick=function(){
+					window.location.href="http://172.18.77.15:31555/folder-result&"+name;
+				}
 			}
 			need[3].onclick=function(){
 				newfile = document.createElement('div');

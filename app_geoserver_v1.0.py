@@ -25,7 +25,9 @@ import json
 import  xml.dom.minidom
 
 from pyproj import Proj, transform
+import mysql.connector
 import numpy as np
+import struct
 import datetime
 
 app = Flask(__name__)
@@ -48,8 +50,7 @@ geoserver_url = "http://172.18.77.15:8089/geoserver"
 cat = Catalog(geoserver_url + "/rest", username="admin", password="geoserver")
 
 # 2017-12-6, 17:28, the connection configurations for the mysql user-job management
-mysql_config = {'user': 'root', 'password': 'weiguang123', \
-                'host': '127.0.0.1', 'database': 'RSISS'}
+mysql_config = {'user': 'root', 'password': 'weiguang123', 'database': 'RSISS'}
 
 
 def allowed_file(filename):
@@ -88,16 +89,164 @@ def create_thumbnail(image):
 
 
 # At 9:52, on 2017-12-7, the web-API for receiving the labeld polygons
-@app.route("/poly-labels&<string:ws_name>&<string:st_name>", methods=['GET', 'POST'])
-def poly_labels_proc(ws_name, st_name):
+def parse_annot_geostrings(annot_geostrs):
+    '''
+    Convert the given annotation geometrical parameter string into list of doubles.
+    Example string: '15561529.36248355,4238805.742944532;15561447.886879355,4238608.660064116;15561649.373846484,4238560.21511027'
+    '''
+    xypairs_splits = annot_geostrs.split(';')
+
+    annot_dbllist = list()
+    for pair_i, pair_str in enumerate(xypairs_splits):
+        cur_xstr, cur_ystr = pair_str.split(',')
+        annot_dbllist.append(np.double(cur_xstr))
+        annot_dbllist.append(np.double(cur_ystr))
+
+    return annot_dbllist
+
+
+def make_annot_geostrings(annot_doublepairs):
+    '''
+    Convert the given list of doubles into the annotation style xy-coordinations pairs.
+    Example string: '15561529.36248355,4238805.742944532;15561447.886879355,4238608.660064116;15561649.373846484,4238560.21511027'
+    '''
+    n_coords = len(annot_doublepairs)
+    n_pairs = n_coords / 2
+
+    annot_strlist = list()
+    for pair_i in range(n_pairs):
+        cur_xstr = annot_doublepairs[pair_i * 2].astype(str)
+        cur_ystr = annot_doublepairs[pair_i * 2 + 1].astype(str)
+
+        annot_strlist.append(','.join([cur_xstr, cur_ystr]))
+
+    return ';'.join(annot_strlist)
+
+def convrt_doubles_to_hexstr(in_doubles_list):
+    num_doubles = len(in_doubles_list)
+    ds_stream = struct.pack('%dd' % num_doubles, *in_doubles_list)
+
+    return '0x' + ''.join([r'{:02x}'.format(ord(x)) for x in ds_stream])
+
+
+def convrt_hexstr_to_doubles(in_hex_bytearr):
+    num_bytes = len(in_hex_bytearr)
+    doubles_arr = struct.unpack('%dd' % (len(in_hex_bytearr) / 8), in_hex_bytearr)
+
+    return doubles_arr
+
+
+@app.route("/poly-labels&<string:opt_type>", methods=['GET', 'POST'])
+def poly_labels_proc(opt_type):
     print "Entering poly_labels_proc labeling data processing function: ", request.method
 
     if request.method == 'POST':
-        label_data = request.form
+        if opt_type == 'commit_annot':
+            '''
+            The committed form should contain the following fields
+                user_name, directory (workspace_name), img_name (store_name)
+                polygon_type (annotation_type), object_type (class of the object)
+            '''
+            label_data = request.form
+
+            cnx_obj = mysql.connector.connect(**mysql_config)
+            db_cursor = cnx_obj.cursor()
+
+            sql_cmd = "insert into annot (uid, directory, imgnm, objclass, geotype, vertex) "\
+                + "values ((select max(_id) from user where user.uname = '%s'), " % (label_data['username']) \
+                + "'%s', '%s', " % (label_data['workspace'], label_data['infoname']) \
+                + "(select max(_id) from obj_types where type_name = '%s'), " % (label_data['infoType']) \
+                + "(select max(_id) from geo_types where type_name = '%s'), " % (label_data['geoType']) \
+                + "%s);" % (convrt_doubles_to_hexstr(parse_annot_geostrings(label_data['geoStr'])))
+            db_cursor.execute(sql_cmd)
+            cnx_obj.commit()
+
+            sql_cmd = "select last_insert_id();"
+            db_cursor.execute(sql_cmd)            
+            cnx_obj.close()
+
+            row = db_cursor.fetchall()
+            print "ID: ", row[0][0]
+            return Response(json.dumps({'index': row[0][0]}), mimetype='application/json')
+
+        if opt_type == 'remove_annot':
+            '''
+            Remove all the annotations on a specific annotation image.
+            '''
+            rm_annot_req = request.form
+
+            cnx_obj = mysql.connector.connect(**mysql_config)
+            db_cursor = cnx_obj.cursor()
+
+            db_cursor.execute("SET SQL_SAFE_UPDATES = 0;")
+            cnx_obj.commit()
+
+            sql_cmd = "delete from annot where annot.imgnm = '%s';" % (rm_annot_req['infoname'])
+            db_cursor.execute(sql_cmd)
+
+            cnx_obj.commit()
+            cnx_obj.close()
+
+            return Response(json.dumps({'code': 200}), mimetype='application/json')
 
     elif request.method == 'GET':
         # retrieve the labeling data from the corresponding store and build the json structure
-        pass
+        if opt_type == 'get_annots':
+            '''
+            The parameters for getting the user/store specific annotations.
+                user_name, workspace, img_name, obj_class
+            '''
+            get_annot_req = request.form
+
+            cnx_obj = mysql.connector.connect(**mysql_config)
+            db_cursor = cnx_obj.cursor()
+
+            sql_cmd = "SELECT  aa._id, obj_types.type_name, geo_types.type_name, aa.vertex " \
+                + "FROM (SELECT * FROM annot " \
+                + "WHERE annot.uid IN (SELECT user._id FROM user WHERE user.uname ='%s')" % (get_annot_req['username']) \
+                + "AND annot.imgnm = 'none') AS aa " % (get_annot_req['infoname']) \
+                + "INNER JOIN geo_types INNER JOIN obj_types " \
+                + "ON aa.objclass = obj_types._id AND aa.geotype = geo_types._id"
+
+            db_cursor.execute(sql_cmd)
+            cnx_obj.close()
+
+            annot_list = list()
+            for row in db_cursor.fetchall():
+                cur_annot = {'obj_class': row[0], 'geo_type': row[1], \
+                    'vertexs': make_annot_geostrings(convrt_hexstr_to_doubles(row[2]))}
+                annot_list.append(cur_annot)
+
+            return Response(json.dumps(annot_list), mimetype='application/json')
+
+        if opt_type == 'get_objclass':
+            '''
+            Return all the available object class names from the database.
+            '''
+            cnx_obj = mysql.connector.connect(**mysql_config)
+            db_cursor = cnx_obj.cursor()
+
+            sql_cmd = "select type_name from obj_types;"
+            db_cursor.execute(sql_cmd)
+            cnx_obj.close()
+
+            types_list = [row[0] for row in db_cursor.fetchall()]
+            return Response(json.dumps(types_list), mimetype='application/json')
+
+        if opt_type == 'get_geotypes':
+            '''
+            Return all the available geometrical types names from the database.
+            '''
+            cnx_obj = mysql.connector.connect(**mysql_config)
+            db_cursor = cnx_obj.cursor()
+
+            sql_cmd = "select type_name from geo_types;"
+            db_cursor.execute(sql_cmd)
+            cnx_obj.close()
+
+            types_list = [row[0] for row in db_cursor.fetchall()]
+            return Response(json.dumps(types_list), mimetype='application/json')
+
 
 # written at 15:40, on 2017-11-30, test the html5 visualization under flask
 @app.route("/folder-view", methods=['GET', 'POST'])
@@ -111,6 +260,13 @@ def folder_imgsview(ws_name):
     print "Calling the folder_imgsview service"
     store_dict = {'workspace': ws_name}
     return render_template('folder_imgsview.html', store_dict=store_dict)
+
+
+@app.route("/folder-result&<string:ws_name>", methods=['GET', 'POST'])
+def folder_result(ws_name):
+    print "Calling the folder_imgsview service"
+    store_dict = {'workspace': ws_name}
+    return render_template('folder_result.html', store_dict=store_dict)
 
 
 @app.route("/basic-test", methods=['GET', 'POST'])
@@ -206,16 +362,33 @@ def folder_traverse(operation):
         pass
 
 
+@app.route('/thumbnail-single&<string:store_name>')
+def make_thumbnail_single(store_name):
+    url='http://172.18.77.15:8089/geoserver/%s/wms?service=WMS&version=1.1.0&' \
+        + 'request=GetMap&layers=%s:%s&styles=&bbox=%s,%s,%s,%s&width=80&height=80' \
+        + '&srs=%s&format=image/png'
+
+    r = cat.get_resource(store_name)
+    res_url=url%(r.workspace.name,r.workspace.name,r.name,r.native_bbox[0],r.native_bbox[2], \
+            r.native_bbox[1],r.native_bbox[3],r.native_bbox[4] if r.native_bbox[4] is not None \
+            and r.native_bbox[4].startswith('EPSG') else ('EPSG:4326' if float(r.native_bbox[0])<10000 else 'EPSG:2309'))
+
+    return res_url
+
+
 @app.route('/thumbnail&<string:workspacename>',methods=['POST','GET'])
 def make_thumbnail(workspacename):
-    url='http://172.18.77.15:8089/geoserver/%s/wms?service=WMS&version=1.1.0&request=GetMap&layers=%s:%s&styles=&bbox=%s,%s,%s,%s&width=80&height=80&srs=%s&format=image/png' 
+    url='http://172.18.77.15:8089/geoserver/%s/wms?service=WMS&version=1.1.0&' \
+        + 'request=GetMap&layers=%s:%s&styles=&bbox=%s,%s,%s,%s&width=80&height=80' \
+        + '&srs=%s&format=image/png'
+
     resources=cat.get_resources(workspace=cat.get_workspace(workspacename))
 
     res_list=[]
     for r in resources:
         res_url=url%(r.workspace.name,r.workspace.name,r.name,r.native_bbox[0],r.native_bbox[2],\
                  r.native_bbox[1],r.native_bbox[3],r.native_bbox[4] if r.native_bbox[4] is not None \
-                 and r.native_bbox[4].startswith('EPSG') else ('EPSG:4326' if float(r.native_bbox[0])<10000 else 'EPSG:2309' ) )
+                 and r.native_bbox[4].startswith('EPSG') else ('EPSG:4326' if float(r.native_bbox[0])<10000 else 'EPSG:2309'))
         res_list.append({"name":r.name,"url":res_url})
 
     return jsonify(res_list)
@@ -322,10 +495,62 @@ def show(storename):
     return render_template('show.html',store_dict=store_dict)
 
 
-@app.route('/showgroup/<string:groupname>', methods=['GET', 'POST'])
-def showgroup(groupname):
-    workspace_name=groupname.split(':')[0]
-    groupname=groupname.split(':')[1]
+@app.route('/asynmask-select&<string:storename>', methods=['GET', 'POST'])
+def asynmask_select(storename):
+    # resource = cat.get_resource(storename, workspace=cat.get_default_workspace())
+    resource = cat.get_resource(storename)
+    src_proj = resource.projection
+
+    store_dict = {}
+    store_dict['bbox'] = resource.latlon_bbox
+    store_dict['workspacename'] = resource.workspace.name
+    store_dict['storename'] = storename
+    store_dict['projection'] = src_proj
+
+    return render_template('algo_regionsel.html',store_dict=store_dict)
+
+
+@app.route('/listorders&<string:job_type>')
+def listorders_bytype(job_type='bridgemask'):
+    cnx_obj = mysql.connector.connect(**mysql_config)
+    db_cursor = cnx_obj.cursor()
+
+    sql_cmd = "select description, result, process_status from job where " \
+        + "job.params = 'JobType:%s'" % (job_type)
+
+    db_cursor.execute(sql_cmd)
+    cnx_obj.close()
+
+    avail_orderlist = list()
+    for row in db_cursor.fetchall():
+        row_reqjson = json.loads(row[0])
+
+        # parse the description, get the store_name, and get the workspace_name
+        req_parmsplits = row_reqjson['img_url'].split('?')[1].split('&')
+        req_keys = [sect.split('=')[0] for sect in req_parmsplits]
+        req_vals = [sect.split('=')[1] for sect in req_parmsplits]
+
+        if 'coverageId' in req_keys:
+            store_name = req_vals[req_keys.index('coverageId')]
+            workspace_name = cat.get_resource(store_name).workspace.name
+        elif 'layers' in req_keys: # if the coverageId does not exists, then it must be layers
+            layer_str = req_vals[req_keys.index('layers')]
+            workspace_name, store_name = layer_str.split(':')
+
+        cur_orderstatus = {'order_param': row_reqjson, 'order_result': row[1], \
+            'status': row[2], 'storename': store_name, 'workspace': workspace_name}
+
+        avail_orderlist.append(cur_orderstatus)
+
+    # return Response(json.dumps(avail_orderlist), mimetype='application/json')
+    return jsonify(avail_orderlist)
+
+
+@app.route('/showgroup/<string:grp_name>', methods=['GET', 'POST'])
+def showgroup(grp_name):
+    workspace_name, groupname=grp_name.split(':')
+    # import ipdb; ipdb.set_trace()
+
     resource = cat.get_layergroup(name=groupname, workspace=cat.get_workspace(workspace_name))
     src_proj = cat.get_layer(resource.layers[0]).resource.projection
 
@@ -335,7 +560,7 @@ def showgroup(groupname):
     store_dict['storename'] = groupname
     store_dict['projection'] = src_proj
 
-    return render_template('show.html',store_dict=store_dict)
+    return render_template('algo_regionsel.html',store_dict=store_dict)
 
 
 @app.route('/', methods=['GET', 'POST'])
@@ -354,6 +579,64 @@ def uploadpage(ws_name=""):
 
     store_dict={'workspace': ws_name}
     return render_template('upload.html', store_dict=store_dict)
+
+# 2017-12-11, 17:46, build / insert the new order records
+# ==========================================================
+def get_taskstorenm(store_name):
+    cnx_obj = mysql.connector.connect(**mysql_config)
+    db_cursor = cnx_obj.cursor()
+
+    sql_cmd = "select process_status from job where job.path = '%s'" \
+        % (store_name)
+
+    db_cursor.execute(sql_cmd)
+    cnx_obj.close()
+
+    task_status = db_cursor.fetchall()
+
+    return task_status[0][0] if len(task_status) > 0 else False
+
+def add_taskrecord(task_info):
+    print ">>>> add record >>>>"
+    
+    cnx_obj = mysql.connector.connect(**mysql_config)
+    db_cursor = cnx_obj.cursor()
+
+    params_str = "JobType:bridgemask"
+    descr_str = json.dumps(task_info)
+
+    sql_cmd = \
+        "insert into job (uid, path, params, process_status, description) " \
+        + "values ((select max(_id) from user " \
+        + "where user.uname = 'lifeimo'), " \
+        + "'%s', '%s', 0, " % (task_info['save_storenm'], params_str) \
+        + "'%s');" % (descr_str)
+
+    db_cursor.execute(sql_cmd)
+    cnx_obj.commit()
+    cnx_obj.close()
+
+    print ">> New Record %s added." % (task_info['save_storenm'])
+
+    return True
+
+
+def asyn_bridgemask(req_form):
+    # parse the requesting parameters
+    taskrslt_strnm = req_form['save_storenm']
+
+    if not get_taskstorenm(taskrslt_strnm):
+        add_taskrecord(req_form)
+        # thread = multiprocessing.Process(target=update_taskrecord, args=(taskrslt_strnm,))
+        # thread.start()
+
+    task_status = get_taskstorenm(taskrslt_strnm)
+    if task_status == '0':
+        ret_json = {'status': 'processing'}
+    else:
+        ret_json = {'status': 'finished'}
+
+    return json.dumps(ret_json)
 
 
 # 2017-11-7, 09:55, collection of services on processing region collection
@@ -470,6 +753,13 @@ def get_procrequest(storename):
         
         return 'showgroup/%s:%s'%(prsrc_ws.name,group_name)
 
+    elif attData_arr[1] == 'AsynMask':
+        # request_url = urllib2.Request(url='http://172.18.77.15:6033/asyn-bridgemask', \
+        #     headers=headers, data=json.dumps(post_dict))
+        # resp = urllib2.urlopen(request_url)
+        addmsk_rslt = asyn_bridgemask(post_dict)
+
+        return jsonify({'code': 200, 'order_rslt': addmsk_rslt})
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=31555)
