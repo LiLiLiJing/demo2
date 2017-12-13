@@ -27,12 +27,13 @@
             margin-left:30px;
         }
         #menu{
-            width:90%;
+            width:30%;
             height:20px;         
             padding:5px 10px;
             font-size:14px;
             font-family:"微软雅黑";
-            margin-left:20px;    
+            margin-left:20px;
+            display:inline-block;    
         }
         #dialog-confirm{
             font-size:14px;
@@ -46,8 +47,22 @@
             float:right;
             margin-right:25px;
             height:500px;
-            border:1px solid #ccc;
+            border:1px solid #eee;
             text-align:center;
+        }
+        #name{
+            display:inline-block;
+            width:30%;
+            height:20px;         
+            padding:5px 10px;
+            font-size:14px;
+            font-family:"微软雅黑";
+            margin-left:20px;
+        }
+        #items li{
+            color:blue;
+            margin:4px 0;
+            cursor:pointer;
         }
     </style>
 </head>
@@ -57,6 +72,12 @@
           <label>几何图形类型：&nbsp;</label>
           <select id="type">
             <option value="Polygon" selected="selected">多边形</option>
+          </select>
+    </div>
+    <div id="name">
+          <label>用户名：&nbsp;</label>
+          <select id="username">
+            <option value="lijianghua" selected="selected">lijianghua</option>
           </select>
     </div> 
     <div id="dialog-confirm" title="图形属性信息设置">
@@ -75,10 +96,7 @@
         <input type="text" value="aaa" id="infoname" />
         <br />
         <label>workspace:</label>
-        <select id="workspace">
-            <option value="shenzhen">shenzhen</option>
-            <option value="globalairports">globalairports</option>
-        </select>
+        <input type="text" value="{{store_dict['workspacename']}}" id="workspace" />
         <br />
         <label>用户名:</label>
         <input type="text" id="username" />
@@ -97,7 +115,8 @@
         var extent=[{{store_dict['bbox'][0]}},{{store_dict['bbox'][2]}},{{store_dict['bbox'][1]}},{{store_dict['bbox'][3]}}];//BBOX范围值
 
         var projection=new ol.proj.Projection({//地图投影类型
-            code:'EPSG:4326',
+            // code:'EPSG:4326',
+            code: '{{store_dict['projection']}}',
             units:'degrees',
             extent:extent
         });
@@ -336,6 +355,55 @@
                     }
                 }
             });
+        
+        
+
+        //获取用户名添加到页面下拉列表中
+        function getName(){
+            $.ajax({
+                url:'http://172.18.77.15:31555/user-manage&get-usrnames',
+                type:'GET',
+                datatype:'json',
+                success:function(data){
+                    //console.log(data);
+                    var str="";
+                    for(var i=0;i<data.length;i++){
+                    str += "<option value='"+data[i].uname+"'>"+data[i].uname+"</option>";
+                    }
+                    $('#username').html(str);
+                },
+                eror:function(){
+                    console.log("cuowu");
+                }
+            })
+        }
+        getName();
+
+        //页面加载完成，右侧信息栏中动态从数据库获取标记信息
+        function getInfo(){
+            var username = $("#username").val();
+            var flag = $(".flag").text();
+            $.ajax({
+                url:'http://172.18.77.15:31555/poly-labels&get_annots',
+                type:'POST',
+                data:{'username':username,'infoname':flag},
+                dataType:'json',
+                success:function(data){
+                    var ul = document.getElementById('items').getElementsByTagName("ul")[0];
+                    ul.innerHTML="";
+                    for(var i=0;i<data.length;i++){
+                    ul.innerHTML += '<li>'+data[i].annot_id+data[i].obj_class+'</li>';
+                    }
+                },
+                error:function(err){
+                    console.log('错误');
+                }
+            })
+        }
+        username.onchange = function (e) {
+            getInfo();
+        };
+        getInfo();
     </script>
     <!-- 页面向后台发送请求，动态生成下拉列表里边的长方形、多边形等 -->
     <script type="text/javascript">

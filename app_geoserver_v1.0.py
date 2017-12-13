@@ -132,8 +132,32 @@ def convrt_doubles_to_hexstr(in_doubles_list):
 def convrt_hexstr_to_doubles(in_hex_bytearr):
     num_bytes = len(in_hex_bytearr)
     doubles_arr = struct.unpack('%dd' % (len(in_hex_bytearr) / 8), in_hex_bytearr)
+    doubles_arr = [np.double(item) for item in doubles_arr]
 
     return doubles_arr
+
+
+@app.route("/user-manage&<string:opt_type>", methods=['GET', 'POST'])
+def user_management_api(opt_type):
+    print "Entering user management Web-API, ", request.method
+
+    if request.method == 'POST':
+        pass
+    elif request.method == 'GET':
+        if opt_type == 'get-usrnames':
+            cnx_obj = mysql.connector.connect(**mysql_config)
+            db_cursor = cnx_obj.cursor()
+
+            sql_cmd = "select user.uname, user.display_name from user;"
+            db_cursor.execute(sql_cmd)
+
+            cnx_obj.close()
+
+            usrnms_list = list()
+            for row in db_cursor.fetchall():
+                usrnms_list.append({'uname': row[0], 'disp_name': row[1]})
+            
+            return jsonify(usrnms_list)
 
 
 @app.route("/poly-labels&<string:opt_type>", methods=['GET', 'POST'])
@@ -189,7 +213,6 @@ def poly_labels_proc(opt_type):
 
             return Response(json.dumps({'code': 200}), mimetype='application/json')
 
-    elif request.method == 'GET':
         # retrieve the labeling data from the corresponding store and build the json structure
         if opt_type == 'get_annots':
             '''
@@ -201,10 +224,11 @@ def poly_labels_proc(opt_type):
             cnx_obj = mysql.connector.connect(**mysql_config)
             db_cursor = cnx_obj.cursor()
 
-            sql_cmd = "SELECT  aa._id, obj_types.type_name, geo_types.type_name, aa.vertex " \
+            # print "Form: ", get_annot_req
+            sql_cmd = "SELECT aa._id, obj_types.type_name, geo_types.type_name, aa.vertex " \
                 + "FROM (SELECT * FROM annot " \
                 + "WHERE annot.uid IN (SELECT user._id FROM user WHERE user.uname ='%s')" % (get_annot_req['username']) \
-                + "AND annot.imgnm = 'none') AS aa " % (get_annot_req['infoname']) \
+                + "AND annot.imgnm = '%s') AS aa " % (get_annot_req['infoname']) \
                 + "INNER JOIN geo_types INNER JOIN obj_types " \
                 + "ON aa.objclass = obj_types._id AND aa.geotype = geo_types._id"
 
@@ -213,12 +237,14 @@ def poly_labels_proc(opt_type):
 
             annot_list = list()
             for row in db_cursor.fetchall():
-                cur_annot = {'obj_class': row[0], 'geo_type': row[1], \
-                    'vertexs': make_annot_geostrings(convrt_hexstr_to_doubles(row[2]))}
+                print row[3]
+                cur_annot = {'annot_id': row[0], 'obj_class': row[1], 'geo_type': row[2], \
+                    'vertexs': make_annot_geostrings(convrt_hexstr_to_doubles(row[3]))}
                 annot_list.append(cur_annot)
 
             return Response(json.dumps(annot_list), mimetype='application/json')
 
+    elif request.method == 'GET':
         if opt_type == 'get_objclass':
             '''
             Return all the available object class names from the database.
@@ -299,8 +325,9 @@ def annot_objs_onimg():
 # At 10:14, on 2017-12-1, operations for listing workspace, stores and layers, layer-groups
 @app.route("/folder-traverse&<string:operation>", methods=['GET', 'POST'])
 def folder_traverse(operation):
-    operation_splits = operation.split('&')
+    operation_splits = operation.split(':')
     print '*** Splitted Operation Strings *** == ', operation_splits
+    # import ipdb; ipdb.set_trace()
 
     if operation_splits[0] == 'listdirs':
         # show all the workspaces, return in full links
@@ -343,9 +370,12 @@ def folder_traverse(operation):
 
     elif operation_splits[0] == 'createdir':
         # create a new workspace
+        # import ipdb; ipdb.set_trace()
+        
         wsdir_name = operation_splits[1]
         wsdir_uri = "/".join([geoserver_url, wsdir_name])
         wsdir_obj = cat.create_workspace(name = wsdir_name, uri = wsdir_uri)
+
 
         return Response(json.dumps({'name': wsdir_obj.name, 'url': wsdir_obj.href}), \
             mimetype='application/json')
@@ -440,9 +470,7 @@ def upload():
         permit_types = ['WorldImage', 'GeoTIFF']
         stores = [s_obj for s_obj in all_stores if s_obj.type in permit_types]
 
-        
         file_display = []
-
         for st in stores:
             dd={"name": st.name,
                 "size": 0,
@@ -487,10 +515,18 @@ def show(storename):
     src_proj = resource.projection
 
     store_dict = {}
-    store_dict['bbox'] = resource.latlon_bbox
-    store_dict['workspacename'] = resource.workspace.name
-    store_dict['storename'] = storename
-    store_dict['projection'] = src_proj
+    special_projs = ['EPSG:404000']
+
+    if src_proj in special_projs:
+        store_dict['bbox'] = resource.latlon_bbox[0:4]
+        store_dict['workspacename'] = resource.workspace.name
+        store_dict['storename'] = storename
+        store_dict['projection'] = src_proj
+    else:
+        store_dict['bbox'] = resource.latlon_bbox
+        store_dict['workspacename'] = resource.workspace.name
+        store_dict['storename'] = storename
+        store_dict['projection'] = src_proj
 
     return render_template('show.html',store_dict=store_dict)
 

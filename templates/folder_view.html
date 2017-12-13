@@ -127,6 +127,9 @@
 
 <script type="text/javascript">
 		//页面加载完成根据数据库显示文件
+	var need = document.getElementsByClassName("need");
+	showFile();//调用函数向后台发送请求动态显示文件夹
+	function showFile(){
 		$.ajax({
                 url: 'http://172.18.77.15:31555/folder-traverse&listdirs', //请求地址
                 type: 'POST',  //请求方式为post
@@ -144,46 +147,70 @@
                     }
                     document.getElementsByClassName('mainRight')[0].innerHTML = str;
              
-		var need = document.getElementsByClassName("need");
-		var nameList = document.getElementsByClassName("title");
-		//console.log(nameList);
-		var divList = document.getElementsByClassName('contents');
-		for (var i = 0; i < divList.length; i++) {
+					need = document.getElementsByClassName("need");
+					var nameList = document.getElementsByClassName("title");
+				//console.log(nameList);
+					var divList = document.getElementsByClassName('contents');
+					for (var i = 0; i < divList.length; i++) {
 			//console.log(nameList[i]);
-			divList[i].onclick = function () { 
-				for (var j = 0; j < divList.length; j++){
-					divList[j].className="contents";
-				}
-				this.className = "contents current";
-				var tag = document.getElementsByClassName("current")[0];
-				var name = tag.children[1].innerText;
+						divList[i].onclick = function () { 
+							for (var j = 0; j < divList.length; j++){
+								divList[j].className="contents";
+								}
+							this.className = "contents current";
+							var tag = document.getElementsByClassName("current")[0];
+							var name = tag.children[1].innerText;
+				//修改文件夹
+							need[0].onclick=function (){
+								window.location.href="http://172.18.77.15:31555/uploadpage&"+name;
+							}
+				//标注文件
+							need[1].onclick=function(){
+								window.location.href="http://172.18.77.15:31555/folder-imgsview&"+name;
+							}
+				//删除文件夹
+							need[2].onclick=function(){
+								tag.parentNode.removeChild(tag);
+							}
+							need[4].onclick=function(){
+								window.location.href="http://172.18.77.15:31555/folder-result&"+name;
+							}
+						}
+					}
+			//新建文件夹
+					
+            }     
+        });
+	}
+		need[3].onclick=function(){
+				var name = window.prompt("请输入文件夹名字");
+				if(name!==null){
+					console.log("aa");
 				
-				need[0].onclick=function (){
-					window.location.href="http://172.18.77.15:31555/uploadpage&"+name;
-				}
-				need[1].onclick=function(){
-					window.location.href="http://172.18.77.15:31555/folder-imgsview&"+name;
-				}
-				need[2].onclick=function(){
-					tag.parentNode.removeChild(tag);
-				}
-				need[4].onclick=function(){
-					window.location.href="http://172.18.77.15:31555/folder-result&"+name;
-				}
-			}
-			need[3].onclick=function(){
-				newfile = document.createElement('div');
-				newfile.className = "contents";
-				newfile.innerHTML = 
-				'<img src="static/images/wjj.jpg" alt=""/>'+
-				'<div class="title">'+'file'+
+						newfile = document.createElement('div');
+						newfile.className = "contents";
+						newfile.innerHTML = 
+						'<img src="static/images/wjj.jpg" alt=""/>'+
+						'<div class="title">'+name+
 						'</div>';
-				var mainRight = document.getElementsByClassName('mainRight')[0];
-				mainRight.appendChild(newfile);
-				console.log(divList.length);
-			}
+						var mainRight = document.getElementsByClassName('mainRight')[0];
+						mainRight.appendChild(newfile);
+						creatFiles(name);
+						//showFile();
+		   			}
 		}
-		   }
-                
-            });
+		//向后台发送创建文件夹请求
+		function creatFiles(filename){
+			$.ajax({
+				url:'http://172.18.77.15:31555/folder-traverse&createdir:'+filename,
+				success:function(response){
+					console.log("创建成功");
+				},
+				error:function(response){
+					console.log("创建失败");
+				}
+			})
+
+		}
+		
 	</script>
