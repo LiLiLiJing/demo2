@@ -13,13 +13,27 @@
 
 $(function () {
     'use strict';
+    var workspace_name = document.getElementsByClassName('flag')[0].innerText;
+    console.log(">>>## Flag content:" + workspace_name);
 
     // Initialize the jQuery File Upload widget:
     $('#fileupload').fileupload({
         // Uncomment the following to send cross-domain cookies:
         //xhrFields: {withCredentials: true},
-        url: 'upload'
+        url: 'upload',
+        formData: {workspace: workspace_name},
+        type: 'POST'
     });
+
+    // $('#fileupload').fileupload({
+    //     // Uncomment the following to send cross-domain cookies:
+    //     //xhrFields: {withCredentials: true},
+    //     url: 'upload',
+    //     formData: {workspace: workspace_name},
+    //     type: 'GET'
+    // });
+
+    console.log(">>>## passed fileupload:" + workspace_name);
 
     // Enable iframe cross-domain access via redirect option:
     $('#fileupload').fileupload(
@@ -31,6 +45,12 @@ $(function () {
         )
     );
 
+    // console.log("<<<< Prepare to submit extra params");
+    // // 2017-12-15, 10:30, modification for extra parameter passing
+    // $('#fileupload').fileupload(
+    //     formData: {self: 'test'});
+    // console.log(">>>> extra params submitted");
+
     if (window.location.hostname === 'blueimp.github.io') {
         // Demo settings:
         $('#fileupload').fileupload('option', {
@@ -41,7 +61,7 @@ $(function () {
             disableImageResize: /Android(?!.*Chrome)|Opera/
                 .test(window.navigator.userAgent),
             maxFileSize: 5000000,
-            acceptFileTypes: /(\.|\/)(gif|jpe?g|png)$/i
+            acceptFileTypes: /(\.|\/)(gif|jpe?g|png)$/i,
         });
         // Upload server status check for browsers with CORS support:
         if ($.support.cors) {
@@ -63,13 +83,17 @@ $(function () {
             //xhrFields: {withCredentials: true},
             url: $('#fileupload').fileupload('option', 'url'),
             dataType: 'json',
-            context: $('#fileupload')[0]
+            context: $('#fileupload')[0],
+            type: 'POST',
+            data: {workspace: workspace_name, operation: 'listfiles'},
         }).always(function () {
             $(this).removeClass('fileupload-processing');
         }).done(function (result) {
             $(this).fileupload('option', 'done')
                 .call(this, $.Event('done'), {result: result});
         });
+
+        console.log(">>>*** upload param initialize:" + workspace_name);
     }
 
 });

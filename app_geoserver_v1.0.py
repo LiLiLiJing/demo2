@@ -468,9 +468,10 @@ def generate_tfw(infile,tfw_name):
 # categorized at 10:12, on 2017-12-1, file uploading / deletion operations
 @app.route("/upload", methods=['GET', 'POST'])
 def upload():
-    print "Entering upload(), with ", request.method
-    
-    if request.method == 'POST':
+    print "<<<<<<< Entering upload(), with ", request.method
+    # import ipdb; ipdb.set_trace()
+
+    if request.method == 'POST' and (not 'operation' in request.form.keys()):
         files = request.files['file']
 
         if files:
@@ -501,21 +502,26 @@ def upload():
                 epsg_strs = re.search("PRIMEM\[.+AUTHORITY\[(.+?)\]\]", upimg_gdalinfo.GetProjection())
 
                 store_name = osp.splitext(osp.basename(result.url))[0]
+                workspace_name = request.form['workspace']
+
                 if epsg_strs is None: # no PRIMEM means EPSG:404000
                     geotfw_fname = osp.splitext(result.url)[0]
                     generate_tfw(result.url, geotfw_fname)
 
                     data_struct = {'tiff': result.url, 'tfw': geotfw_fname + '.tfw'}
-                    cat.create_coveragestore(name=store_name, data=data_struct, workspace=cat.get_default_workspace())
+
+                    ws_obj = cat.get_workspace(workspace_name)
+                    cat.create_coveragestore(name=store_name, data=data_struct, workspace=ws_obj)
 
                 else: # otherwise, means a normal geotiff image
                     print "Uploading image GeoInfo: ", epsg_strs[0]
                     # 2017-11-3, now the file is saved at location - result.url
-                    cat.create_coveragestore(name=store_name, data=result.url, workspace=cat.get_default_workspace())
+                    ws_obj = cat.get_workspace(workspace_name)
+                    cat.create_coveragestore(name=store_name, data=result.url, workspace=ws_obj)
             
             return simplejson.dumps({"files": [result.get_file()]})
 
-    if request.method == 'GET':
+    else:
         # get all file in ./data directory
         #files = [f for f in os.listdir(app.config['UPLOAD_FOLDER']) if os.path.isfile(os.path.join(app.config['UPLOAD_FOLDER'],f)) and f not in IGNORED_FILES ]
         all_stores=cat.get_stores()
@@ -542,8 +548,10 @@ def upload():
 @app.route("/delete/<string:filename>", methods=['DELETE'])
 def delete(filename):
     try:
+        ws_obj = cat.get_resource(filename)
+
         execute_url="curl -v -u admin:geoserver -X DELETE %s/workspaces/%s/coveragestores/%s?recurse=true" \
-            % (geoserver_url + "/rest", cat.get_default_workspace().name, filename)
+            % (geoserver_url + "/rest", ws_obj.workspace.name, filename)
         ret_code = os.system(execute_url)
 
         return simplejson.dumps({filename: 'True'})
