@@ -6,6 +6,7 @@
     <title>绘制保存几何图形</title>
     <link href="../static/libs/ol/ol.css" rel="stylesheet" type="text/css" />
     <script src="../static/libs/ol/ol.js" type="text/javascript"></script>
+    
     <!--  引入第三方插件库 -->
     <script src="../static/libs/jquery-1.11.2.min.js" type="text/javascript"></script>
     <script src="../static/libs/jquery-ui-1.11.4/jquery-ui.min.js" type="text/javascript"></script>
@@ -98,8 +99,8 @@
         <label>workspace:</label>
         <input type="text" value="{{store_dict['workspacename']}}" id="workspace" />
         <br />
-        <label>用户名:</label>
-        <input type="text" id="username" />
+        <!-- <label>用户名:</label>
+        <input type="text" id="fillusername" /> -->
     </div>
     <div id="map" > 
     </div>
@@ -108,6 +109,7 @@
     </div>
     <script type="text/javascript">
         var typeSelect = document.getElementById('type');//绘制类型对象
+        var userNameSelect = document.getElementById('username');
         var draw; //绘制对象
         var geoStr = null; // 当前绘制图形的坐标串
         var currentFeature = null; //当前绘制的几何要素
@@ -120,48 +122,36 @@
             units:'degrees',
             extent:extent
         });
-        //console.log(workspacename);
-        //实例化Map对象加载地图,默认底图加载MapQuest地图
-        var map = new ol.Map({
-            layers: [
-                new ol.layer.Image({
-                    source: new ol.source.ImageWMS({
-                        url: 'http://172.18.77.15:8089/geoserver/{{store_dict['workspacename']}}/wms',
-                        params: {'LAYERS': '{{store_dict['workspacename']}}:{{store_dict['storename']}}','VERSION':'1.1.0'},
-                        serverType: 'geoserver'
-                    })
-                })
-            ],
-            target: 'map', //地图容器div的ID
-            view: new ol.View({
-                projection:projection,
-                center: ol.extent.getCenter(extent), //地图初始中心点
-                minZoom: 2,
-                zoom: 4
-            })
-        });
-
-        //实例化一个矢量图层Vector作为绘制层
-        var source = new ol.source.Vector({ wrapX: false });
-        var vector = new ol.layer.Vector({
-            source: source,
-            style: new ol.style.Style({
-                fill: new ol.style.Fill({
-                    color: 'rgba(255, 255, 255, 0.7)'
-                }),
-                stroke: new ol.style.Stroke({
-                    color: '#0099ff',
-                    width: 2
-                }),
-                image: new ol.style.Circle({
-                    radius: 7,
+        var createPolygonStyleFunction = function (feature) {
+            var fillColor = 'red';
+            var strokeColor = 'red';
+            var strokeWidth = 'red';
+            return function (feature, resolution) {
+                var style = new ol.style.Style({
+                    stroke: new ol.style.Stroke({
+                        color: strokeColor,
+                        width: strokeWidth
+                    }),
                     fill: new ol.style.Fill({
-                        color: '#0099ff'
-                    })
-                })
-            })
-        });
-        map.addLayer(vector); //将绘制层添加到地图容器中
+                        color: fillColor
+                    }),
+                    
+                });
+                return [style];
+            };
+        };
+        //绘制图形
+        function showPaint1(str1,str2){
+         var polygonFeature = new ol.Feature({
+            geometry:new ol.geom.Polygon([str1]),
+            name:str2
+            });
+         return polygonFeature;
+        }
+         
+         var map,source,vector;
+        //实例化Map对象加载地图,默认底图加载MapQuest地图
+       
 
         /**
         * 根据绘制类型进行交互绘制图形处理
@@ -201,7 +191,7 @@
                 
             }
             else {
-                source = null;
+                /*source = null;
                 vector.setSource(source);
                 document.getElementById('items').getElementsByTagName("ul")[0].innerHTML = "";
                 arr.splice(0,arr.length);
@@ -214,12 +204,20 @@
                         dataType:'json',
                         success:function(response){
                             alert("删除成功");
+                            var newMap=document.getElementById("map");
+                            window.map.removeLayer(vector);
+                            source=null;
+                            vector.setSource(source);
+            
+                            map=null;
+                            newMap.innerHTML="";
+                            getInfo();
                         },
                         error:function(err){
                             alert("删除失败");
                         }
                     });
-                })
+                })*/
             }
 
             //map.addInteraction(draw);
@@ -254,25 +252,26 @@
         * @param {string} geoData 几何数据
         * @param {string} attData 属性数据
         */
+        var zoomNum=4;
         function saveData(geoStr,geoType,infoType,infoname,workspace,username) {
+            var zoomnum = map.getView().getZoom();
+            zoomNum=zoomnum;
             //通过ajax请求将数据传到后台文件进行保存处理
             $.ajax({
                 url: 'http://172.18.77.15:31555/poly-labels&commit_annot', //请求地址
                 type: 'POST',  //请求方式为post
                 data: { 'geoStr':geoStr, 'geoType': geoType, 'infoType': infoType, 'infoname': infoname ,'workspace':workspace, 'username': username}, //传入参数 
                 dataType: 'json', //返回数据格式
-                //请求成功完成后要执行的方法 
-                /*beforeSend:function(){
-                    console.log(geoStr);
-                }, */
                 success: function (response) {
                     alert("保存成功");
-                    showData(response.index);
-                   // console.log(response.index);          //直接返回该标记在数据库的索引值
-                     var features = vector.getSource().getFeatures();
-                     features[features.length-1].name=response.index;
-                    // console.log(features[features.length-1].name);
-                        
+                    var newMap=document.getElementById("map");
+                    window.map.removeLayer(vector);
+                    source=null;
+                    vector.setSource(source);
+            
+                    //map=null;
+                    newMap.innerHTML="";
+                    getInfo();  
 
                 },
                 error: function (err) {
@@ -297,6 +296,15 @@
         /**
         * 将绘制的几何数据与对话框设置的属性数据提交到后台处理
         */
+       
+        //获取绘制图形坐标的函数
+        function getCenterOfExtent(Extent){
+            var X = Extent[0] + (Extent[2]-Extent[0])/2;
+            var Y = Extent[1] + (Extent[3]-Extent[1])/2;
+            return [X, Y];
+        }
+
+        var featureCoor=ol.extent.getCenter(extent);
         function submitData() {
             var geoType = $("#geoType").val(); //几何类型
             var infoType = $("#infoType").val(); //标记类型
@@ -307,7 +315,8 @@
                 
                 //console.log(typeof geoType,typeof infoType,typeof infoname,typeof workspace,typeof username);
                 saveData(geoStr,geoType,infoType,infoname,workspace,username); //将数据提交到后台处理（保存到数据库中）
-                
+                featureCoor=getCenterOfExtent(currentFeature.getGeometry().getExtent());
+
                 currentFeature = null;  //置空当前绘制的几何要素
                 geoStr = null; //置空当前绘制图形的geoStr
             }
@@ -325,7 +334,7 @@
             map.removeInteraction(draw); //移除绘制图形
             addInteraction();//添加交互绘制功能控件
         };
-        addInteraction(); //添加交互绘制功能控件
+         //添加交互绘制功能控件
       
         // 初始化信息设置对话框
         $("#dialog-confirm").dialog(
@@ -336,12 +345,7 @@
                 open: function (event, ui) {
                     $(".ui-dialog-titlebar-close", $(this).parent()).hide(); //隐藏默认的关闭按钮
                     //根据绘制图形设置对话框中图形类型与信息类别的值
-                    switch (typeSelect.value) {
-                        case "LineString":
-                            $("#geoType,#infoType").val("LineString");
-                            break;
-                        default:
-                    }
+                    
                 },
                 //对话框功能按钮
                 buttons: {
@@ -378,11 +382,14 @@
             })
         }
         getName();
-
+ 
+        //声明一个数组，用来装坐标信息数组
+        
         //页面加载完成，右侧信息栏中动态从数据库获取标记信息
         function getInfo(){
             var username = $("#username").val();
             var flag = $(".flag").text();
+            
             $.ajax({
                 url:'http://172.18.77.15:31555/poly-labels&get_annots',
                 type:'POST',
@@ -391,17 +398,177 @@
                 success:function(data){
                     var ul = document.getElementById('items').getElementsByTagName("ul")[0];
                     ul.innerHTML="";
+                    var bigArr=[];
+                    var paintArr2=[];
                     for(var i=0;i<data.length;i++){
-                    ul.innerHTML += '<li>'+data[i].annot_id+data[i].obj_class+'</li>';
+                        
+                        ul.innerHTML += '<li>'+data[i].annot_id+data[i].obj_class+'</li>';
+                    //console.log(data[i].vertexs);
+                        var coordinateArr=data[i].vertexs.split(";");
+                    //console.log(coordinateArr);
+                        bigArr.push(coordinateArr);
+                    
                     }
+                    map = new ol.Map({
+                        layers: [
+                            new ol.layer.Image({
+                                source: new ol.source.ImageWMS({
+                                    url: 'http://172.18.77.15:8089/geoserver/{{store_dict['workspacename']}}/wms',
+                                    params: {'LAYERS': '{{store_dict['workspacename']}}:{{store_dict['storename']}}','VERSION':'1.1.0'},
+                                    serverType: 'geoserver'
+                                })  
+                            }),
+                
+                        ],
+                        target: 'map', //地图容器div的ID
+                        view: new ol.View({
+                        projection:projection,
+                        center: featureCoor, //地图初始中心点
+                        minZoom: 2,
+                        zoom: zoomNum,
+                        maxZoom:6
+                        })
+                    });
+                    var paintArr1=[];
+                    //console.log(map.getView().getCenter());  //获取地图中心,打印在界面上
+                    var c_obj
+                    for(var a=0;a<bigArr.length;a++){
+                        var strArr= [];
+                        for(var b=0;b<bigArr[a].length;b++){
+                            var s =bigArr[a][b].split(",")
+                            
+                        
+                            //console.log(s);
+                            var s1=parseFloat(s[0]);
+                            
+                            var s2=parseFloat(s[1]);
+                            var Arr1=[];
+                            Arr1[0]=s1;
+                            Arr1[1]=s2;
+                            strArr.push(Arr1);
+                        
+                        }
+                        //console.log(data[a].annot_id);
+                         c_obj = showPaint1(strArr,data[a].annot_id);  //返回成功
+                        //c_obj = new ol.Feature(new ol.geom.Polygon([strArr]));
+                        // console.log(c);
+                        paintArr1.push(c_obj);           //添加成功
+                        // console.log(paintArr1); 
+                    }
+             
+                    source = new ol.source.Vector({ wrapX: false,
+            // features:[ceshi,ceshi2]
+                        features: paintArr1
+                        });
+                    vector = new ol.layer.Vector({
+                        source: source,
+                        style: new ol.style.Style({
+                        fill: new ol.style.Fill({
+                            color: 'rgba(255, 255, 255, 0.7)'
+                        }),
+                        stroke: new ol.style.Stroke({
+                            color: '#0099ff',
+                            width: 2
+                    }),
+                    image: new ol.style.Circle({
+                        radius: 7,
+                        fill: new ol.style.Fill({
+                        color: '#0099ff'
+                        })
+                    })
+                    })
+                    });
+                    map.addLayer(vector); //将绘制层添加到地图容器中
+                    addInteraction(); 
+
+                    //双击右边列表数据，删除相应的图形  构造函数deleteOne()
+                    
+                    var liArr=ul.getElementsByTagName("li")
+                    for(var z=0;z<liArr.length;z++){
+                        liArr[z].index=z;
+                        liArr[z].ondblclick=function(){
+                            $.ajax({
+                                url:'http://172.18.77.15:31555/poly-labels&remove_one_annot',
+                                type:'POST',
+                                data:{annot_id:data[this.index].annot_id},
+                                dataType:'json',
+                                success:function(response){
+                                    var newMap=document.getElementById("map");
+                                    window.map.removeLayer(vector);
+                                    source=null;
+                                    vector.setSource(source);
+            
+                                    //map=null;
+                                    newMap.innerHTML="";
+                                    getInfo();
+                                },
+                                error:function(err){
+                                    console.log("删除失败");
+                                }
+                            });
+                        };
+                        liArr[z].onmouseover=function(){
+                            var featuresArr=vector.getSource().getFeatures();
+                            //console.log(featuresArr[0].B.name);
+                            //featuresArr[this.index].setStyle(null);
+                            if(featuresArr[this.index].B.name=data[this.index].annot_id){
+                                var highAlpColor = ol.color.asArray('#1fca04');
+                                highAlpColor = highAlpColor.slice();  
+                                highAlpColor[3] = 0.9;
+                                featuresArr[this.index].setStyle(new ol.style.Style({
+                                fill: new ol.style.Fill({
+                                color: 'rgba(255, 255, 255, 0.7)'
+                                }),
+                                stroke: new ol.style.Stroke({
+                            color: '#000000',
+                            width: 4
+                    }),
+                }));
+                            }
+                        }
+                        liArr[z].onmouseout=function(){
+                            var featuresArr=vector.getSource().getFeatures();
+                            for(var y=0;y<liArr.length;y++){
+                                featuresArr[y].setStyle(null);
+
+                            }
+                        }
+                    }
+
+                    //高亮显示图形
+                    
+                    //var featuresArr=vector.getSource().getFeatures();
+                    //console.log(featuresArr);  //数组里边装了每个图形，对象形式
+                    //console.log(featuresArr[0].B.name);
+                    /*var highAlpColor = ol.color.asArray('#1fca04');
+                    highAlpColor = highAlpColor.slice();  
+                    highAlpColor[3] = 0.9;
+                    featuresArr[0].setStyle(new ol.style.Style({
+                        fill: new ol.style.Fill({
+                            color: 'rgba(255, 255, 255, 0.7)'
+                        }),
+                        stroke: new ol.style.Stroke({
+                            color: '#000000',
+                            width: 4
+                    }),
+                }));*/
                 },
                 error:function(err){
                     console.log('错误');
                 }
             })
         }
-        username.onchange = function (e) {
+        userNameSelect.onchange = function (e) {
+            var newMap=document.getElementById("map");
+            window.map.removeLayer(vector);
+            source=null;
+            vector.setSource(source);
+            //vector=null;
+            //map=null;
+            zoomNum=4;
+            newMap.innerHTML="";
             getInfo();
+        
         };
         getInfo();
     </script>
@@ -413,7 +580,7 @@
             type:'get',
             dataType:'json',
             success:function(data){
-                $('#type').html("<option value='Polygon' selected='selected'>"+data[0]+"</option><option value='LineString'>"+data[1]+"</option><option value='"+data[2]+"'>"+data[2]+"</option><option value='"+data[3]+"'>"+data[3]+"</optio n><option value='"+data[4]+"'>"+data[4]+"</option><option value='None'>clearAll</option>");
+                $('#type').html("<option value='Polygon' selected='selected'>"+data[0]+"</option><option value='LineString'>"+data[1]+"</option><option value='"+data[2]+"'>"+data[2]+"</option><option value='"+data[3]+"'>"+data[3]+"</optio n><option value='"+data[4]+"'>"+data[4]+"</option><option value='None'>againAll</option>");
                 var str="";
                 for(var i=0;i<data.length;i++){
                     str += "<option value='"+data[i]+"'>"+data[i]+"</option>";

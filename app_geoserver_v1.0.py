@@ -5,7 +5,7 @@
 # Git repository: https://github.com/ngoduykhanh/flask-file-uploader
 # This work based on jQuery-File-Upload which can be found at https://github.com/blueimp/jQuery-File-Upload/
 
-import os
+import os, re
 import os.path as osp
 
 import PIL
@@ -29,6 +29,7 @@ import mysql.connector
 import numpy as np
 import struct
 import datetime
+import osgeo.gdal as gdal
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'hard to guess string'
@@ -60,7 +61,7 @@ def allowed_file(filename):
 
 def gen_file_name(filename):
     """
-    If file was exist already, rename it and return a new name
+    If file already exists, rename it and return a new name
     """
     i = 1
     while os.path.exists(os.path.join(app.config['UPLOAD_FOLDER'], filename)):
@@ -206,6 +207,26 @@ def poly_labels_proc(opt_type):
             cnx_obj.commit()
 
             sql_cmd = "delete from annot where annot.imgnm = '%s';" % (rm_annot_req['infoname'])
+            db_cursor.execute(sql_cmd)
+
+            cnx_obj.commit()
+            cnx_obj.close()
+
+            return Response(json.dumps({'code': 200}), mimetype='application/json')
+
+        if opt_type == 'remove_one_annot':
+            '''
+            2017-12-14, remove a single annotation from the database
+            '''
+            rm_annot_req = request.form
+
+            cnx_obj = mysql.connector.connect(**mysql_config)
+            db_cursor = cnx_obj.cursor()
+
+            db_cursor.execute("SET SQL_SAFE_UPDATES = 0;")
+            cnx_obj.commit()
+
+            sql_cmd = "delete from annot where annot._id = '%s';" % (rm_annot_req['annot_id'])
             db_cursor.execute(sql_cmd)
 
             cnx_obj.commit()
@@ -423,6 +444,26 @@ def make_thumbnail(workspacename):
 
     return jsonify(res_list)
 
+# added at 11:20, on 2017-12-13, build the .tfw file for the EPSG:404000 type image
+# copied from /home/jcai/workspace/flask/app.py
+def generate_tfw(infile,tfw_name):
+    src = gdal.Open(infile)
+    xform = src.GetGeoTransform()
+
+    src = None
+    edit1=xform[0]+xform[1]/2
+    edit2=xform[3]+xform[5]/2
+
+    #tfw = open(os.path.splitext(infile)[0] + '.tfw', 'wt')
+    tfw = open(tfw_name + '.tfw', 'wt')
+    tfw.write("%0.8f\n" % xform[1])
+    tfw.write("%0.8f\n" % xform[2])
+    tfw.write("%0.8f\n" % xform[4])
+    tfw.write("%0.8f\n" % xform[5])
+    tfw.write("%0.8f\n" % edit1)
+    tfw.write("%0.8f\n" % edit2)
+    tfw.close()
+
 
 # categorized at 10:12, on 2017-12-1, file uploading / deletion operations
 @app.route("/upload", methods=['GET', 'POST'])
@@ -455,9 +496,22 @@ def upload():
                 # return json for js call back
                 result = uploadfile(name=filename, type=mime_type, size=size)
 
-                # 2017-11-3, now the file is saved at location - result.url
+                # 2017-12-13, 12:31, check the projection parameter of the uploaded image
+                upimg_gdalinfo = gdal.Open(result.url)
+                epsg_strs = re.search("PRIMEM\[.+AUTHORITY\[(.+?)\]\]", upimg_gdalinfo.GetProjection())
+
                 store_name = osp.splitext(osp.basename(result.url))[0]
-                cat.create_coveragestore(name=store_name, data=result.url, workspace=cat.get_default_workspace())
+                if epsg_strs is None: # no PRIMEM means EPSG:404000
+                    geotfw_fname = osp.splitext(result.url)[0]
+                    generate_tfw(result.url, geotfw_fname)
+
+                    data_struct = {'tiff': result.url, 'tfw': geotfw_fname + '.tfw'}
+                    cat.create_coveragestore(name=store_name, data=data_struct, workspace=cat.get_default_workspace())
+
+                else: # otherwise, means a normal geotiff image
+                    print "Uploading image GeoInfo: ", epsg_strs[0]
+                    # 2017-11-3, now the file is saved at location - result.url
+                    cat.create_coveragestore(name=store_name, data=result.url, workspace=cat.get_default_workspace())
             
             return simplejson.dumps({"files": [result.get_file()]})
 
