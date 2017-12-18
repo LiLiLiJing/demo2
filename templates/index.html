@@ -20,6 +20,8 @@
     <script type="text/javascript" src="static/libs/codemirror/mode/css/css.js"></script>
     <script type="text/javascript" src="static/libs/codemirror/mode/htmlmixed/htmlmixed.js"></script>
     <script type="text/javascript" src="static/libs/codemirror/addon/edit/matchbrackets.js"></script>
+    <script type="text/javascript" src="static/libs/jquery-1.11.2.min.js"></script>
+
     <!-- 系统首页功能库 -->
     <script type="text/javascript" src="static/js/init.js"></script>
 </head>
@@ -30,8 +32,10 @@
         <img src="static/images/logo.jpg"/>
         <span>Remote Sensing Artificial Intelligence Service 遥感智能服务</span>    
       </a>
+
       <a href="http://www.openlayers.cn/forum.php" target="_blank" class="help"><span>i</span>使用帮助</a>
       <a href="http://openlayers.org/en/master/apidoc/" target="_blank" class="help"><span>a</span>退出登录</a>
+      <a href="http://openlayers.org/en/master/apidoc/" target="_blank" class="help userName"><span>v</span>用户姓名</a>
     </div>
     <div id="content">
         <div class="leftsidebar_box">
@@ -84,5 +88,21 @@
             <iframe id="container_iframe" name="container_iframe"  scrolling="yes" ></iframe>
         </div>
     </div>
+    <script type="text/javascript">
+        $(document).ready(function(){
+            $.ajax({
+                url:'http://172.18.77.15:31555/logstate',
+                type:'POST',
+                dateType:'json',
+                success:function(data){
+                    var username=document.getElementsByClassName("userName")[0];
+                    username.innerHTML="<span>u</span>"+data.value;
+                },
+                error:function(err){
+                    console.log(err);
+                }
+            })
+        })
+    </script>
 </body>
 </html>

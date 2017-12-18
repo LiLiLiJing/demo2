@@ -134,11 +134,11 @@
             type:'get',
             dataType:'json',
             success:function(data){
-                console.log(data);
+                //console.log(data);
                 var str="";
                 for(var i=0;i<data.length;i++){
                     
-                    str+= '<tr><td style="word-wrap:break-word;word-break:break-all;">'+data[i].order_param.save_storenm+'</td><td>'+data[i].order_param.img_url+'</td><td>'+data[i].order_param.server_url+'</td><td class="status">'+data[i].status+'</td></tr>'; 
+                    str+= '<tr><td style="word-wrap:break-word;word-break:break-all;white-space: pre-wrap;">'+data[i].order_param.save_storenm+'</td><td>'+data[i].order_param.img_url+'</td><td>'+data[i].order_param.server_url+'</td><td class="status">'+data[i].status+'</td></tr>'; 
                 };
                 $('#tbody').html(str);
                 var status = document.getElementsByClassName('status');

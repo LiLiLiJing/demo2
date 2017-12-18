@@ -70,7 +70,7 @@
         var extent=[{{store_dict['bbox'][0]}},{{store_dict['bbox'][2]}},{{store_dict['bbox'][1]}},{{store_dict['bbox'][3]}}];//BBOX范围值
 
         var projection=new ol.proj.Projection({//地图投影类型
-            code:'EPSG:4326',
+            code:'{{store_dict['projection']}}',
             units:'degrees',
             extent:extent
         });

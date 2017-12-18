@@ -13,7 +13,7 @@ from PIL import Image
 import simplejson
 import traceback
 
-from flask import Flask, request, render_template, redirect, url_for, send_from_directory, Response, jsonify
+from flask import Flask, request, session, escape, render_template, redirect, url_for, send_from_directory, Response, jsonify
 from flask_bootstrap import Bootstrap
 from werkzeug import secure_filename
 
@@ -524,7 +524,7 @@ def upload():
     else:
         # get all file in ./data directory
         #files = [f for f in os.listdir(app.config['UPLOAD_FOLDER']) if os.path.isfile(os.path.join(app.config['UPLOAD_FOLDER'],f)) and f not in IGNORED_FILES ]
-        all_stores=cat.get_stores()
+        all_stores=cat.get_stores(workspace=cat.get_workspace(name=request.form['workspace']))
 
         # Appended at 09:39, on 2017-11-14, filtering the gotten stores with permitted types
         permit_types = ['WorldImage', 'GeoTIFF']
@@ -661,9 +661,33 @@ def showgroup(grp_name):
     return render_template('algo_regionsel.html',store_dict=store_dict)
 
 
+@app.route('/logstate', methods=['GET', 'POST'])
+def logstate():
+    if 'username' in session:
+        return jsonify({'code': 200, 'value': escape(session['username'])})
+    else:
+        return jsonify({'code': 405})
+
+
+@app.route('/logout')
+def logout():
+    session.pop('username', None)
+    return redirect(url_for(''))
+
+
 @app.route('/', methods=['GET', 'POST'])
 def index():
-    return render_template('login.html')
+    print ">>>> Index Request, ", request.method
+
+    if request.method == 'POST':
+        # import ipdb; ipdb.set_trace()
+        session['username'] = request.form['form-username']
+        password = request.form['form-password']
+
+        return redirect(url_for('login'))
+
+    if request.method == 'GET':
+        return render_template('login.html')
 
 
 @app.route('/login', methods=['GET', 'POST'])
