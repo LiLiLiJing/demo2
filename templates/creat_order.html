@@ -1,0 +1,212 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>无标题文档</title>
+<script src="../static/libs/jquery-1.11.2.min.js" type="text/javascript"></script>
+<style type="text/css">
+	*{
+		margin:0;
+		padding:0;
+		font-family:"微软雅黑";
+		}
+	.f_l{
+		float: left;
+		}
+	.f_r{
+		float: right;
+		}
+	/* 清除浮动 */
+	.clearfix::before,
+	.clearfix::after{
+		content:'';
+		display: block;
+		line-height: 0;
+		height: 0;
+		visibility: hidden;
+		clear: both;
+		}
+
+	form{
+		width:800px;
+		margin:10px auto;	
+		position:relative;
+		}
+	fieldset{
+		padding-left:15px;
+		border:2px solid #ccc;
+	}
+	legend{
+		margin:15px;
+		font-size:24px;
+	}
+	.btn{
+		width:100px;
+		height:50px;
+		font-size:24px;
+		cursor:pointer;
+		background-color:purple;
+		border:none;
+		color:#fff;
+		position:absolute;
+		bottom:14px;
+		right:20px;
+		}
+	.title{
+		font-size:20px;
+	}
+	.head{
+		text-align:center;
+		font-size:24px;
+		margin-bottom:20px;
+	}
+	.marBot{
+		margin-bottom: 12px;
+	}
+
+	.firBlock .firDes{
+		font-size:20px;
+		color:rgba(0,0,0,0.5);
+		margin-left:15px;
+	}
+	.secDes{
+		margin-left:34px;
+		font-size:20px;
+	}
+	.secDes span{
+		margin-right:10px;
+	}
+	.thiDes{
+		margin-left:34px;
+		font-size:20px;
+	}
+	.thiDes span{
+		margin-right:10px;
+	}
+	.fourBlock textarea{
+		outline:none;
+		width:420px;
+		height:20px;
+		font-size:14px;
+		resize: none;
+	}
+	.fourBlock textarea:focus{
+		outline:none;
+		width:420px;
+		height:100px;
+		border:1px solid skyblue;
+	}
+</style>
+</head>
+
+<body>
+	<div id='ws_list'>{{store_dict['ws_list']}}</div>
+    	<!-- <div class="head">标注任务详细描述</div> -->
+        <form action="http://172.18.77.15:31555/lblorder-manip&create-order" method="POST">
+        <fieldset>
+            <legend>标注任务详细描述</legend>
+        	<div class="firBlock clearfix marBot">
+        		<div class="title f_l">所选文件夹:</div>
+        		<div class="firDes f_l">
+        			<div><span>aa</span></div>
+        			<div><span>aa</span></div>
+        			<div><span>aa</span></div>
+        			<div><span>aa</span></div>
+        		</div>
+        	</div>
+        	<div class="secBlock clearfix marBot">
+            	<div class="title f_l">目标类型:</div>
+                <div class="secDes f_l">
+                	
+                </div>
+            </div>
+            <div class="thirdBlock clearfix marBot">
+            	<div class="title f_l">指定用户:</div>
+                <div class="thiDes f_l">
+
+                </div>
+            </div>
+            <div class="fourBlock marBot">
+            	<div class="title">其他说明:</div>
+            	<div>
+            		<textarea name="otherInfo"></textarea>
+            	</div>
+            </div>
+            <input type="submit" value="提交" class="btn"/>
+        </fieldset>
+        </form>
+    
+	
+</body>
+</html>
+<script type="text/javascript">
+		//获取目标类型的函数
+		function getType(){
+			$.ajax({
+	                url: 'http://172.18.77.15:31555/poly-labels&get_objclass', //请求地址
+	                type: 'GET',  //请求方式为post    
+	                dataType: 'JSON', //返回数据格式
+	                //请求成功完成后要执行的方法  
+	                success: function (response) {     
+	                    var secDes = $(".secDes");
+	                    var str="";
+	                    for(var i=0;i<response.length;i++){
+	                    	str+="<label><div><span>"+response[i]+"</span><input type='checkbox' name='object' value="+response[i]+"/></div></label>"
+	                	}
+	                	secDes.html(str);
+	                },
+	                error: function (err) {
+	                    console.log("执行失败");
+	                }
+	        });
+		}
+		//获取用户名
+		function getName(){
+			$.ajax({
+				url:'http://172.18.77.15:31555/user-manage&get-usrnames',
+				type:'GET',
+				dayaType:'JSON',
+				success:function(response){
+					var thiDes = $(".thiDes");
+	                var str="";
+	                for(var i=0;i<response.length;i++){
+	                    str+="<label><div><span>"+response[i].uname+"</span><input type='checkbox' name='user' value="+response[i].uname+"/></div></label>"
+	                }
+	                thiDes.html(str);
+				},
+				error:function(){
+					console.log();
+				}
+			})
+		}
+		//获取所选文件夹
+		function getFile(){
+			var list=document.getElementById("ws_list");
+			var text=list.innerText;
+			var size=text.length;
+			var uptext=text.slice(1,size-1);
+			var textArr=uptext.split(",");
+			var size1;
+			var newArr=[];
+			if(textArr.length==1){
+				newArr.push(textArr[0].slice(2,textArr[0].length-1));
+				console.log(newArr);
+			}else{
+				newArr.push(textArr[0].slice(2,textArr[0].length-1));
+				for(var k=1;k<textArr.length;k++){
+					size1=textArr[k].length;
+					newArr.push(textArr[k].slice(3,textArr[k].length-1));
+				}
+			}
+			var firDes = $(".firDes");
+			var str="";
+			for(var i=0;i<newArr.length;i++){
+		        str+="<div><input value="+newArr[i]+" type='text' name='workspace'>"+newArr[i]+"</div>"
+		                }
+		    firDes.html(str);
+		}
+		getType();
+		getName();
+		getFile();
+		$("#ws_list").css("display","none");
+</script>

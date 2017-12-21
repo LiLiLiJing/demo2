@@ -22,13 +22,14 @@
             background-color:#ccc;
         }
         #map{
-            width:75%;
-            height:95%;
+            width:1250px;
+            height:630px;
             float:left;
             margin-left:30px;
+            border:1px solid #fff;
         }
         #menu{
-            width:30%;
+            width:200px;
             height:20px;         
             padding:5px 10px;
             font-size:14px;
@@ -53,17 +54,40 @@
         }
         #name{
             display:inline-block;
-            width:30%;
+            width:200px;
             height:20px;         
             padding:5px 10px;
             font-size:14px;
             font-family:"微软雅黑";
             margin-left:20px;
         }
-        #items li{
-            color:blue;
-            margin:4px 0;
+        .fr{
+            float:right;
+        }
+        #itemsInfo{
+            width:200px;
+            display:inline-block;
+            margin-left:25px;
+        } 
+        #itemsInfo table{
+            display:block;
+            width:190px;
+        }
+        #itemsInfo .trInfo{
             cursor:pointer;
+        }
+        #itemsInfo .deleteInfo{
+            color:blue;
+            width:40px;
+            text-align:center;
+        }
+        #setSize{
+            display:inline-block;
+        }
+        .main{
+            min-width:1160px;
+            max-width:1660px;
+            overflow:auto;
         }
     </style>
 </head>
@@ -80,7 +104,27 @@
           <select id="username">
             <option value="lijianghua" selected="selected">lijianghua</option>
           </select>
-    </div> 
+    </div>
+    <div id="setSize">
+          <label>宽度：&nbsp;</label>
+          <select id="mapWidth">
+            <option value="1250" selected="selected">1250px</option>
+            <option value="800">800px</option>
+            <option value="900">900px</option>
+            <option value="1000">1000px</option>
+            <option value="1100">1100px</option>
+            <option value="1200">1200px</option>
+            <option value="1300">1300px</option>
+            <option value="1400">1400px</option>
+          </select>
+          <label>长度：&nbsp;</label>
+          <select id="mapHeight">
+            <option value="650" selected="selected">650px</option>
+            <option value="700">700px</option>
+            <option value="750">750px</option>
+            <option value="800">800px</option>
+          </select>
+    </div>
     <div id="dialog-confirm" title="图形属性信息设置">
         <label>几何类型:</label>
         <select id="geoType">
@@ -102,12 +146,18 @@
         <!-- <label>用户名:</label>
         <input type="text" id="fillusername" /> -->
     </div>
-    <div id="map" > 
+    <div class="main">
+        <div id="map" > 
+        </div>
+        <div id="itemsInfo">
+            
+        </div>
     </div>
-    <div id="items">
+    <div class="navImg">
         <ul></ul>
     </div>
     <script type="text/javascript">
+        var setSize=document.getElementById("setSize");
         var typeSelect = document.getElementById('type');//绘制类型对象
         var userNameSelect = document.getElementById('username');
         var draw; //绘制对象
@@ -334,6 +384,12 @@
             map.removeInteraction(draw); //移除绘制图形
             addInteraction();//添加交互绘制功能控件
         };
+        setSize.onchange = function (e) {
+            var mapWidth=$("#mapWidth").val();
+            var mapHeight=$("#mapHeight").val();
+            $("#map").css({"width":mapWidth+"px","height":mapHeight+"px"});
+            map.updateSize();
+        };
          //添加交互绘制功能控件
       
         // 初始化信息设置对话框
@@ -396,19 +452,28 @@
                 data:{'username':username,'infoname':flag},
                 dataType:'json',
                 success:function(data){
-                    var ul = document.getElementById('items').getElementsByTagName("ul")[0];
-                    ul.innerHTML="";
+                    //var ul = document.getElementById('items').getElementsByTagName("ul")[0];
+                    var itemsInfo=document.getElementById("itemsInfo");
+                    itemsInfo.innerHTML="";
+                    //ul.innerHTML="";
                     var bigArr=[];
                     var paintArr2=[];
-                    for(var i=0;i<data.length;i++){
                         
-                        ul.innerHTML += '<li>'+data[i].annot_id+data[i].obj_class+'</li>';
-                    //console.log(data[i].vertexs);
+                        var strInfo="";
+                        strInfo +="<table><thead><tr><th>序号</th><th>内容</th><th>操作</th></tr></thead>";
+                        strInfo +="<tbody>";
+                        if(data.length==0){
+                            strInfo="";
+                        }
+                        for(var i=0;i<data.length;i++){
+                        strInfo += "<tr class='trInfo'><td>"+data[i].annot_id+"</td><td>"+data[i].obj_class+"</td><td class='deleteInfo'>删除</td></tr>";
                         var coordinateArr=data[i].vertexs.split(";");
-                    //console.log(coordinateArr);
-                        bigArr.push(coordinateArr);
                     
-                    }
+                        bigArr.push(coordinateArr);
+                        }
+                        strInfo +="</tbody></table>"
+                        itemsInfo.innerHTML=strInfo;
+                        
                     map = new ol.Map({
                         layers: [
                             new ol.layer.Image({
@@ -424,9 +489,9 @@
                         view: new ol.View({
                         projection:projection,
                         center: featureCoor, //地图初始中心点
-                        minZoom: 2,
+                        minZoom: 0.5,
                         zoom: zoomNum,
-                        maxZoom:6
+                        maxZoom:10
                         })
                     });
                     var paintArr1=[];
@@ -483,10 +548,12 @@
 
                     //双击右边列表数据，删除相应的图形  构造函数deleteOne()
                     
-                    var liArr=ul.getElementsByTagName("li")
-                    for(var z=0;z<liArr.length;z++){
-                        liArr[z].index=z;
-                        liArr[z].ondblclick=function(){
+                    var delArr=document.getElementsByClassName("deleteInfo");
+                    var trInfoArr=document.getElementsByClassName("trInfo");
+                    for(var z=0;z<delArr.length;z++){
+                        delArr[z].index=z;
+                        trInfoArr[z].index=z;
+                        delArr[z].onclick=function(){
                             $.ajax({
                                 url:'http://172.18.77.15:31555/poly-labels&remove_one_annot',
                                 type:'POST',
@@ -507,7 +574,7 @@
                                 }
                             });
                         };
-                        liArr[z].onmouseover=function(){
+                        trInfoArr[z].onmouseover=function(){
                             var featuresArr=vector.getSource().getFeatures();
                             //console.log(featuresArr[0].B.name);
                             //featuresArr[this.index].setStyle(null);
@@ -516,42 +583,26 @@
                                 highAlpColor = highAlpColor.slice();  
                                 highAlpColor[3] = 0.9;
                                 featuresArr[this.index].setStyle(new ol.style.Style({
-                                fill: new ol.style.Fill({
-                                color: 'rgba(255, 255, 255, 0.7)'
-                                }),
-                                stroke: new ol.style.Stroke({
-                            color: '#000000',
-                            width: 4
-                    }),
-                }));
+                                    fill: new ol.style.Fill({
+                                        color: 'rgba(255, 255, 255, 0.7)'
+                                    }),
+                                    stroke: new ol.style.Stroke({
+                                        color: '#FF0000',
+                                        width: 2
+                                    }),
+                                }));
                             }
                         }
-                        liArr[z].onmouseout=function(){
+                        trInfoArr[z].onmouseout=function(){
                             var featuresArr=vector.getSource().getFeatures();
-                            for(var y=0;y<liArr.length;y++){
+                            for(var y=0;y<delArr.length;y++){
                                 featuresArr[y].setStyle(null);
 
                             }
                         }
                     }
 
-                    //高亮显示图形
                     
-                    //var featuresArr=vector.getSource().getFeatures();
-                    //console.log(featuresArr);  //数组里边装了每个图形，对象形式
-                    //console.log(featuresArr[0].B.name);
-                    /*var highAlpColor = ol.color.asArray('#1fca04');
-                    highAlpColor = highAlpColor.slice();  
-                    highAlpColor[3] = 0.9;
-                    featuresArr[0].setStyle(new ol.style.Style({
-                        fill: new ol.style.Fill({
-                            color: 'rgba(255, 255, 255, 0.7)'
-                        }),
-                        stroke: new ol.style.Stroke({
-                            color: '#000000',
-                            width: 4
-                    }),
-                }));*/
                 },
                 error:function(err){
                     console.log('错误');

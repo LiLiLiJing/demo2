@@ -22,28 +22,17 @@
             border-collapse: collapse;
             border-spacing: 0;
             border: 1px solid #c0c0c0;
-            width: 800px;
+            width: 95%;
+            margin-bottom:10px;
 			}
-        thead{
-            text-align:center;
-            font-size:14px;
+        table:hover{
+            background-color: #fafafa;
         }
         th,
         td {
             border: 1px solid #d0d0d0;
             color: #404060;
             padding: 10px;
-        }
-
-        th {
-            background-color: #09c;
-            color: #fff;
-        }
-        tbody tr {
-            background-color: #f0f0f0;
-        }
-        tbody tr:hover {
-            background-color: #fafafa;
         }
 		.fl{
 			float:left;
@@ -69,7 +58,8 @@
 			margin-top:20px;
 			}
 		.mainleft{
-			width:15%;
+			width:12%;
+            margin-left:20px;
 			}
 		.mainleft span{
 			display:block;
@@ -88,10 +78,43 @@
 			color:red;
 			}
         .mainright{
-            width:80%;
+           width:85%; 
         }
         .status{
             width:100px;
+        }
+        table div{
+            font-size:14px;
+            font-weight:bold;
+        }
+        /*.img_url{
+            width:400px;
+        } */
+        td{
+            word-wrap:break-word;
+            word-break:break-all;
+            white-space: pre-wrap;
+        }
+        .save_storenm{
+            width:28%;
+        }
+        .img_url{
+            width:28%;
+        }
+        .server_url{
+            width:28%;
+        }
+        .status{
+            text-align:center;
+            cursor:pointer;
+        }
+        .status span{
+            margin-bottom:6px;
+        }
+        .titleSty{
+            font-weight:bold;
+            font-size:14px;
+            margin-right:12px;
         }
     </style>
 </head>
@@ -100,72 +123,83 @@
 	<div>
     	<div class="header"></div>
         <div class="main clearfix">
-        	<div class="mainleft fl">
-               <a href=""><span>新建订单</span></a>
-               <a href=""><span>文件夹选项</span></a>
-               <a href=""><span>文件夹选项</span></a>
-               <a href=""><span>订单页面</span></a>
+            <div class="mainleft fl">
+                <span>文件夹选项</span>
+                <span>文件夹选项</span>
+                <span>文件夹选项</span>
+                <span>订单页面</span>
             </div>
-            <div class="mainright fl">
-            	<table>
-                    <thead>
-                        <tr>
-                            <td>save_storenm</td><td>img_url</td><td>server_url</td><td> status&nbsp;&nbsp;&nbsp;</td>
-                        </tr>
-                    </thead>
-                    <tbody id="tbody">
-                        <tr>
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                        </tr>
-                    </tbody>
-                </table>
+            <div class="mainright fl" id="contents">
+            	
             </div>
         </div>
     </div>
 </body>
 </html>
 	<script>
-        $(document).ready(function(){
+    var str="";
+    function getInfo(){
         $.ajax({
-            url:'http://172.18.77.15:31555/listorders&bridgemask',
+            url:'http://172.18.77.15:31555/listorders&all',
             type:'get',
             dataType:'json',
             success:function(data){
-                //console.log(data);
-                var str="";
+                
+                str="";
                 for(var i=0;i<data.length;i++){
-                    
-                    str+= '<tr><td style="word-wrap:break-word;word-break:break-all;white-space: pre-wrap;">'+data[i].order_param.save_storenm+'</td><td>'+data[i].order_param.img_url+'</td><td>'+data[i].order_param.server_url+'</td><td class="status">'+data[i].status+'</td></tr>'; 
+                    str +='<table>';
+                    str +='<tr><td colspan="4"><span class="orderNum titleSty">订单编号：</span><span class="creatTime titleSty">创建时间：</span></td></tr>';
+                    str+= '<tr><td class="save_storenm"><div>save_storenm:</div>'+data[i].order_param.save_storenm+'</td><td class="img_url"><div>img_url:</div>'+data[i].order_param.img_url+'</td><td class="server_url"><div>server_url:</div>'+data[i].order_param.server_url+'</td><td class="status" data-index='+i+'>'+data[i].status+'</td></tr>'; 
+                    str+='</table>';
                 };
-                $('#tbody').html(str);
+                $('#contents').html(str);
                 var status = document.getElementsByClassName('status');
                 for(var j=0;j<$('.status').length;j++){
                     //console.log(status[j].innerText);
                     if(status[j].innerHTML=="0"){
                         status[j].innerText="未处理";
                     }else{
-                        status[j].innerHTML='已完成<button type="button">点击跳转</button';
+                        status[j].innerHTML='<span style="display:block">已完成</span><span style="display:block" class="link">点击跳转</span><span style="display:block" class="delinfo">删除</span>';
                     }
                 };
                     
 
-                    var buttonArr=document.getElementsByTagName('button');
-                    for(var k = 0;k<buttonArr.length;k++){
-                        buttonArr[k].index=k;
-                        var workspace=data[k].workspace;
-                        buttonArr[k].onclick=function(){
-                            window.location.href='http://172.18.77.15:31555/showgroup/'+workspace+':'+data[this.index].order_result;
-                            //console.log(data[this.index].order_result);
+                    var linkArr=document.getElementsByClassName('link');
+                    for(var k = 0;k<linkArr.length;k++){
+                        
+                        linkArr[k].onclick=function(){
+                            var index=this.parentNode.dataset['index'];
+                            workspace=data[index].workspace;
+                            window.location.href="http://172.18.77.15:31555/showgroup/"+workspace+":"+data[index].order_result;
+                            //console.log(this.parentNode.dataset['index']);
                         }
                     }
-                
+                var delinfo=$(".delinfo")     
+                for(var i=0;i<delinfo.length;i++){
+                    
+                    delinfo[i].onclick=function(){
+                        var index=this.parentNode.dataset['index'];
+                        var storenm=data[index].order_param.save_storenm;
+                        document.getElementById("contents").innerHTML="";
+                        $.ajax({
+                            url:'http://172.18.77.15:31555/deleteorder&'+storenm,
+                            
+                            type:"POST",
+                            success:function(data){ 
+                                console.log(data);
+                                getInfo();
+                            },
+                            
+                        });
+                    }
+                }                     
             },
             error:function(){
                 console.log("有错误");
             }
         });
-    })
+    }
+    getInfo();
+    
+    
     </script>

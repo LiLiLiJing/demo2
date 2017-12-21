@@ -46,7 +46,7 @@
 			width:80%;
 			}
 		.mainLeft{
-			width:20%;
+			width:190px;
 			margin-top:56px;
 			margin-right:20px;
 			margin-left:40px;
@@ -63,6 +63,7 @@
 			border-radius:5px;
 			margin-bottom:20px;
 			font-size:14px;
+
 			}
 		.mainLeft span:hover{
 			background-color:rgb(56,57,63);
@@ -71,7 +72,21 @@
 		.mainRight{
 			margin-top:15px;
 			width:70%;
+			position:relative;
 			}
+		.mainRight .ipt{
+			position:absolute;
+			width:48px;
+			display:none;
+		}
+		.mainRight .ipt1{
+			top:12px;
+			left:150px;
+		}
+		.mainRight .ipt2{
+			top:12px;
+			left:210px;
+		}
 		.mainRight h3{
 			margin-top:10px;
 			margin-bottom:20px;
@@ -80,7 +95,7 @@
 			margin-bottom:10px;
 			border:1px solid #fff;
 			border-radius:4px;
-			width:100px;
+			width:110px;
 			height:100px;
 			padding-top:5px;
 			position:relative;
@@ -89,6 +104,12 @@
 			margin-right:10px;
 			text-align:center;
 			}
+		.mainRight .contents input{
+			position:absolute;
+			top:0px;
+			right:0px;
+			display:none;
+		}
 		.contents img{
 			width:70px;
 			height:60px;
@@ -115,7 +136,8 @@
                 <span class="need paint">标注文件</span>
                 <span class="need delete">删除文件夹</span>
                 <span class="need creat">新建文件夹</span>
-                <span class="need lala">查看订单</span>
+                <span class="need lala">新建算法订单</span>
+                <span class="need newLab">新建标注订单</span>
             </div>
             <div class="mainRight f_l">
             	
@@ -128,8 +150,8 @@
 <script type="text/javascript">
 		//页面加载完成根据数据库显示文件
 	var need = document.getElementsByClassName("need");
-	showFile();//调用函数向后台发送请求动态显示文件夹
-	function showFile(){
+	//showFile();//调用函数向后台发送请求动态显示文件夹
+	$(document).ready(function(){
 		$.ajax({
                 url: 'http://172.18.77.15:31555/folder-traverse&listdirs', //请求地址
                 type: 'POST',  //请求方式为post
@@ -138,13 +160,20 @@
                 //请求成功完成后要执行的方法  
                 success: function (response) {
                     var str="";
+                    str+='<form action="http://172.18.77.15:31555/create-lblorder-ui" method="POST">';
                     str+='<h3>文件夹列表</h3>';
+                    str+='<input class="ipt2 ipt" type="button" value="取消" /><input class="ipt1 ipt" type="submit" value="提交" />';
+                    
                     //var mainRight = document.getElementsByClassName('mainRight')[0];
                     for(var i=0;i<response.length;i++){
                     	str+='<div class="contents">'+
                 		'<img src="../static/images/wjj.jpg" alt=""/>'+
-                    	'<div class="title">'+response[i].name+'</div></div>'
+                    	'<div class="title">'+response[i].name+'</div>'+
+						'<input type="checkbox" name="ws_list" value='+response[i].name+'>'+
+                    	'</div>'
+
                     }
+                    str+='</form>';
                     document.getElementsByClassName('mainRight')[0].innerHTML = str;
              
 					need = document.getElementsByClassName("need");
@@ -181,7 +210,7 @@
 					
             }     
         });
-	}
+	})
 		need[3].onclick=function(){
 				var name = window.prompt("请输入文件夹名字");
 				if(name!==null){
@@ -199,6 +228,23 @@
 						//showFile();
 		   			}
 		}
+		need[5].onclick=function(){
+			var divList = document.getElementsByClassName('contents');
+			var ipt1=document.getElementsByClassName('ipt1')[0];
+			var ipt2=document.getElementsByClassName('ipt2')[0];
+			ipt1.style.display="inline-block";
+			ipt2.style.display="inline-block";
+			ipt2.onclick=function(){
+				ipt1.style.display="none";
+				ipt2.style.display="none";
+				for(var count=0;count<divList.length;count++){
+					divList[count].getElementsByTagName("input")[0].style.display="none";
+				}
+			}
+			for(var count=0;count<divList.length;count++){
+				divList[count].getElementsByTagName("input")[0].style.display="block";
+			}
+			}
 		//向后台发送创建文件夹请求
 		function creatFiles(filename){
 			$.ajax({

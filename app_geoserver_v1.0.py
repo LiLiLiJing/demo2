@@ -322,6 +322,12 @@ def basic_test():
     return render_template('basic_test.html')
 
 
+@app.route("/creat-order", methods=['GET', 'POST'])
+def creat_order():
+    print "Calling the creat_order service"
+    return render_template('creat_order.html')
+
+
 @app.route("/order-index", methods=['GET', 'POST'])
 def order_index():
     print "Calling the order_index service"
@@ -352,6 +358,8 @@ def folder_traverse(operation):
 
     if operation_splits[0] == 'listdirs':
         # show all the workspaces, return in full links
+        # import ipdb; ipdb.set_trace()
+
         all_ws_list = cat.get_workspaces()
 
         num_ws = len(all_ws_list)
@@ -437,6 +445,13 @@ def make_thumbnail(workspacename):
 
     res_list=[]
     for r in resources:
+        # appended at 9:15, on 2017-12-20, check if the containing raster is an algorithm output
+        ignore_suffixs = ['AsynMask', 'AsynPlane', 'AsynStorage', 'shp', 'vec', 'vec1']
+
+        cur_rsuffix = r.name.split('_')[-1]
+        if cur_rsuffix in ignore_suffixs:
+            continue
+
         res_url=url%(r.workspace.name,r.workspace.name,r.name,r.native_bbox[0],r.native_bbox[2],\
                  r.native_bbox[1],r.native_bbox[3],r.native_bbox[4] if r.native_bbox[4] is not None \
                  and r.native_bbox[4].startswith('EPSG') else ('EPSG:4326' if float(r.native_bbox[0])<10000 else 'EPSG:2309'))
@@ -613,8 +628,11 @@ def listorders_bytype(job_type='bridgemask'):
     cnx_obj = mysql.connector.connect(**mysql_config)
     db_cursor = cnx_obj.cursor()
 
-    sql_cmd = "select description, result, process_status from job where " \
-        + "job.params = 'JobType:%s'" % (job_type)
+    if job_type == 'all':
+        sql_cmd = "select description, result, process_status from job;"
+    else:
+        sql_cmd = "select description, result, process_status from job where " \
+            + "job.params = 'JobType:%s';" % (job_type)
 
     db_cursor.execute(sql_cmd)
     cnx_obj.close()
@@ -644,10 +662,135 @@ def listorders_bytype(job_type='bridgemask'):
     return jsonify(avail_orderlist)
 
 
+def hproc_getjobresult_bysavstorenm(job_storenm):
+    '''
+    2017-12-21, 9:30, getting the result of the job by the saved storename.
+    '''
+    # cnx_obj = mysql.connector.connect(**mysql_config)
+    # db_cursor = cnx_obj.cursor()
+
+    # sql_cmd = "select result from job where job.path = '%s';" % job_storenm
+    # db_cursor.execute(sql_cmd)
+    # cnx_obj.close()
+
+    # result_list = list()
+    # for row in db_cursor.fetchall():
+    #     result_list.append(row[0])
+
+    # if len(result_list) <= 0:
+    #     return None
+    # else:
+    #     return result_list[0]
+    ws_list = cat.get_workspaces()
+    for ws_obj in ws_list:
+        curws_lyrgrps = cat.get_layergroups(workspace=ws_obj)
+        for grp_obj in curws_lyrgrps:
+            curgrp_lyrnms = grp_obj.layers
+            if job_storenm in curgrp_lyrnms:
+                return grp_obj.name, grp_obj
+    return None, None
+
+
+def hproc_deleteorder_geosrvr(job_storenm):
+    '''
+    2017-12-21, 10:00, delete the saved algorithm processing result store from geoserver.
+    '''
+    # step 1: delete the correlating layer-group
+    lyrgrp_name, lyrgrp_obj = hproc_getjobresult_bysavstorenm(job_storenm)
+
+    if lyrgrp_name:
+        cat.delete(lyrgrp_obj)
+
+    # step 2: delete the layer object itself, if featureType, delete layer at first
+    lyr_obj = cat.get_layer(job_storenm)
+    if lyr_obj:
+        cat.delete(lyr_obj)
+
+    # step 3: delete the correlated store object
+    str_obj = cat.get_store(job_storenm)
+    if str_obj:
+        cat.delete(str_obj, recurse=True)
+
+
+@app.route('/deleteorder&<job_storenm>', methods=['POST', 'GET'])
+def deleteorder_bystrenm(job_storenm):
+    '''
+    Appended at 9:59, on 2017-12-20
+    Removing the appointed order by the result-saving storename.
+    '''
+    # check if the layer group exists, then removing it from the geoserver
+    # step 1: remove the store from the geoserver
+    hproc_deleteorder_geosrvr(job_storenm)
+
+    # then removing it from the mysql database
+    cnx_obj = mysql.connector.connect(**mysql_config)
+    db_cursor = cnx_obj.cursor()
+
+    db_cursor.execute("SET SQL_SAFE_UPDATES = 0;")
+    cnx_obj.commit()
+
+    sql_cmd = "delete from job where job.path = '%s';" % (job_storenm)
+    print "SQL Command: ", sql_cmd
+
+    try:
+        db_cursor.execute(sql_cmd)
+        cnx_obj.commit()
+    except Exception, err:
+        cnx_obj.close()
+        return jsonify({'code': 405})
+        
+    cnx_obj.close()
+
+    return jsonify({'code': 200})
+
+
+@app.route('/create-lblorder-ui', methods=['POST'])
+def create_label_orderui():
+    # the frontend will post the selected list workspace names
+    f = request.form
+
+    sel_wslist = f.getlist(f.keys()[0])
+    store_dict = {}
+    store_dict['ws_list'] = sel_wslist
+
+    return render_template('creat_order.html', store_dict=store_dict)
+
+
+@app.route('/lblorder-manip&<string:opt_type>', methods=['GET', 'POST'])
+def labelorder_manip(opt_type):
+    '''
+    2017-12-20, 19:01, manipulations to the image labeling order table
+    '''
+    if opt_type == "create-order":
+        # parse the given form object, form the mysql updating command
+        post_f = request.form
+
+        # sect 1: getting the selected workspaces
+        wsnms_list = post_f.getlist('workspace')
+        # concate the list of the workspace names, update to the 'path' column
+        
+
+        # sect 2: getting the object types being selected
+        objtypes_list = post_f.getlist('object')
+
+        # sect 3: getting the user being selected
+        usrs_list = post_f.getlist('user')
+
+        # sect 4: gettting the labeling description
+        desc_str = post_f.getlist('otherInfo')[0]
+
+    elif opt_type == "get-order":
+        pass
+    elif opt_type == "delete-order":
+        pass
+    elif opt_type == "update-order":
+        pass
+
+
 @app.route('/showgroup/<string:grp_name>', methods=['GET', 'POST'])
 def showgroup(grp_name):
     workspace_name, groupname=grp_name.split(':')
-    # import ipdb; ipdb.set_trace()
+    print ">>>> Showgroup, ws ", workspace_name, ", gpname ", groupname
 
     resource = cat.get_layergroup(name=groupname, workspace=cat.get_workspace(workspace_name))
     src_proj = cat.get_layer(resource.layers[0]).resource.projection
@@ -669,10 +812,11 @@ def logstate():
         return jsonify({'code': 405})
 
 
-@app.route('/logout')
+@app.route('/logout', methods=['GET', 'POST'])
 def logout():
     session.pop('username', None)
-    return redirect(url_for(''))
+    # return redirect('/')
+    return jsonify({'code': 200})
 
 
 @app.route('/', methods=['GET', 'POST'])
@@ -702,6 +846,26 @@ def uploadpage(ws_name=""):
     store_dict={'workspace': ws_name}
     return render_template('upload.html', store_dict=store_dict)
 
+
+# 2017-12-20, 13:49, the web-API for saving and retrieving temporary variables
+@app.route('/tempvars&<string:opt_type>', methods=['POST'])
+def tempvars_opt(opt_type):
+    print "Calling tempvars API with method: ", request.method
+    if opt_type == 'save':
+        var_values = request.form['values']
+        var_name = request.form['name']
+
+        session['var_' + var_name] = var_values
+        return jsonify(var_values)
+
+    elif opt_type == 'retrieve':
+        var_name = request.form['name']
+        if 'var_' + var_name in session:
+            return jsonify(session['var_' + var_name])
+        else:
+            return 405
+
+
 # 2017-12-11, 17:46, build / insert the new order records
 # ==========================================================
 def get_taskstorenm(store_name):
@@ -718,13 +882,19 @@ def get_taskstorenm(store_name):
 
     return task_status[0][0] if len(task_status) > 0 else False
 
-def add_taskrecord(task_info):
+def add_taskrecord(task_name, task_info):
     print ">>>> add record >>>>"
     
     cnx_obj = mysql.connector.connect(**mysql_config)
     db_cursor = cnx_obj.cursor()
 
-    params_str = "JobType:bridgemask"
+    if task_name == 'AsynMask':
+        params_str = "JobType:bridgemask"
+    elif task_name == 'AsynPlane':
+        params_str = "JobType:planedet"
+    elif task_name == 'AsynStorage':
+        params_str = "JobType:storagedet"
+
     descr_str = json.dumps(task_info)
 
     sql_cmd = \
@@ -743,12 +913,12 @@ def add_taskrecord(task_info):
     return True
 
 
-def asyn_bridgemask(req_form):
+def asyn_tasks(task_name, req_form):
     # parse the requesting parameters
     taskrslt_strnm = req_form['save_storenm']
 
     if not get_taskstorenm(taskrslt_strnm):
-        add_taskrecord(req_form)
+        add_taskrecord(task_name, req_form)
         # thread = multiprocessing.Process(target=update_taskrecord, args=(taskrslt_strnm,))
         # thread.start()
 
@@ -875,11 +1045,11 @@ def get_procrequest(storename):
         
         return 'showgroup/%s:%s'%(prsrc_ws.name,group_name)
 
-    elif attData_arr[1] == 'AsynMask':
+    elif attData_arr[1] in ['AsynMask', 'AsynPlane', 'AsynStorage']:
         # request_url = urllib2.Request(url='http://172.18.77.15:6033/asyn-bridgemask', \
         #     headers=headers, data=json.dumps(post_dict))
         # resp = urllib2.urlopen(request_url)
-        addmsk_rslt = asyn_bridgemask(post_dict)
+        addmsk_rslt = asyn_tasks(attData_arr[1], post_dict)
 
         return jsonify({'code': 200, 'order_rslt': addmsk_rslt})
 
