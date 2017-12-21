@@ -43,7 +43,7 @@ THUMBNAIL_EXTENSION = 'png'
 IGNORED_FILES = set(['.gitignore'])
 
 bootstrap = Bootstrap(app)
-GLOBAL_PORT_NUMBER = 31533
+GLOBAL_PORT_NUMBER = 31555
 
 # 2017-11-3, the package added for data communication with the geoserver
 from geoserver.catalog import Catalog
@@ -299,20 +299,21 @@ def poly_labels_proc(opt_type):
 @app.route("/folder-view", methods=['GET', 'POST'])
 def folder_view():
     print "Calling the folder_view service"
-    return render_template('folder_view.html')
+    store_dict = {'port_number': GLOBAL_PORT_NUMBER}
+    return render_template('folder_view.html', store_dict=store_dict)
 
 
 @app.route("/folder-imgsview&<string:ws_name>", methods=['GET', 'POST'])
 def folder_imgsview(ws_name):
     print "Calling the folder_imgsview service"
-    store_dict = {'workspace': ws_name}
+    store_dict = {'workspace': ws_name, 'port_number': GLOBAL_PORT_NUMBER}
     return render_template('folder_imgsview.html', store_dict=store_dict)
 
 
 @app.route("/folder-result&<string:ws_name>", methods=['GET', 'POST'])
 def folder_result(ws_name):
     print "Calling the folder_imgsview service"
-    store_dict = {'workspace': ws_name}
+    store_dict = {'workspace': ws_name, 'port_number': GLOBAL_PORT_NUMBER}
     return render_template('folder_result.html', store_dict=store_dict)
 
 
@@ -325,13 +326,15 @@ def basic_test():
 @app.route("/creat-order", methods=['GET', 'POST'])
 def creat_order():
     print "Calling the creat_order service"
-    return render_template('creat_order.html')
+    store_dict = {'port_number': GLOBAL_PORT_NUMBER}
+    return render_template('creat_order.html', store_dict=store_dict)
 
 
 @app.route("/order-index", methods=['GET', 'POST'])
 def order_index():
     print "Calling the order_index service"
-    return render_template('orderindex.html')
+    store_dict = {'port_number': GLOBAL_PORT_NUMBER}
+    return render_template('orderindex.html', store_dict=store_dict)
 
 
 # At 17:30, on 2017-12-6, operations for the mysql user-job managements
@@ -591,7 +594,7 @@ def show(storename):
     resource = cat.get_resource(storename)
     src_proj = resource.projection
 
-    store_dict = {}
+    store_dict = {'port_number': GLOBAL_PORT_NUMBER}
     special_projs = ['EPSG:404000']
 
     if src_proj in special_projs:
@@ -614,7 +617,7 @@ def asynmask_select(storename):
     resource = cat.get_resource(storename)
     src_proj = resource.projection
 
-    store_dict = {}
+    store_dict = {'port_number': GLOBAL_PORT_NUMBER}
     store_dict['bbox'] = resource.latlon_bbox
     store_dict['workspacename'] = resource.workspace.name
     store_dict['storename'] = storename
@@ -629,7 +632,7 @@ def listorders_bytype(job_type='bridgemask'):
     db_cursor = cnx_obj.cursor()
 
     if job_type == 'all':
-        sql_cmd = "select description, result, process_status from job;"
+        sql_cmd = "select description, result, process_status from job where job.params regexp '^JobType';"
     else:
         sql_cmd = "select description, result, process_status from job where " \
             + "job.params = 'JobType:%s';" % (job_type)
@@ -750,9 +753,7 @@ def create_label_orderui():
     f = request.form
 
     sel_wslist = f.getlist(f.keys()[0])
-    store_dict = {}
-    store_dict['ws_list'] = sel_wslist
-
+    store_dict = {'ws_list': sel_wslist, 'port_number': GLOBAL_PORT_NUMBER}
     return render_template('creat_order.html', store_dict=store_dict)
 
 
@@ -767,20 +768,60 @@ def labelorder_manip(opt_type):
 
         # sect 1: getting the selected workspaces
         wsnms_list = post_f.getlist('workspace')
-        # concate the list of the workspace names, update to the 'path' column
-        
+        wsnms_str = 'Workspace:' + ','.join(wsnms_list)
 
         # sect 2: getting the object types being selected
-        objtypes_list = post_f.getlist('object')
+        objtypes_list = [item[:-1].encode('ascii') for item in post_f.getlist('object')]
+        objtypes_str = 'ObjTypes:' + ','.join(objtypes_list)
 
         # sect 3: getting the user being selected
-        usrs_list = post_f.getlist('user')
+        usrs_list = [item[:-1].encode('ascii') for item in post_f.getlist('user')]
+        usrs_str = 'Users:' + ','.join(usrs_list)
 
         # sect 4: gettting the labeling description
         desc_str = post_f.getlist('otherInfo')[0]
 
-    elif opt_type == "get-order":
-        pass
+        cnx_obj = mysql.connector.connect(**mysql_config)
+        db_cursor = cnx_obj.cursor()
+        sql_cmd = "insert into job (uid, path, params, description) " \
+            + "values (1, '%s', 'AnnotJob;%s', '%s')" % (';'.join([wsnms_str, objtypes_str]), usrs_str, desc_str)
+        db_cursor.execute(sql_cmd)
+        cnx_obj.commit()
+        cnx_obj.close()
+
+        return jsonify({'code': 200})
+
+    elif opt_type == "get-orders":
+        # get all the annotation orders
+        cnx_obj = mysql.connector.connect(**mysql_config)
+        db_cursor = cnx_obj.cursor()
+
+        sql_cmd = "select _id, path, params, start_time, description from job " \
+            + "where job.params regexp '^AnnotJob';"
+        db_cursor.execute(sql_cmd)
+        cnx_obj.close()
+
+        annotjobs_list = list()
+        for row in db_cursor.fetchall():
+            cur_id, cur_pathstr, cur_params, cur_starttime, cur_desc = row
+            cur_workspace, cur_objtypes = cur_pathstr.split(';')
+            cur_users = cur_params.split(';')[1]
+            cur_info = {'id': cur_id, 'workspace': cur_workspace, 'objtypes': cur_objtypes, \
+                'users': cur_users, 'description': cur_desc}
+            annotjobs_list.append(cur_info)
+
+        return jsonify(annotjobs_list)
+
+    elif opt_type == "get-specorder":
+        # retreive the information from mysql, the detailed descriptions about the annotation job
+        cnx_obj = mysql.connector.connect(**mysql_config)
+        db_cursor = cnx_obj.cursor()
+
+        order_no = request.form['order_no']
+        sql_cmd = "select path, params, start_time, description from job where job._id = %s;" % order_no
+        db_cursor.execute(sql_cmd)
+        cnx_obj.close()
+
     elif opt_type == "delete-order":
         pass
     elif opt_type == "update-order":
@@ -836,7 +877,8 @@ def index():
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    return render_template('index.html')
+    store_dict={'port_number': GLOBAL_PORT_NUMBER}
+    return render_template('index.html', store_dict=store_dict)
 
 
 @app.route('/uploadpage&<string:ws_name>', methods=['GET', 'POST'])
@@ -1054,4 +1096,4 @@ def get_procrequest(storename):
         return jsonify({'code': 200, 'order_rslt': addmsk_rslt})
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=31555)
+    app.run(debug=True, host='0.0.0.0', port=GLOBAL_PORT_NUMBER)

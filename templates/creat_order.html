@@ -102,7 +102,7 @@
 <body>
 	<div id='ws_list'>{{store_dict['ws_list']}}</div>
     	<!-- <div class="head">标注任务详细描述</div> -->
-        <form action="http://172.18.77.15:31555/lblorder-manip&create-order" method="POST">
+        <form action="http://172.18.77.15:{{store_dict['port_number']}}/lblorder-manip&create-order" method="POST">
         <fieldset>
             <legend>标注任务详细描述</legend>
         	<div class="firBlock clearfix marBot">
@@ -143,7 +143,7 @@
 		//获取目标类型的函数
 		function getType(){
 			$.ajax({
-	                url: 'http://172.18.77.15:31555/poly-labels&get_objclass', //请求地址
+	                url: 'http://172.18.77.15:{{store_dict['port_number']}}/poly-labels&get_objclass', //请求地址
 	                type: 'GET',  //请求方式为post    
 	                dataType: 'JSON', //返回数据格式
 	                //请求成功完成后要执行的方法  
@@ -163,7 +163,7 @@
 		//获取用户名
 		function getName(){
 			$.ajax({
-				url:'http://172.18.77.15:31555/user-manage&get-usrnames',
+				url:'http://172.18.77.15:{{store_dict['port_number']}}/user-manage&get-usrnames',
 				type:'GET',
 				dayaType:'JSON',
 				success:function(response){

@@ -248,7 +248,7 @@
                 $(function(){
                     var flag = $(".flag").text();
                     $.ajax({
-                        url:'http://172.18.77.15:31555/poly-labels&remove_annot',
+                        url:'http://172.18.77.15:{{store_dict['port_number']}}/poly-labels&remove_annot',
                         type:'POST',
                         data:{infoname:'flag'},
                         dataType:'json',
@@ -308,7 +308,7 @@
             zoomNum=zoomnum;
             //通过ajax请求将数据传到后台文件进行保存处理
             $.ajax({
-                url: 'http://172.18.77.15:31555/poly-labels&commit_annot', //请求地址
+                url: 'http://172.18.77.15:{{store_dict['port_number']}}/poly-labels&commit_annot', //请求地址
                 type: 'POST',  //请求方式为post
                 data: { 'geoStr':geoStr, 'geoType': geoType, 'infoType': infoType, 'infoname': infoname ,'workspace':workspace, 'username': username}, //传入参数 
                 dataType: 'json', //返回数据格式
@@ -421,7 +421,7 @@
         //获取用户名添加到页面下拉列表中
         function getName(){
             $.ajax({
-                url:'http://172.18.77.15:31555/user-manage&get-usrnames',
+                url:'http://172.18.77.15:{{store_dict['port_number']}}/user-manage&get-usrnames',
                 type:'GET',
                 datatype:'json',
                 success:function(data){
@@ -447,7 +447,7 @@
             var flag = $(".flag").text();
             
             $.ajax({
-                url:'http://172.18.77.15:31555/poly-labels&get_annots',
+                url:'http://172.18.77.15:{{store_dict['port_number']}}/poly-labels&get_annots',
                 type:'POST',
                 data:{'username':username,'infoname':flag},
                 dataType:'json',
@@ -555,7 +555,7 @@
                         trInfoArr[z].index=z;
                         delArr[z].onclick=function(){
                             $.ajax({
-                                url:'http://172.18.77.15:31555/poly-labels&remove_one_annot',
+                                url:'http://172.18.77.15:{{store_dict['port_number']}}/poly-labels&remove_one_annot',
                                 type:'POST',
                                 data:{annot_id:data[this.index].annot_id},
                                 dataType:'json',
@@ -628,7 +628,7 @@
     <script type="text/javascript">
     $(document).ready(function(){
         $.ajax({
-            url:'http://172.18.77.15:31555/poly-labels&get_geotypes',
+            url:'http://172.18.77.15:{{store_dict['port_number']}}/poly-labels&get_geotypes',
             type:'get',
             dataType:'json',
             success:function(data){
@@ -649,7 +649,7 @@
     <script type="text/javascript">
     $(document).ready(function(){
         $.ajax({
-            url:'http://172.18.77.15:31555/poly-labels&get_objclass',
+            url:'http://172.18.77.15:{{store_dict['port_number']}}/poly-labels&get_objclass',
             type:'get',
             dataType:'json',
             success:function(data){
