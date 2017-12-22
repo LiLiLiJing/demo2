@@ -415,7 +415,7 @@ def folder_traverse(operation):
     elif operation_splits[0] == 'deletedir':
         wsdir_name = operation_splits[1]
         wsdir_obj = cat.get_workspace(name = wsdir_name)
-        del_status = cat.delete(wsdir_obj)
+        del_status = cat.delete(wsdir_obj, recurse=True)
 
         return Response(json.dumps(del_status), mimetype='application/json')
 
@@ -566,11 +566,13 @@ def upload():
 @app.route("/delete/<string:filename>", methods=['DELETE'])
 def delete(filename):
     try:
-        ws_obj = cat.get_resource(filename)
+        # ws_obj = cat.get_resource(filename)
+        # execute_url="curl -v -u admin:geoserver -X DELETE %s/workspaces/%s/coveragestores/%s?recurse=true" \
+        #     % (geoserver_url + "/rest", ws_obj.workspace.name, filename)
+        # ret_code = os.system(execute_url)
 
-        execute_url="curl -v -u admin:geoserver -X DELETE %s/workspaces/%s/coveragestores/%s?recurse=true" \
-            % (geoserver_url + "/rest", ws_obj.workspace.name, filename)
-        ret_code = os.system(execute_url)
+        store_obj = cat.get_store(filename)
+        cat.delete(store_obj, recurse=True)
 
         return simplejson.dumps({filename: 'True'})
     except:
@@ -757,6 +759,12 @@ def create_label_orderui():
     return render_template('creat_order.html', store_dict=store_dict)
 
 
+@app.route('/show-lblordrs-ui', methods=['POST', 'GET'])
+def show_label_orderui():
+    # the frontend will post the selected list workspace names
+    store_dict = {'port_number': GLOBAL_PORT_NUMBER}
+    return render_template('show_lblorder.html', store_dict=store_dict)
+
 @app.route('/lblorder-manip&<string:opt_type>', methods=['GET', 'POST'])
 def labelorder_manip(opt_type):
     '''
@@ -807,7 +815,7 @@ def labelorder_manip(opt_type):
             cur_workspace, cur_objtypes = cur_pathstr.split(';')
             cur_users = cur_params.split(';')[1]
             cur_info = {'id': cur_id, 'workspace': cur_workspace, 'objtypes': cur_objtypes, \
-                'users': cur_users, 'description': cur_desc}
+                'users': cur_users, 'description': cur_desc, "start_time": cur_starttime}
             annotjobs_list.append(cur_info)
 
         return jsonify(annotjobs_list)
@@ -822,8 +830,51 @@ def labelorder_manip(opt_type):
         db_cursor.execute(sql_cmd)
         cnx_obj.close()
 
-    elif opt_type == "delete-order":
-        pass
+    elif opt_type == "proc-order":
+        # import ipdb; ipdb.set_trace()
+        order_id = request.form['id']
+        cnx_obj = mysql.connector.connect(**mysql_config)
+        db_cursor = cnx_obj.cursor()
+
+        sql_cmd = "select path, params, start_time, description from job where job._id = %s;" % order_id
+        db_cursor.execute(sql_cmd)
+        cnx_obj.close()
+
+        cur_pathstr, cur_params, cur_starttime, cur_desc = db_cursor.fetchall()[0]
+        cur_workspace, cur_objtypes = cur_pathstr.split(';')
+        cur_users = cur_params.split(';')[1]
+
+        # parse the workspace, and collect the coveragestores in it
+        cur_wslist = cur_workspace.split(':')[1].split(',')
+        cur_strlist = list()
+        for cur_wsname in cur_wslist:
+            cur_ws_rsclist = cat.get_resources(workspace=cur_wsname)
+
+            for cur_rsc in cur_ws_rsclist:
+                cur_rsc_name = cur_rsc.name
+                cur_rsc_suffix = cur_rsc_name.split('_')[-1]
+
+                if cur_rsc_suffix in ['AsynMask', 'AsynStorage', 'AsynPlane']:
+                    continue
+                if (not cur_rsc.resource_type == 'coverage'):
+                    continue
+
+                if cur_rsc.projection in ['EPSG:404000', ]:
+                    cur_rsc_bbox = cur_rsc.latlon_bbox[0:4]
+                else:
+                    cur_rsc_bbox = cur_rsc.latlon_bbox
+
+                cur_rsc_info = {'projection': cur_rsc.projection, \
+                    'workspacename': cur_wsname, 'storename': cur_rsc_name, \
+                    'bbox': cur_rsc_bbox}
+                cur_strlist.append(cur_rsc_info)
+
+        cur_info = {'storeinfos': cur_strlist, 'objtypes': cur_objtypes, \
+                'users': cur_users, 'description': cur_desc, "start_time": cur_starttime, \
+                'port_number': GLOBAL_PORT_NUMBER}
+
+        return render_template('annotordr_show.html', store_dict=cur_info)
+
     elif opt_type == "update-order":
         pass
 
@@ -1001,7 +1052,7 @@ def get_procrequest(storename):
     prsrc_proj = prsrc.projection
     prsrc_ws = prsrc.workspace
 
-    wms_request_projs = ['EPSG:404000']
+    wms_request_projs = ['EPSG:404000', ]
     if prsrc_proj in wms_request_projs:
         
         res=requests.get("%s/wcs?service=WCS&version=2.0.0&" % geoserver_url\

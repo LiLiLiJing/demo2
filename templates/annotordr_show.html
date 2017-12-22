@@ -92,7 +92,21 @@
     </style>
 </head>
 <body>
-<div class="flag">{{ store_dict['storename'] }}</div>
+<div>{{store_dict['id']}}</div>
+<div>{{store_dict['objtypes']}}</div>
+<div>{{store_dict['users']}}</div>
+<div>
+    {% for store_info in store_dict['storeinfos'] %}
+    <div>
+        <li id="workspacename">{{store_info['workspacename']}}</li>
+        <li id="storename">{{store_info['storename']}}</li>
+        <li id="projection">{{store_info['projection']}}</li>
+        <li id="bbox">{{store_info['bbox'][0]}},{{store_info['bbox'][2]}},{{store_info['bbox'][1]}},{{store_info['bbox'][3]}}</li>
+    </div>
+    {% endfor %}
+</div>
+
+<div class="flag">{{ store_dict['storeinfos'][0]['storename'] }}</div>
     <div id="menu">
           <label>几何图形类型：&nbsp;</label>
           <select id="type">
@@ -141,7 +155,7 @@
         <input type="text" value="aaa" id="infoname" />
         <br />
         <label>workspace:</label>
-        <input type="text" value="{{store_dict['workspacename']}}" id="workspace" />
+        <input type="text" value="{{store_dict['storeinfos'][0]['workspacename']}}" id="workspace" />
         <br />
         <!-- <label>用户名:</label>
         <input type="text" id="fillusername" /> -->
@@ -164,11 +178,11 @@
         var geoStr = null; // 当前绘制图形的坐标串
         var currentFeature = null; //当前绘制的几何要素
 
-        var extent=[{{store_dict['bbox'][0]}},{{store_dict['bbox'][2]}},{{store_dict['bbox'][1]}},{{store_dict['bbox'][3]}}];//BBOX范围值
+        var extent=[{{store_dict['storeinfos'][0]['bbox'][0]}},{{store_dict['storeinfos'][0]['bbox'][2]}},{{store_dict['storeinfos'][0]['bbox'][1]}},{{store_dict['storeinfos'][0]['bbox'][3]}}];//BBOX范围值
 
         var projection=new ol.proj.Projection({//地图投影类型
             // code:'EPSG:4326',
-            code: '{{store_dict['projection']}}',
+            code: '{{store_dict['storeinfos'][0]['projection']}}',
             units:'degrees',
             extent:extent
         });
@@ -201,7 +215,6 @@
          
          var map,source,vector;
         //实例化Map对象加载地图,默认底图加载MapQuest地图
-       
 
         /**
         * 根据绘制类型进行交互绘制图形处理
@@ -479,7 +492,7 @@
                             new ol.layer.Image({
                                 source: new ol.source.ImageWMS({
                                     url: 'http://172.18.77.15:8089/geoserver/{{store_dict['workspacename']}}/wms',
-                                    params: {'LAYERS': '{{store_dict['workspacename']}}:{{store_dict['storename']}}','VERSION':'1.1.0'},
+                                    params: {'LAYERS': '{{store_dict['storeinfos'][0]['workspacename']}}:{{store_dict['storeinfos'][0]['storename']}}','VERSION':'1.1.0'},
                                     serverType: 'geoserver'
                                 })  
                             }),
