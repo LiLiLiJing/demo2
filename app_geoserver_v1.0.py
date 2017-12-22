@@ -765,12 +765,14 @@ def show_label_orderui():
     store_dict = {'port_number': GLOBAL_PORT_NUMBER}
     return render_template('show_lblorder.html', store_dict=store_dict)
 
+
 @app.route('/lblorder-manip&<string:opt_type>', methods=['GET', 'POST'])
 def labelorder_manip(opt_type):
     '''
     2017-12-20, 19:01, manipulations to the image labeling order table
     '''
-    if opt_type == "create-order":
+    opt_type_split = opt_type.split(':')
+    if opt_type_split[0] == "create-order":
         # parse the given form object, form the mysql updating command
         post_f = request.form
 
@@ -799,7 +801,7 @@ def labelorder_manip(opt_type):
 
         return jsonify({'code': 200})
 
-    elif opt_type == "get-orders":
+    elif opt_type_split[0] == "get-orders":
         # get all the annotation orders
         cnx_obj = mysql.connector.connect(**mysql_config)
         db_cursor = cnx_obj.cursor()
@@ -820,7 +822,7 @@ def labelorder_manip(opt_type):
 
         return jsonify(annotjobs_list)
 
-    elif opt_type == "get-specorder":
+    elif opt_type_split[0] == "get-specorder":
         # retreive the information from mysql, the detailed descriptions about the annotation job
         cnx_obj = mysql.connector.connect(**mysql_config)
         db_cursor = cnx_obj.cursor()
@@ -830,9 +832,9 @@ def labelorder_manip(opt_type):
         db_cursor.execute(sql_cmd)
         cnx_obj.close()
 
-    elif opt_type == "proc-order":
+    elif opt_type_split[0] == "proc-order":
         # import ipdb; ipdb.set_trace()
-        order_id = request.form['id']
+        order_id = opt_type_split[1]
         cnx_obj = mysql.connector.connect(**mysql_config)
         db_cursor = cnx_obj.cursor()
 
@@ -871,7 +873,7 @@ def labelorder_manip(opt_type):
 
         cur_info = {'storeinfos': cur_strlist, 'objtypes': cur_objtypes, \
                 'users': cur_users, 'description': cur_desc, "start_time": cur_starttime, \
-                'port_number': GLOBAL_PORT_NUMBER}
+                'port_number': GLOBAL_PORT_NUMBER, 'id': order_id}
 
         return render_template('annotordr_show.html', store_dict=cur_info)
 
@@ -936,7 +938,7 @@ def login():
 def uploadpage(ws_name=""):
     print '((((((((((((((((((((uploadpage))))))))))))))))))))))'
 
-    store_dict={'workspace': ws_name}
+    store_dict={'workspace': ws_name, 'port_number': GLOBAL_PORT_NUMBER}
     return render_template('upload.html', store_dict=store_dict)
 
 

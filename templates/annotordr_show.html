@@ -61,8 +61,20 @@
             font-family:"微软雅黑";
             margin-left:20px;
         }
+        .fl{
+            float:left;
+        }
         .fr{
             float:right;
+        }
+        .clearfix::before,
+        .clearfix::after{
+            content:'';
+            display: block;
+            line-height: 0;
+            height: 0;
+            visibility: hidden;
+            clear: both;
         }
         #itemsInfo{
             width:200px;
@@ -89,19 +101,22 @@
             max-width:1660px;
             overflow:auto;
         }
+        .bor{
+            border:1px solid red;
+        }
     </style>
 </head>
 <body>
 <div>{{store_dict['id']}}</div>
-<div>{{store_dict['objtypes']}}</div>
-<div>{{store_dict['users']}}</div>
-<div>
+<div id="need_type">{{store_dict['objtypes']}}</div>
+<div id="need_user">{{store_dict['users']}}</div>
+<div class="clearfix">
     {% for store_info in store_dict['storeinfos'] %}
-    <div>
-        <li id="workspacename">{{store_info['workspacename']}}</li>
-        <li id="storename">{{store_info['storename']}}</li>
-        <li id="projection">{{store_info['projection']}}</li>
-        <li id="bbox">{{store_info['bbox'][0]}},{{store_info['bbox'][2]}},{{store_info['bbox'][1]}},{{store_info['bbox'][3]}}</li>
+    <div class="fl bor infoBox">
+        <li class="workspacename">{{store_info['workspacename']}}</li>
+        <li class="storename">{{store_info['storename']}}</li>
+        <li class="projection">{{store_info['projection']}}</li>
+        <li class="bbox">{{store_info['bbox'][0]}},{{store_info['bbox'][2]}},{{store_info['bbox'][1]}},{{store_info['bbox'][3]}}</li>
     </div>
     {% endfor %}
 </div>
@@ -171,6 +186,92 @@
         <ul></ul>
     </div>
     <script type="text/javascript">
+      //改变下拉标记内容  
+    var need_type_arr=$("#need_type").text().slice(9).split(",");
+    var str_type="";
+    for(var arri=0;arri<need_type_arr.length;arri++){
+        
+        str_type+="<option value='"+need_type_arr[arri]+"'>"+need_type_arr[arri]+"</option>";
+    }
+    $("#infoType").html(str_type);
+    //改变下拉用户名
+    var need_user_arr=$("#need_user").text().slice(6).split(",");
+    var str_user="";
+    for(var arrj=0;arrj<need_type_arr.length;arrj++){
+        
+        str_user+="<option value='"+need_user_arr[arrj]+"'>"+need_user_arr[arrj]+"</option>";
+    }
+    $("#username").html(str_user);
+
+    //定义全局变量
+    var extent=[];  
+    var projection; 
+    var change_workspace;
+    var change_storename;
+    var change_projection;
+    var change_bbox=change; 
+    //获取需要更改的信息
+    function change(){
+        var change_workspaceArr=document.getElementsByClassName("workspacename");
+        var change_storenameArr=document.getElementsByClassName("storename");
+        var change_projectionArr=document.getElementsByClassName("projection");
+        var change_bboxArr=document.getElementsByClassName("bbox");
+        change_workspace=change_workspaceArr[0].innerText;
+        change_storename=change_storenameArr[0].innerText;
+        change_projection=change_projectionArr[0].innerText;
+        change_bbox=change_bboxArr[0].innerText.split(",");
+        //将字符串转化成数字数组
+        for(var bbox=0;bbox<change_bbox.length;bbox++){
+            extent.push(parseFloat(change_bbox[bbox]));
+        }
+        projection=new ol.proj.Projection({//地图投影类型
+            code: change_projection,
+            units:'degrees',
+            extent:extent
+        });
+
+        //获取信息盒子
+        var infoBox=$(".infoBox");
+        for(var boxi=0;boxi<infoBox.length;boxi++){
+            infoBox[boxi].num = boxi;
+            //每个div绑定点击事件
+            infoBox[boxi].onclick=function(){
+                change_workspace=change_workspaceArr[this.num].innerText;
+                change_storename=change_storenameArr[this.num].innerText;
+                change_projection=change_projectionArr[this.num].innerText;
+                change_bbox=change_bboxArr[this.num].innerText.split(",");
+                //将字符串转化成数字数组
+                for(var bbox=0;bbox<change_bbox.length;bbox++){
+                    extent.push(parseFloat(change_bbox[bbox]));
+                }
+                projection=new ol.proj.Projection({//地图投影类型
+                    code: change_projection,
+                    units:'degrees',
+                    extent:extent
+                });
+                var newMap=document.getElementById("map");
+                var cLayers = map.getLayers();
+                console.log(cLayers);
+                if (cLayers != null) { 
+                    for (var ii = 0; ii < cLayers.length; ii++) {
+                        map.removeLayer(cLayers[ii]);
+                    }
+                }
+
+                source=null;
+                vector.setSource(source);
+            
+                    //map=null;
+                newMap.innerHTML="";
+                getInfo();  
+       
+            }    
+        }
+        console.log("1")
+    }
+    change();//调用更改信息函数
+
+    
         var setSize=document.getElementById("setSize");
         var typeSelect = document.getElementById('type');//绘制类型对象
         var userNameSelect = document.getElementById('username');
@@ -186,6 +287,7 @@
             units:'degrees',
             extent:extent
         });
+
         var createPolygonStyleFunction = function (feature) {
             var fillColor = 'red';
             var strokeColor = 'red';
@@ -429,33 +531,12 @@
                 }
             });
         
-        
-
-        //获取用户名添加到页面下拉列表中
-        function getName(){
-            $.ajax({
-                url:'http://172.18.77.15:{{store_dict['port_number']}}/user-manage&get-usrnames',
-                type:'GET',
-                datatype:'json',
-                success:function(data){
-                    //console.log(data);
-                    var str="";
-                    for(var i=0;i<data.length;i++){
-                    str += "<option value='"+data[i].uname+"'>"+data[i].uname+"</option>";
-                    }
-                    $('#username').html(str);
-                },
-                eror:function(){
-                    console.log("cuowu");
-                }
-            })
-        }
-        getName();
  
         //声明一个数组，用来装坐标信息数组
         
         //页面加载完成，右侧信息栏中动态从数据库获取标记信息
         function getInfo(){
+            console.log("2");
             var username = $("#username").val();
             var flag = $(".flag").text();
             
@@ -491,13 +572,11 @@
                         layers: [
                             new ol.layer.Image({
                                 source: new ol.source.ImageWMS({
-                                    url: 'http://172.18.77.15:8089/geoserver/{{store_dict['workspacename']}}/wms',
-                                    params: {'LAYERS': '{{store_dict['storeinfos'][0]['workspacename']}}:{{store_dict['storeinfos'][0]['storename']}}','VERSION':'1.1.0'},
+                                    url: 'http://172.18.77.15:8089/geoserver/'+change_workspace+'/wms',
+                                    params: {'LAYERS': change_workspace+':'+change_storename,'VERSION':'1.1.0'},
                                     serverType: 'geoserver'
                                 })  
-                            }),
-                
-                        ],
+                            }),],
                         target: 'map', //地图容器div的ID
                         view: new ol.View({
                         projection:projection,
@@ -621,8 +700,9 @@
                     console.log('错误');
                 }
             })
-            console.log(">>>>>> GetInfo() >>>>>>");
-        }
+}
+
+        
         userNameSelect.onchange = function (e) {
             var newMap=document.getElementById("map");
             window.map.removeLayer(vector);
@@ -637,6 +717,10 @@
         
         };
         getInfo();
+
+
+
+
     </script>
     <!-- 页面向后台发送请求，动态生成下拉列表里边的长方形、多边形等 -->
     <script type="text/javascript">
@@ -660,23 +744,6 @@
 
     })
     </script>
-    <script type="text/javascript">
-    $(document).ready(function(){
-        $.ajax({
-            url:'http://172.18.77.15:{{store_dict['port_number']}}/poly-labels&get_objclass',
-            type:'get',
-            dataType:'json',
-            success:function(data){
-                var str="";
-                for(var i=0;i<data.length;i++){
-                    str+="<option value='"+data[i]+"'>"+data[i]+"</option>";
-                }
-                $('#infoType').html(str);
-            }
-        });
-        $('.flag').css('display','none');
-        $('#infoname').val($('.flag').text());
-    })
-    </script>
+    
 </body>
 </html>

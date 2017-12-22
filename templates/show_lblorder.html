@@ -95,18 +95,19 @@
 					for(var i=0;i<dealArr.length;i++){
 						dealArr[i].onclick=function(){
 							var flag=this.dataset['index'];
-							$.ajax({
+							/*$.ajax({
 								url:"http://172.18.77.15:{{store_dict['port_number']}}/lblorder-manip&proc-order",
 								data: {'id': flag},
 								datatype:'JSON',
 								type:'POST',
 								success:function(data){
-									console.log(data);
-								},
-								error:function(err){
+									console.log(data);*/
+									window.location.href="http://172.18.77.15:{{store_dict['port_number']}}/lblorder-manip&proc-order:"+flag;
+								/*},*/
+								/*error:function(err){
 
-								}
-							})
+								}*/
+							//})
 						}
 					}
 				},
