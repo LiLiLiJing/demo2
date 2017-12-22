@@ -191,7 +191,7 @@ def poly_labels_proc(opt_type):
             cnx_obj.close()
 
             row = db_cursor.fetchall()
-            print "ID: ", row[0][0]
+            # print "ID: ", row[0][0]
             return Response(json.dumps({'index': row[0][0]}), mimetype='application/json')
 
         if opt_type == 'remove_annot':
@@ -258,7 +258,7 @@ def poly_labels_proc(opt_type):
 
             annot_list = list()
             for row in db_cursor.fetchall():
-                print row[3]
+                # print row[3]
                 cur_annot = {'annot_id': row[0], 'obj_class': row[1], 'geo_type': row[2], \
                     'vertexs': make_annot_geostrings(convrt_hexstr_to_doubles(row[3]))}
                 annot_list.append(cur_annot)

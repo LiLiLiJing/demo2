@@ -241,6 +241,7 @@
                 change_projection=change_projectionArr[this.num].innerText;
                 change_bbox=change_bboxArr[this.num].innerText.split(",");
                 //将字符串转化成数字数组
+                extent=[];
                 for(var bbox=0;bbox<change_bbox.length;bbox++){
                     extent.push(parseFloat(change_bbox[bbox]));
                 }
@@ -250,21 +251,15 @@
                     extent:extent
                 });
                 var newMap=document.getElementById("map");
-                var cLayers = map.getLayers();
-                console.log(cLayers);
-                if (cLayers != null) { 
-                    for (var ii = 0; ii < cLayers.length; ii++) {
-                        map.removeLayer(cLayers[ii]);
-                    }
-                }
-
+                window.map.removeLayer(vector);
                 source=null;
                 vector.setSource(source);
             
                     //map=null;
-                newMap.innerHTML="";
-                getInfo();  
-       
+                    newMap.innerHTML="";
+                    getInfo();  
+                
+
             }    
         }
         console.log("1")
@@ -417,10 +412,9 @@
         * @param {string} geoData 几何数据
         * @param {string} attData 属性数据
         */
-        var zoomNum=4;
+
         function saveData(geoStr,geoType,infoType,infoname,workspace,username) {
-            var zoomnum = map.getView().getZoom();
-            zoomNum=zoomnum;
+
             //通过ajax请求将数据传到后台文件进行保存处理
             $.ajax({
                 url: 'http://172.18.77.15:{{store_dict['port_number']}}/poly-labels&commit_annot', //请求地址
@@ -536,14 +530,14 @@
         
         //页面加载完成，右侧信息栏中动态从数据库获取标记信息
         function getInfo(){
-            console.log("2");
+            console.log(change_storename);
             var username = $("#username").val();
             var flag = $(".flag").text();
             
             $.ajax({
                 url:'http://172.18.77.15:{{store_dict['port_number']}}/poly-labels&get_annots',
                 type:'POST',
-                data:{'username':username,'infoname':flag},
+                data:{'username':username,'infoname':change_storename},
                 dataType:'json',
                 success:function(data){
                     //var ul = document.getElementById('items').getElementsByTagName("ul")[0];
@@ -580,10 +574,9 @@
                         target: 'map', //地图容器div的ID
                         view: new ol.View({
                         projection:projection,
-                        center: featureCoor, //地图初始中心点
-                        minZoom: 0.5,
-                        zoom: zoomNum,
-                        maxZoom:10
+                        center: ol.extent.getCenter(extent), //地图初始中心点
+                        minZoom: 2,
+                        zoom: 4,
                         })
                     });
                     var paintArr1=[];
@@ -711,13 +704,12 @@
             //vector=null;
             //map=null;
             featureCoor=ol.extent.getCenter(extent);
-            zoomNum=4;
             newMap.innerHTML="";
             getInfo();
         
         };
         getInfo();
-
+        $('#infoname').val($('.flag').text());
 
 
 
