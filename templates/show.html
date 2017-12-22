@@ -302,10 +302,10 @@
         * @param {string} geoData 几何数据
         * @param {string} attData 属性数据
         */
-        var zoomNum=4;
+        var zoomFirst=4;
+
         function saveData(geoStr,geoType,infoType,infoname,workspace,username) {
-            var zoomnum = map.getView().getZoom();
-            zoomNum=zoomnum;
+            
             //通过ajax请求将数据传到后台文件进行保存处理
             $.ajax({
                 url: 'http://172.18.77.15:{{store_dict['port_number']}}/poly-labels&commit_annot', //请求地址
@@ -355,7 +355,7 @@
         }
 
         var featureCoor=ol.extent.getCenter(extent);
-        console.log(featureCoor);
+        var firstCoor=ol.extent.getCenter(extent);
         function submitData() {
             var geoType = $("#geoType").val(); //几何类型
             var infoType = $("#infoType").val(); //标记类型
@@ -367,7 +367,7 @@
                 //console.log(typeof geoType,typeof infoType,typeof infoname,typeof workspace,typeof username);
                 saveData(geoStr,geoType,infoType,infoname,workspace,username); //将数据提交到后台处理（保存到数据库中）
                 featureCoor=getCenterOfExtent(currentFeature.getGeometry().getExtent());
-
+                zoomFirst=map.getView().getZoom();
                 currentFeature = null;  //置空当前绘制的几何要素
                 geoStr = null; //置空当前绘制图形的geoStr
             }
@@ -491,9 +491,10 @@
                         projection:projection,
                         center: featureCoor, //地图初始中心点
                         minZoom: 2,
-                        zoom: 4,
+                        zoom: zoomFirst,
                         })
                     });
+
                     var paintArr1=[];
                     //console.log(map.getView().getCenter());  //获取地图中心,打印在界面上
                     var c_obj
@@ -551,13 +552,14 @@
                     var delArr=document.getElementsByClassName("deleteInfo");
                     var trInfoArr=document.getElementsByClassName("trInfo");
                     for(var z=0;z<delArr.length;z++){
-                        delArr[z].index=z;
-                        trInfoArr[z].index=z;
+                        delArr[z].delnum=z;
+                        trInfoArr[z].trnum=z;
+
                         delArr[z].onclick=function(){
                             $.ajax({
                                 url:'http://172.18.77.15:{{store_dict['port_number']}}/poly-labels&remove_one_annot',
                                 type:'POST',
-                                data:{annot_id:data[this.index].annot_id},
+                                data:{annot_id:data[this.delnum].annot_id},
                                 dataType:'json',
                                 success:function(response){
                                     var newMap=document.getElementById("map");
@@ -575,23 +577,28 @@
                             });
                         };
                         trInfoArr[z].onmouseover=function(){
+                            
                             var featuresArr=vector.getSource().getFeatures();
                             //console.log(featuresArr[0].B.name);
                             //featuresArr[this.index].setStyle(null);
-                            if(featuresArr[this.index].B.name=data[this.index].annot_id){
-                                var highAlpColor = ol.color.asArray('#1fca04');
-                                highAlpColor = highAlpColor.slice();  
-                                highAlpColor[3] = 0.9;
-                                featuresArr[this.index].setStyle(new ol.style.Style({
-                                    fill: new ol.style.Fill({
-                                        color: 'rgba(255, 255, 255, 0.7)'
-                                    }),
-                                    stroke: new ol.style.Stroke({
-                                        color: '#FF0000',
-                                        width: 2
-                                    }),
-                                }));
+                            for(var ll=0;ll<featuresArr.length;ll++){
+                                console.log(featuresArr[ll].B.name);
+                                if(featuresArr[ll].B.name==data[this.trnum].annot_id){
+                                    var highAlpColor = ol.color.asArray('#1fca04');
+                                    highAlpColor = highAlpColor.slice();  
+                                    highAlpColor[3] = 0.9;
+                                    featuresArr[ll].setStyle(new ol.style.Style({
+                                        fill: new ol.style.Fill({
+                                            color: 'rgba(255, 255, 255, 0.7)'
+                                        }),
+                                        stroke: new ol.style.Stroke({
+                                            color: '#FF0000',
+                                            width: 2
+                                        }),
+                                    }));
+                                }
                             }
+                            
                         }
                         trInfoArr[z].onmouseout=function(){
                             var featuresArr=vector.getSource().getFeatures();
@@ -616,7 +623,8 @@
             vector.setSource(source);
             //vector=null;
             //map=null;
-            featureCoor=ol.extent.getCenter(extent);
+            featureCoor=firstCoor;
+            zoomFirst=4;
             newMap.innerHTML="";
             getInfo();
         
