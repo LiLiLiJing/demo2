@@ -355,6 +355,7 @@
         }
 
         var featureCoor=ol.extent.getCenter(extent);
+        console.log(featureCoor);
         function submitData() {
             var geoType = $("#geoType").val(); //几何类型
             var infoType = $("#infoType").val(); //标记类型
@@ -489,9 +490,8 @@
                         view: new ol.View({
                         projection:projection,
                         center: featureCoor, //地图初始中心点
-                        minZoom: 0.5,
-                        zoom: zoomNum,
-                        maxZoom:10
+                        minZoom: 2,
+                        zoom: 4,
                         })
                     });
                     var paintArr1=[];
@@ -608,7 +608,6 @@
                     console.log('错误');
                 }
             })
-            console.log(">>>>>> GetInfo() >>>>>>");
         }
         userNameSelect.onchange = function (e) {
             var newMap=document.getElementById("map");
@@ -618,7 +617,6 @@
             //vector=null;
             //map=null;
             featureCoor=ol.extent.getCenter(extent);
-            zoomNum=4;
             newMap.innerHTML="";
             getInfo();
         

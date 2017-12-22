@@ -579,9 +579,10 @@
                         zoom: 4,
                         })
                     });
+                    console.log(ol.extent.getCenter(extent));
                     var paintArr1=[];
                     //console.log(map.getView().getCenter());  //获取地图中心,打印在界面上
-                    var c_obj
+                    var c_obj;
                     for(var a=0;a<bigArr.length;a++){
                         var strArr= [];
                         for(var b=0;b<bigArr[a].length;b++){
