@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <title>无标题文档</title>
 <script src="../static/libs/jquery-1.11.2.min.js" type="text/javascript"></script>
+<script type="text/javascript" src="../static/js/jquery.form.js"></script>
 <style type="text/css">
 	*{
 		margin:0;
@@ -107,7 +108,7 @@
 <body>
 	<div id='ws_list'>{{store_dict['ws_list']}}</div>
     	<!-- <div class="head">标注任务详细描述</div> -->
-        <form action="http://172.18.77.15:31555/lblorder-manip&create-order" method="POST">
+        <form action="http://172.18.77.15:31555/lblorder-manip&create-order" method="POST" id="infoForm">
         <fieldset>
             <legend>标注任务详细描述</legend>
         	<div class="firBlock clearfix marBot">
@@ -146,7 +147,7 @@
 		function getType(){
 			$.ajax({
 	                url: 'http://172.18.77.15:31555/poly-labels&get_objclass', //请求地址
-	                type: 'GET',  //请求方式为post    
+	                type: 'GET',     
 	                dataType: 'JSON', //返回数据格式
 	                //请求成功完成后要执行的方法  
 	                success: function (response) {     
@@ -192,7 +193,7 @@
 			var newArr=[];
 			if(textArr.length==1){
 				newArr.push(textArr[0].slice(2,textArr[0].length-1));
-				console.log(newArr);
+				//console.log(newArr);
 			}else{
 				newArr.push(textArr[0].slice(2,textArr[0].length-1));
 				for(var k=1;k<textArr.length;k++){
@@ -224,4 +225,12 @@
 		getName();
 		getFile();
 		$("#ws_list").css("display","none");
+		$(function(){
+			$("#infoForm").ajaxForm(function(data){
+				//console.log(data.code);
+				if(data.code==200){
+					window.location.href="http://172.18.77.15:31555/show-lblordrs-ui";
+				}
+			})
+		});
 </script>

@@ -89,6 +89,7 @@
             max-width:1660px;
             overflow:auto;
         }
+        
     </style>
 </head>
 <body>
@@ -566,7 +567,8 @@
                                     window.map.removeLayer(vector);
                                     source=null;
                                     vector.setSource(source);
-            
+                                    featureCoor=ol.extent.getCenter(extent);
+                                    zoomFirst=4;
                                     //map=null;
                                     newMap.innerHTML="";
                                     getInfo();
@@ -582,7 +584,7 @@
                             //console.log(featuresArr[0].B.name);
                             //featuresArr[this.index].setStyle(null);
                             for(var ll=0;ll<featuresArr.length;ll++){
-                                console.log(featuresArr[ll].B.name);
+                                //console.log(featuresArr[ll].B.name);
                                 if(featuresArr[ll].B.name==data[this.trnum].annot_id){
                                     var highAlpColor = ol.color.asArray('#1fca04');
                                     highAlpColor = highAlpColor.slice();  
@@ -639,7 +641,13 @@
             type:'get',
             dataType:'json',
             success:function(data){
-                $('#type').html("<option value='None' selected='selected'>None</option><option value='Polygon' >"+data[0]+"</option><option value='LineString'>"+data[1]+"</option><option value='"+data[2]+"'>"+data[2]+"</option><option value='"+data[3]+"'>"+data[3]+"</optio n><option value='"+data[4]+"'>"+data[4]+"</option>");
+                /*var strType="";
+                strType="<option value='None' selected='selected'>None</option>";
+                for(var k=0;k<data.length;k++){
+                    strType+="<option value='"+data[i]+"'>"+data[i]+"<option>";
+                }
+                $('#type').html(strType);*/
+                $('#type').html("<option value='None' selected='selected'>None</option><option value='Polygon' >"+data[0]+"</option><option value='LineString'>"+data[1]+"</option><option value='"+data[2]+"'>"+data[2]+"</option><option value='"+data[3]+"'>"+data[3]+"</option><option value='"+data[4]+"'>"+data[4]+"</option>");
                 var str="";
                 for(var i=0;i<data.length;i++){
                     str += "<option value='"+data[i]+"'>"+data[i]+"</option>";

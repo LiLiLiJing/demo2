@@ -104,19 +104,46 @@
         .bor{
             border:1px solid red;
         }
+        .disNone{
+            display:none;
+        }
+        .infoBox{
+            cursor:pointer;
+        }
+        .picBox{
+            margin-left:30px;
+        }
+        .navImg img{
+            width:100px;
+            height:100px;
+        }
+        .navImg li{
+            float:left;
+            border:1px solid red;
+            margin-right: 10px;
+            margin-top: 5px;
+            display:table-cell;
+            text-align:center;
+            cursor:pointer;
+        }
+        .navImg span{
+            display:block;
+        }
     </style>
 </head>
 <body>
-<div>{{store_dict['id']}}</div>
-<div id="need_type">{{store_dict['objtypes']}}</div>
-<div id="need_user">{{store_dict['users']}}</div>
-<div class="clearfix">
+<div id="need_id" class="disNone">{{store_dict['id']}}</div>
+<div id="need_type" class="disNone">{{store_dict['objtypes']}}</div>
+<div id="need_user" class="disNone">{{store_dict['users']}}</div>
+<div class="clearfix disNone">
     {% for store_info in store_dict['storeinfos'] %}
     <div class="fl bor infoBox">
-        <li class="workspacename">{{store_info['workspacename']}}</li>
-        <li class="storename">{{store_info['storename']}}</li>
-        <li class="projection">{{store_info['projection']}}</li>
-        <li class="bbox">{{store_info['bbox'][0]}},{{store_info['bbox'][2]}},{{store_info['bbox'][1]}},{{store_info['bbox'][3]}}</li>
+        <ul>
+            <li class="workspacename">{{store_info['workspacename']}}</li>
+            <li class="storename">{{store_info['storename']}}</li>
+            <li class="projection">{{store_info['projection']}}</li>
+            <li class="bbox">{{store_info['bbox'][0]}},{{store_info['bbox'][2]}},{{store_info['bbox'][1]}},{{store_info['bbox'][3]}}</li>
+        </ul>
     </div>
     {% endfor %}
 </div>
@@ -182,10 +209,13 @@
             
         </div>
     </div>
-    <div class="navImg">
-        <ul></ul>
+    <div class="picBox">
+        <div class="navImg">
+            <ul id="imgs" class="clearfix"></ul>
+        </div>
     </div>
     <script type="text/javascript">
+    $(".flag").css("display","none");
       //改变下拉标记内容  
     var need_type_arr=$("#need_type").text().slice(9).split(",");
     var str_type="";
@@ -209,7 +239,55 @@
     var change_workspace;
     var change_storename;
     var change_projection;
-    var change_bbox=change; 
+    var change_bbox=change;
+    var infoBoxLi;
+    //轮播图 
+    
+    function Picture(){
+        var picStorenameArr=document.getElementsByClassName("storename");
+        var picWorkspaceArr=document.getElementsByClassName("workspacename");
+        var dd=0;
+        var str="";
+        for(var d=0;d<picWorkspaceArr.length;d++){
+            
+            
+            $.ajax({
+                url:'http://172.18.77.15:31555/thumbnail&'+picWorkspaceArr[d].innerText,
+                type:'get',
+                dataType:'JSON',
+                success:function(data){
+                    var picStorename=picStorenameArr[dd].innerText; 
+                    var picWorkspace=picWorkspaceArr[dd].innerText;    
+                    for(var ddd=0;ddd<data.length;ddd++){
+                        if(data[ddd].name==picStorename){
+                            str+="<li class='infoBoxLi'><img src='"+data[ddd].url+"' ><span>"+picWorkspace+"</span><span>"+data[ddd].name+"</span></li>";
+                            
+                            $("#imgs").html(str);
+                        }
+                    }
+                    dd++;
+                    /*var infoBoxLi=$(".infoBoxLi");
+                    for(var iii=0;iii<infoBoxLi.length;iii++){
+                        infoBoxLi[iii].index=iii;
+                        infoBoxLi[iii].onclick=function(){
+                            console.log(this.index);
+                        }
+                    }*/
+                    change();
+                }
+
+            })
+
+        }
+
+        
+        
+        
+    }
+    Picture();
+    
+
+    
     //获取需要更改的信息
     function change(){
         var change_workspaceArr=document.getElementsByClassName("workspacename");
@@ -220,6 +298,8 @@
         change_storename=change_storenameArr[0].innerText;
         change_projection=change_projectionArr[0].innerText;
         change_bbox=change_bboxArr[0].innerText.split(",");
+        $('#infoname').val(change_storename);
+        $('#workspace').val(change_workspace);
         //将字符串转化成数字数组
         for(var bbox=0;bbox<change_bbox.length;bbox++){
             extent.push(parseFloat(change_bbox[bbox]));
@@ -231,7 +311,8 @@
         });
 
         //获取信息盒子
-        var infoBox=$(".infoBox");
+        var infoBox=$(".infoBoxLi");
+        //console.log(infoBox);
         for(var boxi=0;boxi<infoBox.length;boxi++){
             infoBox[boxi].num = boxi;
             //每个div绑定点击事件
@@ -240,6 +321,8 @@
                 change_storename=change_storenameArr[this.num].innerText;
                 change_projection=change_projectionArr[this.num].innerText;
                 change_bbox=change_bboxArr[this.num].innerText.split(",");
+                $('#infoname').val(change_storename);
+                $('#workspace').val(change_workspace);
                 //将字符串转化成数字数组
                 extent=[];
                 for(var bbox=0;bbox<change_bbox.length;bbox++){
@@ -254,17 +337,19 @@
                 window.map.removeLayer(vector);
                 source=null;
                 vector.setSource(source);
-            
+                    
                     //map=null;
+                    featureCoor=ol.extent.getCenter(extent);
+                    zoomFirst=4;
                     newMap.innerHTML="";
                     getInfo();  
                 
 
             }    
         }
-        console.log("1")
     }
-    change();//调用更改信息函数
+    change();
+    //调用更改信息函数
 
     
         var setSize=document.getElementById("setSize");
@@ -412,7 +497,7 @@
         * @param {string} geoData 几何数据
         * @param {string} attData 属性数据
         */
-
+        var zoomFirst=4;
         function saveData(geoStr,geoType,infoType,infoname,workspace,username) {
 
             //通过ajax请求将数据传到后台文件进行保存处理
@@ -464,6 +549,7 @@
         }
 
         var featureCoor=ol.extent.getCenter(extent);
+        var firstCoor=ol.extent.getCenter(extent);
         function submitData() {
             var geoType = $("#geoType").val(); //几何类型
             var infoType = $("#infoType").val(); //标记类型
@@ -475,6 +561,7 @@
                 //console.log(typeof geoType,typeof infoType,typeof infoname,typeof workspace,typeof username);
                 saveData(geoStr,geoType,infoType,infoname,workspace,username); //将数据提交到后台处理（保存到数据库中）
                 featureCoor=getCenterOfExtent(currentFeature.getGeometry().getExtent());
+                zoomFirst=map.getView().getZoom();
 
                 currentFeature = null;  //置空当前绘制的几何要素
                 geoStr = null; //置空当前绘制图形的geoStr
@@ -530,7 +617,7 @@
         
         //页面加载完成，右侧信息栏中动态从数据库获取标记信息
         function getInfo(){
-            console.log(change_storename);
+
             var username = $("#username").val();
             var flag = $(".flag").text();
             
@@ -574,12 +661,12 @@
                         target: 'map', //地图容器div的ID
                         view: new ol.View({
                         projection:projection,
-                        center: ol.extent.getCenter(extent), //地图初始中心点
+                        center: featureCoor, //地图初始中心点
                         minZoom: 2,
-                        zoom: 4,
+                        zoom: zoomFirst,
                         })
                     });
-                    console.log(ol.extent.getCenter(extent));
+
                     var paintArr1=[];
                     //console.log(map.getView().getCenter());  //获取地图中心,打印在界面上
                     var c_obj;
@@ -637,20 +724,21 @@
                     var delArr=document.getElementsByClassName("deleteInfo");
                     var trInfoArr=document.getElementsByClassName("trInfo");
                     for(var z=0;z<delArr.length;z++){
-                        delArr[z].index=z;
-                        trInfoArr[z].index=z;
+                        delArr[z].delnum=z;
+                        trInfoArr[z].trnum=z;
                         delArr[z].onclick=function(){
                             $.ajax({
                                 url:'http://172.18.77.15:{{store_dict['port_number']}}/poly-labels&remove_one_annot',
                                 type:'POST',
-                                data:{annot_id:data[this.index].annot_id},
+                                data:{annot_id:data[this.delnum].annot_id},
                                 dataType:'json',
                                 success:function(response){
                                     var newMap=document.getElementById("map");
                                     window.map.removeLayer(vector);
                                     source=null;
                                     vector.setSource(source);
-            
+                                    featureCoor=ol.extent.getCenter(extent);
+                                    zoomFirst=4;
                                     //map=null;
                                     newMap.innerHTML="";
                                     getInfo();
@@ -664,19 +752,21 @@
                             var featuresArr=vector.getSource().getFeatures();
                             //console.log(featuresArr[0].B.name);
                             //featuresArr[this.index].setStyle(null);
-                            if(featuresArr[this.index].B.name=data[this.index].annot_id){
-                                var highAlpColor = ol.color.asArray('#1fca04');
-                                highAlpColor = highAlpColor.slice();  
-                                highAlpColor[3] = 0.9;
-                                featuresArr[this.index].setStyle(new ol.style.Style({
-                                    fill: new ol.style.Fill({
-                                        color: 'rgba(255, 255, 255, 0.7)'
-                                    }),
-                                    stroke: new ol.style.Stroke({
-                                        color: '#FF0000',
-                                        width: 2
-                                    }),
-                                }));
+                            for(var ll=0;ll<featuresArr.length;ll++){
+                                if(featuresArr[ll].B.name==data[this.trnum].annot_id){
+                                    var highAlpColor = ol.color.asArray('#1fca04');
+                                    highAlpColor = highAlpColor.slice();  
+                                    highAlpColor[3] = 0.9;
+                                    featuresArr[ll].setStyle(new ol.style.Style({
+                                        fill: new ol.style.Fill({
+                                            color: 'rgba(255, 255, 255, 0.7)'
+                                        }),
+                                        stroke: new ol.style.Stroke({
+                                            color: '#FF0000',
+                                            width: 2
+                                        }),
+                                    }));
+                                }
                             }
                         }
                         trInfoArr[z].onmouseout=function(){
@@ -704,13 +794,14 @@
             vector.setSource(source);
             //vector=null;
             //map=null;
-            featureCoor=ol.extent.getCenter(extent);
+            featureCoor=firstCoor;
+            zoomFirst=4;
             newMap.innerHTML="";
             getInfo();
         
         };
         getInfo();
-        $('#infoname').val($('.flag').text());
+        
 
 
 
