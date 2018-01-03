@@ -151,6 +151,8 @@
 		//页面加载完成根据数据库显示文件
 	var need = document.getElementsByClassName("need");
 	//showFile();//调用函数向后台发送请求动态显示文件夹
+	
+	function show(){
 	$(document).ready(function(){
 		$.ajax({
                 url: 'http://172.18.77.15:{{store_dict['port_number']}}/folder-traverse&listdirs', //请求地址
@@ -199,7 +201,9 @@
 							}
 				//删除文件夹
 							need[2].onclick=function(){
+								delFile(name);
 								tag.parentNode.removeChild(tag);
+								
 							}
 							need[4].onclick=function(){
 								window.location.href="http://172.18.77.15:{{store_dict['port_number']}}/folder-result&"+name;
@@ -211,6 +215,34 @@
             }     
         });
 	})
+}
+		function creatFiles(filename){
+			$.ajax({
+				url:'http://172.18.77.15:{{store_dict['port_number']}}/folder-traverse&createdir:'+filename,
+				success:function(response){
+					show();
+				},
+				error:function(response){
+					console.log("创建失败");
+				}
+			})
+
+		}
+		function delFile(name){
+			
+			$.ajax({
+				url:'http://172.18.77.15:31555/folder-traverse&deletedir:'+name,
+				
+				type:'POST',
+				success:function(data){
+					
+				},
+				error:function(){
+					console.log("1");
+				}
+			})
+		}
+		show();
 		need[3].onclick=function(){
 				var name = window.prompt("请输入文件夹名字");
 				if(name!==null){
@@ -246,17 +278,6 @@
 			}
 			}
 		//向后台发送创建文件夹请求
-		function creatFiles(filename){
-			$.ajax({
-				url:'http://172.18.77.15:{{store_dict['port_number']}}/folder-traverse&createdir:'+filename,
-				success:function(response){
-					console.log("创建成功");
-				},
-				error:function(response){
-					console.log("创建失败");
-				}
-			})
-
-		}
+		
 		
 	</script>

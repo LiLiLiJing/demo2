@@ -246,7 +246,7 @@ def poly_labels_proc(opt_type):
             db_cursor = cnx_obj.cursor()
 
             # print "Form: ", get_annot_req
-            sql_cmd = "SELECT aa._id, obj_types.type_name, geo_types.type_name, aa.vertex " \
+            sql_cmd = "SELECT aa._id, obj_types.type_name, geo_types.type_name, aa.vertex, aa.detailtype " \
                 + "FROM (SELECT * FROM annot " \
                 + "WHERE annot.uid IN (SELECT user._id FROM user WHERE user.uname ='%s')" % (get_annot_req['username']) \
                 + "AND annot.imgnm = '%s') AS aa " % (get_annot_req['infoname']) \
@@ -260,10 +260,34 @@ def poly_labels_proc(opt_type):
             for row in db_cursor.fetchall():
                 # print row[3]
                 cur_annot = {'annot_id': row[0], 'obj_class': row[1], 'geo_type': row[2], \
-                    'vertexs': make_annot_geostrings(convrt_hexstr_to_doubles(row[3]))}
+                    'vertexs': make_annot_geostrings(convrt_hexstr_to_doubles(row[3])), \
+                    'detailtype': row[4]}
                 annot_list.append(cur_annot)
 
             return Response(json.dumps(annot_list), mimetype='application/json')
+
+        if opt_type == 'add_desc':
+            '''
+            2018-1-2, 14:50, update the detailed descriptions about the current annotation.
+            '''
+            detaildesc_req = request.form
+
+            cnx_obj = mysql.connector.connect(**mysql_config)
+            db_cursor = cnx_obj.cursor()
+
+            # print "Form: ", detaildesc_req
+            sql_cmd = "update RSISS.annot set detailtype='%s' where _id=%s" \
+                % (detaildesc_req['detailtype'], detaildesc_req['id'])
+
+            db_cursor.execute("SET SQL_SAFE_UPDATES = 0;")
+            cnx_obj.commit()
+
+            db_cursor.execute(sql_cmd)
+            cnx_obj.commit()
+            
+            cnx_obj.close()
+
+            return jsonify({'code': 200, 'id': detaildesc_req['id']})
 
     elif request.method == 'GET':
         if opt_type == 'get_objclass':

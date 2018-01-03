@@ -34,7 +34,7 @@
 		position:relative;
 		}
 	fieldset{
-		padding-left:15px;
+		padding:0 15px;
 		border:2px solid #ccc;
 	}
 	legend{
@@ -86,21 +86,30 @@
 	}
 	.fourBlock textarea{
 		outline:none;
-		width:420px;
-		height:20px;
+		width:480px;
+		height:100px;
 		font-size:14px;
 		resize: none;
 	}
 	.fourBlock textarea:focus{
-		outline:none;
-		width:420px;
-		height:100px;
+		
 		border:1px solid skyblue;
 	}
 	input[name=workspace]{
 		border:none;
 		font-size:20px;
 		color:rgba(0,0,0,0.5);
+	}
+	.fixHeight{
+		height:150px;
+		overflow-y:auto;
+		width:220px;
+		margin-top:2px;
+	}
+	.space{
+		height:1px;
+		width:100%;
+		background-color:#ccc;
 	}
 </style>
 </head>
@@ -117,18 +126,21 @@
         			
         		</div>
         	</div>
+        	<div class="space"></div>
         	<div class="secBlock clearfix marBot">
             	<div class="title f_l">目标类型:</div>
-                <div class="secDes f_l">
+                <div class="secDes f_l fixHeight">
                 	
                 </div>
             </div>
+            <div class="space"></div>
             <div class="thirdBlock clearfix marBot">
             	<div class="title f_l">指定用户:</div>
-                <div class="thiDes f_l">
+                <div class="thiDes f_l fixHeight">
 
                 </div>
             </div>
+            <div class="space"></div>
             <div class="fourBlock marBot">
             	<div class="title">其他说明:</div>
             	<div>

@@ -129,6 +129,14 @@
         .navImg span{
             display:block;
         }
+        .navImg{
+            height:200px;
+            width:1500px;
+            overflow-y:scroll;
+            border:1px solid #ddd;
+            margin-top:10px;
+            padding:5px 0;
+        }
     </style>
 </head>
 <body>
@@ -317,6 +325,10 @@
             infoBox[boxi].num = boxi;
             //每个div绑定点击事件
             infoBox[boxi].onclick=function(){
+                for(var boxa=0;boxa<infoBox.length;boxa++){
+                    infoBox[boxa].style.border="1px solid red";
+                }
+                this.style.border="1px solid blue";
                 change_workspace=change_workspaceArr[this.num].innerText;
                 change_storename=change_storenameArr[this.num].innerText;
                 change_projection=change_projectionArr[this.num].innerText;

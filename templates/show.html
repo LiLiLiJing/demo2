@@ -71,7 +71,16 @@
         } 
         #itemsInfo table{
             display:block;
-            width:190px;
+            width:250px;
+        }
+        #itemsInfo table td{
+            text-align:center;
+        }
+        #itemsInfo table td input{
+            width:70px;
+            border:none;
+            background-color:#ccc;
+            font-size:16px;
         }
         #itemsInfo .trInfo{
             cursor:pointer;
@@ -89,7 +98,13 @@
             max-width:1660px;
             overflow:auto;
         }
-        
+        .updata{
+            word-wrap:break-word;
+            word-break:break-all;
+            white-space: pre-wrap;
+            max-width:90px;
+        }
+
     </style>
 </head>
 <body>
@@ -440,7 +455,38 @@
             })
         }
         getName();
- 
+        
+        function edit(element,up_id){
+
+        　  var oldhtml = element.innerHTML;//获得元素之前的内容
+        　  var newobj = document.createElement('input');//创建一个input元素
+        　  newobj.type = 'text';//为newobj元素添加类型
+            newobj.value=oldhtml;
+        　  element.innerHTML = '';　　 //设置元素内容为空
+        　  element.appendChild(newobj);//添加子元素
+        　  newobj.focus();//获得焦点
+          //设置newobj失去焦点的事件
+        　  newobj.onblur = function(){
+           //下面应该判断是否做了修改并使用ajax代码请求服务端将id与修改后的数据提交
+                
+              //当触发时判断newobj的值是否为空，为空则不修改，并返回oldhtml
+            element.innerHTML = this.value ? this.value : oldhtml;
+            $.ajax({
+                url:'http://172.18.77.15:{{store_dict['port_number']}}/poly-labels&add_desc',
+                type:'POST',
+                data:{"id":up_id,"detailtype":element.innerHTML},
+                dataType:'json',
+                success:function(data){
+                    
+                },
+                error:function(err){
+                    console.log("错误");
+                }
+            })
+           }
+        }
+
+
         //声明一个数组，用来装坐标信息数组
         
         //页面加载完成，右侧信息栏中动态从数据库获取标记信息
@@ -455,6 +501,7 @@
                 dataType:'json',
                 success:function(data){
                     //var ul = document.getElementById('items').getElementsByTagName("ul")[0];
+                    
                     var itemsInfo=document.getElementById("itemsInfo");
                     itemsInfo.innerHTML="";
                     //ul.innerHTML="";
@@ -462,13 +509,13 @@
                     var paintArr2=[];
                         
                         var strInfo="";
-                        strInfo +="<table><thead><tr><th>序号</th><th>内容</th><th>操作</th></tr></thead>";
+                        strInfo +="<table><thead><tr><th>序号</th><th>内容</th><th>详情信息</th><th>操作</th></tr></thead>";
                         strInfo +="<tbody>";
                         if(data.length==0){
                             strInfo="";
                         }
                         for(var i=0;i<data.length;i++){
-                        strInfo += "<tr class='trInfo'><td>"+data[i].annot_id+"</td><td>"+data[i].obj_class+"</td><td class='deleteInfo'>删除</td></tr>";
+                            strInfo += "<tr class='trInfo'><td>"+data[i].annot_id+"</td><td>"+data[i].obj_class+"</td><td class='updata'>"+data[i].detailtype+"</td><td class='deleteInfo'>删除</td></tr>";
                         var coordinateArr=data[i].vertexs.split(";");
                     
                         bigArr.push(coordinateArr);
@@ -552,6 +599,14 @@
                     
                     var delArr=document.getElementsByClassName("deleteInfo");
                     var trInfoArr=document.getElementsByClassName("trInfo");
+                    var updataArr=$(".updata");
+                    for(var zz=0;zz<updataArr.length;zz++){
+                        updataArr[zz].upnum=zz;
+                        updataArr[zz].onclick=function(){
+                            var up_id=data[this.upnum].annot_id;
+                            edit(this,up_id);
+                        }
+                    }
                     for(var z=0;z<delArr.length;z++){
                         delArr[z].delnum=z;
                         trInfoArr[z].trnum=z;
@@ -560,7 +615,7 @@
                             $.ajax({
                                 url:'http://172.18.77.15:{{store_dict['port_number']}}/poly-labels&remove_one_annot',
                                 type:'POST',
-                                data:{annot_id:data[this.delnum].annot_id},
+                                data:{'annot_id':data[this.delnum].annot_id},
                                 dataType:'json',
                                 success:function(response){
                                     var newMap=document.getElementById("map");
@@ -647,7 +702,14 @@
                     strType+="<option value='"+data[i]+"'>"+data[i]+"<option>";
                 }
                 $('#type').html(strType);*/
-                $('#type').html("<option value='None' selected='selected'>None</option><option value='Polygon' >"+data[0]+"</option><option value='LineString'>"+data[1]+"</option><option value='"+data[2]+"'>"+data[2]+"</option><option value='"+data[3]+"'>"+data[3]+"</option><option value='"+data[4]+"'>"+data[4]+"</option>");
+                /*$('#type').html("<option value='None' selected='selected'>None</option><option value='Polygon' >"+data[0]+"</option><option value='LineString'>"+data[1]+"</option><option value='"+data[2]+"'>"+data[2]+"</option><option value='"+data[3]+"'>"+data[3]+"</option><option value='"+data[4]+"'>"+data[4]+"</option>");*/
+                var strOpt="<option value='None' selected='selected'>None</option>";
+                strOpt +="";
+                for(k=0;k<data.length;k++){
+                    strOpt += "<option value='"+data[k]+"' >"+data[k]+"</option>";
+                }
+                
+                $('#type').html(strOpt);
                 var str="";
                 for(var i=0;i<data.length;i++){
                     str += "<option value='"+data[i]+"'>"+data[i]+"</option>";
