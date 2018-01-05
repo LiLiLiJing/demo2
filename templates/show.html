@@ -65,9 +65,11 @@
             float:right;
         }
         #itemsInfo{
-            width:200px;
+            width:270px;
             display:inline-block;
             margin-left:25px;
+            height:650px;
+            overflow-y:auto;
         } 
         #itemsInfo table{
             display:block;
@@ -100,11 +102,27 @@
         }
         .updata{
             word-wrap:break-word;
-            word-break:break-all;
+            word-break:keep-all;
             white-space: pre-wrap;
             max-width:90px;
         }
+        .disnone{
+            display:none;
+        }
+        #layer1{
+            margin-left:30px;
+            
+            border:none;
+            position:relative;
+        }
+        #layer1 .opacity{
+            display:inline-block;
+            width:200px;
+            height:30px;
+            position:absolute;
+            top:24px;
 
+        }
     </style>
 </head>
 <body>
@@ -171,6 +189,35 @@
     </div>
     <div class="navImg">
         <ul></ul>
+    </div>
+    <div>
+        <fieldset id="layer2" class="disnone">
+                        <label class="checkbox" for="visible2">
+                            <input id="visible2" class="visible" type="checkbox" checked="checked" />是否可见
+                        </label>
+                        <label>透明度</label>
+                        <input class="opacity" type="range" min="0" max="1" step="0.01"/><br />
+                    </fieldset>
+    </div>
+    <div>
+        <fieldset id="layer1" class="disnone">
+                      <label class="checkbox" for="visible1">
+                          <input id="visible1" class="visible" type="checkbox"/>是否可见
+                      </label><br />
+                      <label>
+                      透明度:<input class="opacity" type="range" min="0" max="1" step="0.01"/><br />
+                      </label>
+                    </fieldset>
+    </div>
+    <div>
+        <fieldset id="layer0" class="disnone">
+                        <label class="checkbox" for="visible0">
+                            <input id="visible0" class="visible" type="checkbox"/>是否可见
+                        </label><br />
+                        <label>透明度</label>
+                        <input class="opacity" type="range" min="0" max="1" step="0.01"/><br />
+                        
+                    </fieldset>
     </div>
     <script type="text/javascript">
         var setSize=document.getElementById("setSize");
@@ -523,6 +570,36 @@
                         strInfo +="</tbody></table>"
                         itemsInfo.innerHTML=strInfo;
                         
+                        //新加透明度代码
+                    /*var format = 'image/png';
+                    var bounds = [15560835.88090661, 4238555.695861422,
+                    15561776.645743217, 4239898.4779405715];
+
+                    var untiled = new ol.layer.Image({
+                        source: new ol.source.ImageWMS({
+                            ratio: 1,
+                            url: 'http://172.18.77.15:8089/geoserver/globalairports/wms',
+                            params: {'FORMAT': format,
+                                     'VERSION': '1.1.1',  
+                                     LAYERS: 'globalairports:hengbing_20171222_09_32_55_681929_AsynPlane',
+                                     STYLES: '',
+                                    }
+                        })
+                    });
+                    var tiled = new ol.layer.Tile({
+                        visible: false,
+                        source: new ol.source.TileWMS({
+                            url: 'http://172.18.77.15:8089/geoserver/globalairports/wms',
+                            params: {'FORMAT': format, 
+                                    'VERSION': '1.1.1',
+                                    tiled: true,
+                                    LAYERS: 'globalairports:hengbing_20171222_09_32_55_681929_AsynPlane',
+                                    STYLES: '',
+                                    tilesOrigin: 15560835.88090661 + "," + 4238555.695861422
+                            }
+                        })
+                    });*/
+
                     map = new ol.Map({
                         layers: [
                             new ol.layer.Image({
@@ -532,7 +609,7 @@
                                     serverType: 'geoserver'
                                 })  
                             }),
-                
+                            
                         ],
                         target: 'map', //地图容器div的ID
                         view: new ol.View({
@@ -542,6 +619,34 @@
                         zoom: zoomFirst,
                         })
                     });
+                    //添加到map中
+                    /*map.addLayer(untiled);
+                    map.addLayer(tiled);
+                    map.getView().fit(bounds, map.getSize());*/         
+                    //更改透明度函数
+                    /*function bindInputs(layerid, layer) {
+                        var visibilityInput = $(layerid + ' input.visible');//是否可见控件
+                        visibilityInput.on('change', function () {//绑定change事件
+                            layer.setVisible(this.checked);//设置图层的可见性
+                        });
+                        visibilityInput.prop('checked', layer.getVisible());//更新可见控件状态
+                        //遍历其他显示样式属性，依次绑定change事件
+                        $.each(['opacity'],
+                            function (i, v) {
+                                var input = $(layerid + ' input.' + v);
+                                input.on('input change', function () {
+                                    layer.set(v, parseFloat(this.value));//根据当前控件值设置对应的图层显示属性值
+                                });
+                                input.val(String(layer.get(v)));//更新当前显示属性控件状态（值）
+                            }
+                        );
+                    }*/
+                    //调用更改透明度函数
+                    /*map.getLayers().forEach(function (layer,i) {
+                        bindInputs('#layer'+i, layer);//调用绑定图层显示样式控件的处理函数
+                    });*/
+
+
 
                     var paintArr1=[];
                     //console.log(map.getView().getCenter());  //获取地图中心,打印在界面上
@@ -594,6 +699,10 @@
                     });
                     map.addLayer(vector); //将绘制层添加到地图容器中
                     addInteraction(); 
+
+                
+        
+
 
                     //双击右边列表数据，删除相应的图形  构造函数deleteOne()
                     
