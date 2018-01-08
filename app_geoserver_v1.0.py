@@ -695,21 +695,6 @@ def hproc_getjobresult_bysavstorenm(job_storenm):
     '''
     2017-12-21, 9:30, getting the result of the job by the saved storename.
     '''
-    # cnx_obj = mysql.connector.connect(**mysql_config)
-    # db_cursor = cnx_obj.cursor()
-
-    # sql_cmd = "select result from job where job.path = '%s';" % job_storenm
-    # db_cursor.execute(sql_cmd)
-    # cnx_obj.close()
-
-    # result_list = list()
-    # for row in db_cursor.fetchall():
-    #     result_list.append(row[0])
-
-    # if len(result_list) <= 0:
-    #     return None
-    # else:
-    #     return result_list[0]
     ws_list = cat.get_workspaces()
     for ws_obj in ws_list:
         curws_lyrgrps = cat.get_layergroups(workspace=ws_obj)
@@ -717,6 +702,7 @@ def hproc_getjobresult_bysavstorenm(job_storenm):
             curgrp_lyrnms = grp_obj.layers
             if job_storenm in curgrp_lyrnms:
                 return grp_obj.name, grp_obj
+
     return None, None
 
 
@@ -852,9 +838,32 @@ def labelorder_manip(opt_type):
         db_cursor = cnx_obj.cursor()
 
         order_no = request.form['order_no']
-        sql_cmd = "select path, params, start_time, description from job where job._id = %s;" % order_no
+        sql_cmd = "select _id, path, params, start_time, description from job where job._id = %s;" % order_no
         db_cursor.execute(sql_cmd)
         cnx_obj.close()
+
+    elif opt_type_split[0] == "get-specusr-order":
+        # get the order related to a specific user
+        cnx_obj = mysql.connector.connect(**mysql_config)
+        db_cursor = cnx_obj.cursor()
+
+        user_name = request.form['user_name']
+        sql_cmd = "select _id, path, params, start_time, description from job " \
+            + "where (job.params regexp '^AnnotJob') and (job.params like '\%%s\%')" % (user_name)
+        db_cursor.execute(sql_cmd)
+        cnx_obj.close()
+
+        usr_annotjobs_list = list()
+        for row in db_cursor.fetchall():
+            cur_id, cur_pathstr, cur_params, cur_starttime, cur_desc = row
+            cur_workspace, cur_objtypes = cur_pathstr.split(';')
+
+            cur_info = {'id': cur_id, 'workspace': cur_workspace, 'objtypes': cur_objtypes, \
+                'users': 'Users:%s' % user_name, 'description': cur_desc, "start_time": cur_starttime}
+
+            usr_annotjobs_list.append(cur_info)
+
+        return jsonify(usr_annotjobs_list)
 
     elif opt_type_split[0] == "proc-order":
         # import ipdb; ipdb.set_trace()
@@ -922,6 +931,26 @@ def showgroup(grp_name):
     return render_template('algo_regionsel.html',store_dict=store_dict)
 
 
+@app.route('/showgroup-transp/<string:grp_name>', methods=['GET', 'POST'])
+def showgroup_transp(grp_name):
+    workspace_name, groupname=grp_name.split(':')
+    print ">>>> Showgroup-transp, ws ", workspace_name, ", gpname ", groupname
+
+    resource = cat.get_layergroup(name=groupname, workspace=cat.get_workspace(workspace_name))
+    resrc0_proj = cat.get_layer(resource.layers[0]).resource.projection
+
+    store_dict = {}
+    store_dict['bbox'] = resource.bounds
+    store_dict['workspacename'] = workspace_name
+
+    store_dict['storename1'] = resource.layers[0]
+    store_dict['storename2'] = resource.layers[1]
+
+    store_dict['projection'] = resrc0_proj
+
+    return render_template('algo_regionsel_transtack.html',store_dict=store_dict)
+
+
 @app.route('/logstate', methods=['GET', 'POST'])
 def logstate():
     if 'username' in session:
@@ -945,18 +974,45 @@ def index():
         # import ipdb; ipdb.set_trace()
         session['username'] = request.form['form-username']
         password = request.form['form-password']
+        login_type = request.form['login-type']
 
-        return redirect(url_for('login'))
+        # get all the annotation orders
+        cnx_obj = mysql.connector.connect(**mysql_config)
+        db_cursor = cnx_obj.cursor()
+
+        sql_cmd = "select uname, display_name, pwd, utype from user " \
+            + "where (uname = '%s') or (display_name = '%s');" % (session['username'], session['username'])
+        db_cursor.execute(sql_cmd)
+        cnx_obj.close()
+
+        # just get the first row of records from the selectoin result
+        req_rows = db_cursor.fetchall(); n_recs = len(req_rows)
+        if n_recs <=0:
+            return jsonify({'code': '404'})
+        else:
+            # check the type of the user
+            first_rec_row = req_rows[0]; user_type = first_rec_row[3]
+            cur_user_types = [item.strip() for item in user_type.split(',')]
+
+            # import ipdb; ipdb.set_trace()
+            if ('user' in cur_user_types) and (login_type == 'user'):
+                return redirect(url_for('login_user', user_name = session['username']))
+            elif ('admin' in cur_user_types) and (login_type == 'admin'):
+                return redirect(url_for('login_admin'))
 
     if request.method == 'GET':
         return render_template('login.html')
 
 
-@app.route('/login', methods=['GET', 'POST'])
-def login():
+@app.route('/login-admin', methods=['GET', 'POST'])
+def login_admin():
     store_dict={'port_number': GLOBAL_PORT_NUMBER}
     return render_template('index.html', store_dict=store_dict)
 
+@app.route('/login-user&<string:user_name>', methods=['GET', 'POST'])
+def login_user(user_name):
+    store_dict={'port_number': GLOBAL_PORT_NUMBER, 'user_name': user_name}
+    return render_template('index_user.html', store_dict=store_dict)
 
 @app.route('/uploadpage&<string:ws_name>', methods=['GET', 'POST'])
 def uploadpage(ws_name=""):

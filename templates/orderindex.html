@@ -144,7 +144,7 @@
             type:'get',
             dataType:'json',
             success:function(data){
-                
+                console.log(data);
                 str="";
                 for(var i=0;i<data.length;i++){
                     str +='<table>';
@@ -164,16 +164,16 @@
                 };
                     
 
-                    var linkArr=document.getElementsByClassName('link');
-                    for(var k = 0;k<linkArr.length;k++){
+                var linkArr=document.getElementsByClassName('link');
+                for(var k = 0;k<linkArr.length;k++){
                         
-                        linkArr[k].onclick=function(){
-                            var index=this.parentNode.dataset['index'];
-                            workspace=data[index].workspace;
-                            window.location.href="http://172.18.77.15:{{store_dict['port_number']}}/showgroup/"+workspace+":"+data[index].order_result;
-                            //console.log(this.parentNode.dataset['index']);
-                        }
+                    linkArr[k].onclick=function(){
+                        var index=this.parentNode.dataset['index'];
+                        workspace=data[index].workspace;
+                        window.location.href="http://172.18.77.15:{{store_dict['port_number']}}showgroup/"+workspace+":"+data[index].order_result;
+                        //console.log(this.parentNode.dataset['index']);
                     }
+                }
                 var delinfo=$(".delinfo")     
                 for(var i=0;i<delinfo.length;i++){
                     
@@ -183,7 +183,6 @@
                         document.getElementById("contents").innerHTML="";
                         $.ajax({
                             url:'http://172.18.77.15:{{store_dict['port_number']}}/deleteorder&'+storenm,
-                            
                             type:"POST",
                             success:function(data){ 
                                 console.log(data);
