@@ -14,11 +14,11 @@
             border:none;padding:0;margin:0;
         }
         #map{
-            width:100%;
-            height:95%;
+            width:95%;
+            height:90%;
         }
         #menu{
-            width:100%;
+            width:95%;
             height:20px;         
             padding:5px 10px;
             font-size:14px;
@@ -32,10 +32,55 @@
         .ui-widget-header { border: 1px solid #aaaaaa; background: #cccccc url(images/ui-bg_highlight-soft_75_cccccc_1x100.png) 50% 50% repeat-x; color: #222222; font-weight: bold; }
         .ui-widget, .ui-widget input, .ui-widget select{font-size:14px;font-family:"微软雅黑";}
         .ui-widget .ui-widget{font-size:14px; font-family:"微软雅黑"; color: #222222;}
-        
+        .disnone{
+            display:none;
+        }
+        #layer1{
+            
+            
+            border:none;
+            position:relative;
+        }
+        #layer1 .opacity{
+            display:inline-block;
+            width:200px;
+            height:30px;
+            position:absolute;
+            top:24px;
+
+        }
     </style>
 </head>
 <body>
+<div>
+        <fieldset id="layer2" class="disnone">
+                        <label class="checkbox" for="visible2">
+                            <input id="visible2" class="visible" type="checkbox" checked="checked" />是否可见
+                        </label>
+                        <label>透明度</label>
+                        <input class="opacity" type="range" min="0" max="1" step="0.01"/><br />
+                    </fieldset>
+    </div>
+    <div>
+        <fieldset id="layer1">
+                      <label class="checkbox" for="visible1">
+                          <input id="visible1" class="visible" type="checkbox"/>是否可见
+                      </label><br />
+                      <label>
+                      透明度:<input class="opacity" type="range" min="0" max="1" step="0.01"/><br />
+                      </label>
+                    </fieldset>
+    </div>
+    <div>
+        <fieldset id="layer0" class="disnone">
+                        <label class="checkbox" for="visible0">
+                            <input id="visible0" class="visible" type="checkbox"/>是否可见
+                        </label><br />
+                        <label>透明度</label>
+                        <input class="opacity" type="range" min="0" max="1" step="0.01"/><br />
+                        
+                    </fieldset>
+    </div>
     <div id="menu">
           <label>几何图形类型：&nbsp;</label>
           <select id="type">
@@ -62,6 +107,7 @@
     <div>{{store_dict['storename1']}}, {{store_dict['storename2']}}</div>
     <div id="map" > 
     </div>
+    
     <script type="text/javascript">
         var typeSelect = document.getElementById('type');//绘制类型对象
         var draw; //绘制对象
@@ -69,12 +115,43 @@
         var currentFeature = null; //当前绘制的几何要素
 
         var extent=[{{store_dict['bbox'][0]}},{{store_dict['bbox'][2]}},{{store_dict['bbox'][1]}},{{store_dict['bbox'][3]}}];//BBOX范围值
-
+        console.log(extent);
         var projection=new ol.proj.Projection({//地图投影类型
             code:'{{store_dict['projection']}}',
             units:'degrees',
             extent:extent
         });
+
+        var format = 'image/png';
+                    var bounds = extent;
+                    /*[15560835.88090661, 4238555.695861422,
+                    15561776.645743217, 4239898.4779405715]*/
+
+                    var untiled = new ol.layer.Image({
+                        source: new ol.source.ImageWMS({
+                            ratio: 1,
+                            url: 'http://172.18.77.15:8089/geoserver/{{store_dict['workspacename']}}/wms',
+                            params: {'FORMAT': format,
+                                     'VERSION': '1.1.1',  
+                                     LAYERS: '{{store_dict['workspacename']}}:{{store_dict['storename2']}}',
+                                     STYLES: '',
+                                    }
+                        })
+                    });
+                    var tiled = new ol.layer.Tile({
+                        visible: false,
+                        source: new ol.source.TileWMS({
+                            url: 'http://172.18.77.15:8089/geoserver/{{store_dict['workspacename']}}/wms',
+                            params: {'FORMAT': format, 
+                                    'VERSION': '1.1.1',
+                                    tiled: true,
+                                    LAYERS: '{{store_dict['workspacename']}}:{{store_dict['storename2']}}',
+                                    STYLES: '',
+                                    //tilesOrigin: 15560835.88090661 + "," + 4238555.695861422
+                            }
+                        })
+                    });
+
 
         //实例化Map对象加载地图,默认底图加载MapQuest地图
         var map = new ol.Map({
@@ -82,7 +159,7 @@
                 new ol.layer.Image({
                     source: new ol.source.ImageWMS({
                         url: 'http://172.18.77.15:8089/geoserver/{{store_dict['workspacename']}}/wms',
-                        params: {'LAYERS': '{{store_dict['workspacename']}}:{{store_dict['storename']}}','VERSION':'1.1.0'},
+                        params: {'LAYERS': '{{store_dict['workspacename']}}:{{store_dict['storename1']}}','VERSION':'1.1.0'},
                         serverType: 'geoserver'
                     })
                 })
@@ -95,6 +172,34 @@
                 zoom: 4
             })
         });
+
+        map.addLayer(untiled);
+                    map.addLayer(tiled);
+                    map.getView().fit(bounds, map.getSize());       
+                    //更改透明度函数
+                    function bindInputs(layerid, layer) {
+                        var visibilityInput = $(layerid + ' input.visible');//是否可见控件
+                        visibilityInput.on('change', function () {//绑定change事件
+                            layer.setVisible(this.checked);//设置图层的可见性
+                        });
+                        visibilityInput.prop('checked', layer.getVisible());//更新可见控件状态
+                        //遍历其他显示样式属性，依次绑定change事件
+                        $.each(['opacity'],
+                            function (i, v) {
+                                var input = $(layerid + ' input.' + v);
+                                input.on('input change', function () {
+                                    layer.set(v, parseFloat(this.value));//根据当前控件值设置对应的图层显示属性值
+                                });
+                                input.val(String(layer.get(v)));//更新当前显示属性控件状态（值）
+                            }
+                        );
+                    }
+                    //调用更改透明度函数
+                    map.getLayers().forEach(function (layer,i) {
+                        bindInputs('#layer'+i, layer);//调用绑定图层显示样式控件的处理函数
+                    });
+
+
 
         //实例化一个矢量图层Vector作为绘制层
         var source = new ol.source.Vector({ wrapX: false });
@@ -197,7 +302,7 @@
         function saveData(geoType,geoData, attData) {
             //通过ajax请求将数据传到后台文件进行保存处理
             $.ajax({
-                url: 'http://172.18.77.15:{{store_dict['port_number']}}/procrequest/{{ store_dict["storename"] }}', //请求地址
+                url: 'http://172.18.77.15:{{store_dict['port_number']}}/procrequest/{{ store_dict["storename1"] }}', //请求地址
                 type: 'POST',  //请求方式为post
                 data: { 'type': geoType, 'geo': geoData, 'att': attData }, //传入参数 
                 dataType: 'text', //返回数据格式

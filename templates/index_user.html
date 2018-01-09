@@ -20,6 +20,9 @@
 				width:100px;
 				height:100px;
 				}
+			ul,ol{
+				list-style:none;
+			}
 	        table {
 	            border-collapse: collapse;
 	            border-spacing: 0;
@@ -45,196 +48,118 @@
             word-break:break-all;
             
 	        }
-	        .main{
-				width:900px;
-	        	margin:10px auto;
+	        .contents{
+	        	width:1300px;
+	        	margin:50px auto;
+	        	border:1px solid red;
 	        }
-	        .orderNum{
-	        	margin-right:25px;
-	        	font-size:14px;
-            	font-weight:bold;
+	        .fl{
+	        	float:left;
 	        }
-	        .creatTime{
-	        	font-size:14px;
-            	font-weight:bold;
+	        .fr{
+	        	float:right;
 	        }
-	        .deal{
-	        	cursor:pointer;
-	        	min-width:40px;
-	        }
-			.tdstyle{
-				width:22%;
+	        .clearfix:after{
+				content:'';
+				display:block;
+				clear:both;
 			}
-			.selectOrder{
-				width:900px;
-				margin:10px auto;
+			.left{
+				margin:5px;
 			}
-			.selTime{
-				width:84px;
+			.left ul{
+				width:200px;
 			}
-			.selectUser{
-				margin-right:10px;
+			.left li{
+				background-color:orange;
+				margin-bottom:5px;
+				height:58px;
+				overflow:hidden;
+				cursor:pointer;
+			}
+			.left li:hover{
+				background-color:#fff;
 			}
 		</style>
 	</head>
 	
 	<body>
-		<div class="selectOrder">
-			<span class="selectUser">
-				<span>用户名:</span>
-				<span class="userName">{{store_dict['user_name']}}</span>
-			</span>
-			<span class="select">订单筛选:</span>
-			<select class="selTime" id="selTime">
-				<option value="all" selected="selected">全部</option>
-				<option value="3">过去3天</option>
-				<option value="7">过去7天</option>
-				<option value="30">过去30天</option>
-			</select>
-
+		<div class="contents clearfix">
+			<div class="left fl">
+				<ul>
+					
+				</ul>
+			</div>
+			<div class="right fl">
+				
+			</div>
 		</div>
 		
-		<div class="main">
-			
-		</div>
 	</body>
+	<script type="text/javascript" src="../static/js/template-native.js"></script>
+	
 	<script type="text/javascript">
+		function imgInfo(info){
+			var str="";
+			for(var i=0;i<info.length;i++){
+				var storename=info[i].storename;
+				var workspace=info[i].workspacename;
+				console.log(storename);
+				$.ajax({
+	                url:'http://172.18.77.15:31555/thumbnail&'+workspace,
+	                type:'get',
+	                dataType:'JSON',
+	                success:function(data){
+	                	
+	                    
+	                    for(var ddd=0;ddd<data.length;ddd++){
+	                        
+	                        if(data[ddd].name==storename){
+	                            //str+="<li class='infoBoxLi'><img src='"+data[ddd].url+"' ></li>";
+	                            console.log(data[ddd].name);
+	                            
+	                        }
+	                    }
+	                    
+	                }
+
+            	})
+			}
+			
+		}
+		//获取数据函数
 		function show(){
 			$.ajax({
 				url:'http://172.18.77.15:{{store_dict['port_number']}}/lblorder-manip&get-orders',
-				type:"POST",
+				type:'POST',
 				dataType:'JSON',
 				success:function(data){
+					//console.log(data);
+					var str="";
+					for(var i=0;i<data.length;i++){
+						str+='<li data-index='+data[i].id+'>';
+						str+='<div>id:'+data[i].id+'</div>'+
+							 
+							 '<div>描述信息:<br>'+data[i].description+'</div>'
+						str+='</li>';
+					}
+					$(".left>ul").html(str);
+					$(".left>ul>li").click(function(){
+						var index=$(this)[0].dataset['index'];
+						$.ajax({
+							url:'http://172.18.77.15:{{store_dict['port_number']}}/lblorder-manip&proc-order:'+index+':json',
+							type:'POST',
+							dataType:'JSON',
+							success:function(info){
+								console.log(info);
+								imgInfo(info.storeinfos);
+							},
+							error:function(){
+
+							}
+						});
+					});
 					
-					//根据用户名筛选订单
-					function showOrder(data1){
-						var str="";
-						var obj="";
-						var user="";
-						var space="";
-		                for(var i=0;i<data1.length;i++){
-		                    obj=data1[i].objtypes.slice(9);
-		                    user=data1[i].users.slice(6);
-		                    space=data1[i].workspace.slice(10);
-		                    str +='<table>';
-		                    str +='<tr><td colspan="5"><span class="orderNum titleSty">订单编号：'+data1[i].id+'</span><span class="creatTime titleSty">创建时间：'+data1[i].start_time+'</span></td></tr>';
-		                    str+= '<tr><td class="descript tdstyle"><div>Description:</div>'+data1[i].description+'</td><td class="type tdstyle"><div>ObjTypes:</div>'+obj+'</td><td class="user tdstyle"><div>Users:</div>'+user+'</td><td class="workspace tdstyle"><div>Workspace:</div>'+space+'</td><td><div class="deal" data-index='+data1[i].id+'>处理</div></td></tr>';
-		                    str+='</table>';
-		                };
-	                	$('.main').html(str);
-	                	var dealArr=document.getElementsByClassName("deal");
-
-						for(var j=0;j<dealArr.length;j++){
-							dealArr[j].onclick=function(){
-								var flag=this.dataset['index'];
-								/*$.ajax({
-									url:"http://172.18.77.15:{{store_dict['port_number']}}/lblorder-manip&proc-order",
-									data: {'id': flag},
-									datatype:'JSON',
-									type:'POST',
-									success:function(data){
-										console.log(data);*/
-										window.location.href="http://172.18.77.15:{{store_dict['port_number']}}/lblorder-manip&proc-order:"+flag;
-									/*},*/
-									/*error:function(err){
-
-									}*/
-								//})
-							}
-						}
-					}
-					function selOrder(dataArr){
-						var value=document.getElementById("selTime").value;
-						
-						if(value=="all"){
-							showOrder(dataArr);
-						}
-						else{
-							var nowTime=new Date();
-							var ago,agoArr,month;
-							var monthArr=["Jan","Feb","Mar","Apr","May","June","July","Aug","Sep","Otc","Nov","Dec"];
-							var dayArr=[];
-							for(var k=0;k<dataArr.length;k++){
-								ago=dataArr[k].start_time;
-								
-								agoDate=ago.substring(5,25);
-								agoArr=agoDate.split(" ");
-								for(var l=0;l<monthArr.length;l++){
-									if(agoArr[1]==monthArr[l]){
-										month=(l+1);
-										month=month<10?"0"+month:month;
-										agoArr[1]=month.toString();
-									}
-								}
-								var target = new Date(agoArr[2]+"/"+agoArr[1]+"/"+agoArr[0]);
-								var timeSum = nowTime.getTime() - target.getTime();
-								var differday = parseInt(timeSum/1000/60/60/24);
-								//console.log(differday);
-								if(differday<=value){
-									dayArr.push(dataArr[k]);
-								}
-
-							}
-							//遍历新数组，将符合条件数据显示到页面上
-							var str="";
-							var obj="";
-							var user="";
-							var space="";
-							for(var e=0;e<dayArr.length;e++){
-								obj=dayArr[e].objtypes.slice(9);
-			                    user=dayArr[e].users.slice(6);
-			                    space=dayArr[e].workspace.slice(10);
-			                    str +='<table>';
-			                    str +='<tr><td colspan="5"><span class="orderNum titleSty">订单编号：'+dayArr[e].id+'</span><span class="creatTime titleSty">创建时间：'+dayArr[e].start_time+'</span></td></tr>';
-			                    str+= '<tr><td class="descript tdstyle"><div>Description:</div>'+dayArr[e].description+'</td><td class="type tdstyle"><div>ObjTypes:</div>'+obj+'</td><td class="user tdstyle"><div>Users:</div>'+user+'</td><td class="workspace tdstyle"><div>Workspace:</div>'+space+'</td><td><div class="deal" data-index='+dayArr[e].id+'>处理</div></td></tr>';
-			                    str+='</table>';
-							}
-							$('.main').html(str);
-							var dealArr=document.getElementsByClassName("deal");
-
-							for(var j=0;j<dealArr.length;j++){
-								dealArr[j].onclick=function(){
-									var flag=this.dataset['index'];
-									/*$.ajax({
-										url:"http://172.18.77.15:{{store_dict['port_number']}}/lblorder-manip&proc-order",
-										data: {'id': flag},
-										datatype:'JSON',
-										type:'POST',
-										success:function(data){
-											console.log(data);*/
-											window.location.href="http://172.18.77.15:{{store_dict['port_number']}}/lblorder-manip&proc-order:"+flag;
-										/*},*/
-										/*error:function(err){
-
-										}*/
-									//})
-								}
-							}
-						}
-					}
-					var userName=$(".userName").text();
-					var dataArr=[];
-					//console.log(userName);
-					for(var q=0;q<data.length;q++){
-						var index=data[q].users.slice(6).indexOf(userName);
-						if(index!==-1){
-							dataArr.push(data[q]);
-							
-							showOrder(dataArr);
-						}
-					}
-					//根据日期订单筛选
-					/*var selTime=document.getElementById("selTime");
-					selTime.onchange = function (e) {
-			              selOrder(dataArr);
-			        };*/
-			        $("#selTime").change(function(){
-						var opt = $(this).find("option:selected");
-
-						opt.attr("selected",true);	
-						selOrder(dataArr);
-
-					}); 
 				},
 				error:function(err){
 					console.log(err);
@@ -242,11 +167,6 @@
 			})
 		}
 		show();
-		var info='<option value="all" selected="selected">全部</option>'+
-				'<option value="3">过去3天</option>'+
-				'<option value="7">过去7天</option>'+
-				'<option value="30">过去30天</option>';
 		
-		$("#selTime").html(info);
 	</script>
 </html>

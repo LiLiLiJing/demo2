@@ -49,11 +49,11 @@
 			}
 		.main{
 			width:90%;
-			margin:0 auto;
+			margin:10px auto;
 
 			}
 		.mainRight{
-			margin-top:15px;
+			
 			width:100%;
 			position:relative;
 			}	
@@ -110,10 +110,39 @@
 			width:100px;
 			height:100px;
 			}
+		.back{
+			position:relative;
+		}
+		#triangle {
+		    width: 0;
+		    height: 0;
+		    border-top: 10px solid transparent;
+		    border-right: 12px solid #fff;
+		    border-bottom: 10px solid transparent;
+		    display:inline-block;
+		}
+		#rectangle{
+			display:inline-block;
+			width:50px;
+			height:20px;
+			background-color:#fff;
+			position:absolute;
+			top:0px;
+			left:12px;
+			text-align:center;
+			line-height:20px;
+			cursor:pointer;
+		}
 	</style>
 </head> 
-<body>
+<body>	
+		
         <div class="main clearfix">
+        	<div class="back">
+        		<div id="triangle"></div>
+        		<a href="http://172.18.77.15:31555/folder-view"><div id="rectangle">返回</div></a>
+        	</div>
+        	
             <div class="mainRight f_l">
   
             </div>

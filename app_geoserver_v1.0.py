@@ -616,7 +616,6 @@ def get_file(filename):
 
 @app.route('/show&<string:storename>', methods=['GET', 'POST'])
 def show(storename):
-    # resource = cat.get_resource(storename, workspace=cat.get_default_workspace())
     resource = cat.get_resource(storename)
     src_proj = resource.projection
 
@@ -639,7 +638,6 @@ def show(storename):
 
 @app.route('/asynmask-select&<string:storename>', methods=['GET', 'POST'])
 def asynmask_select(storename):
-    # resource = cat.get_resource(storename, workspace=cat.get_default_workspace())
     resource = cat.get_resource(storename)
     src_proj = resource.projection
 
@@ -782,6 +780,7 @@ def labelorder_manip(opt_type):
     2017-12-20, 19:01, manipulations to the image labeling order table
     '''
     opt_type_split = opt_type.split(':')
+
     if opt_type_split[0] == "create-order":
         # parse the given form object, form the mysql updating command
         post_f = request.form
@@ -867,11 +866,19 @@ def labelorder_manip(opt_type):
 
     elif opt_type_split[0] == "proc-order":
         # import ipdb; ipdb.set_trace()
+        # comment: 2018-1-9, lifeimo, command = "lblorder-manip&proc-order:<id>:<type>"
         order_id = opt_type_split[1]
+
+        if len(opt_type_split) > 2:
+            t_return = opt_type_split[2]
+        else:
+            t_return = 'none'
+
         cnx_obj = mysql.connector.connect(**mysql_config)
         db_cursor = cnx_obj.cursor()
 
-        sql_cmd = "select path, params, start_time, description from job where job._id = %s;" % order_id
+        sql_cmd = "select path, params, start_time, description from job" \
+            + " where job._id = %s;" % order_id
         db_cursor.execute(sql_cmd)
         cnx_obj.close()
 
@@ -899,16 +906,18 @@ def labelorder_manip(opt_type):
                 else:
                     cur_rsc_bbox = cur_rsc.latlon_bbox
 
-                cur_rsc_info = {'projection': cur_rsc.projection, \
-                    'workspacename': cur_wsname, 'storename': cur_rsc_name, \
-                    'bbox': cur_rsc_bbox}
+                cur_rsc_info = {'projection': cur_rsc.projection, 'workspacename': cur_wsname, \
+                    'storename': cur_rsc_name, 'bbox': cur_rsc_bbox}
                 cur_strlist.append(cur_rsc_info)
 
         cur_info = {'storeinfos': cur_strlist, 'objtypes': cur_objtypes, \
                 'users': cur_users, 'description': cur_desc, "start_time": cur_starttime, \
                 'port_number': GLOBAL_PORT_NUMBER, 'id': order_id}
 
-        return render_template('annotordr_show.html', store_dict=cur_info)
+        if t_return == 'none':
+            return render_template('annotordr_show.html', store_dict=cur_info)
+        elif t_return == 'json':
+            return jsonify(cur_info)
 
     elif opt_type == "update-order":
         pass
