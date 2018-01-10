@@ -888,12 +888,14 @@ def labelorder_manip(opt_type):
 
         # parse the workspace, and collect the coveragestores in it
         cur_wslist = cur_workspace.split(':')[1].split(',')
+
         cur_strlist = list()
+        cur_strnms_list = list()
         for cur_wsname in cur_wslist:
             cur_ws_rsclist = cat.get_resources(workspace=cur_wsname)
 
             for cur_rsc in cur_ws_rsclist:
-                cur_rsc_name = cur_rsc.name
+                cur_rsc_name = cur_rsc.name; cur_strnms_list.append(cur_rsc_name)
                 cur_rsc_suffix = cur_rsc_name.split('_')[-1]
 
                 if cur_rsc_suffix in ['AsynMask', 'AsynStorage', 'AsynPlane']:
@@ -914,10 +916,16 @@ def labelorder_manip(opt_type):
                 'users': cur_users, 'description': cur_desc, "start_time": cur_starttime, \
                 'port_number': GLOBAL_PORT_NUMBER, 'id': order_id}
 
+        #import ipdb; ipdb.set_trace()
         if t_return == 'none':
             return render_template('annotordr_show.html', store_dict=cur_info)
         elif t_return == 'json':
             return jsonify(cur_info)
+        elif isinstance(t_return, unicode):
+            cur_info['sel_imgname'] = t_return.encode('utf-8')
+            cur_info['sel_imgidx'] = cur_strnms_list.index(cur_info['sel_imgname'])
+            # import ipdb; ipdb.set_trace()
+            return render_template('annotordr_show_imgsel.html', store_dict=cur_info)
 
     elif opt_type == "update-order":
         pass

@@ -1,0 +1,865 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+
+    <title>绘制保存几何图形</title>
+    <link href="../static/libs/ol/ol.css" rel="stylesheet" type="text/css" />
+    <script src="../static/libs/ol/ol.js" type="text/javascript"></script>
+    
+    <!--  引入第三方插件库 -->
+    <script src="../static/libs/jquery-1.11.2.min.js" type="text/javascript"></script>
+    <script src="../static/libs/jquery-ui-1.11.4/jquery-ui.min.js" type="text/javascript"></script>
+    <link href="../static/libs/jquery-ui-1.11.4/jquery-ui.min.css" rel="stylesheet" type="text/css" />
+    <style type="text/css">
+        body,html,div,ul,li,iframe,p,img{
+            border:none;padding:0;margin:0;
+        }
+        ol,ul{
+            list-style: none;
+            }
+        body{
+            background-color:#ccc;
+        }
+        #map{
+            width:1250px;
+            height:630px;
+            float:left;
+            margin-left:30px;
+            border:1px solid #fff;
+        }
+        #menu{
+            width:200px;
+            height:20px;         
+            padding:5px 10px;
+            font-size:14px;
+            font-family:"微软雅黑";
+            margin-left:20px;
+            display:inline-block;    
+        }
+        #dialog-confirm{
+            font-size:14px;
+            font-family:"微软雅黑";
+        }
+        .ui-widget-header { border: 1px solid #aaaaaa; background: #cccccc url(images/ui-bg_highlight-soft_75_cccccc_1x100.png) 50% 50% repeat-x; color: #222222; font-weight: bold; }
+        .ui-widget, .ui-widget input, .ui-widget select{font-size:14px;font-family:"微软雅黑";}
+        .ui-widget .ui-widget{font-size:14px; font-family:"微软雅黑"; color: #222222;}
+        #items{
+            width:15%;
+            float:right;
+            margin-right:25px;
+            height:500px;
+            border:1px solid #eee;
+            text-align:center;
+        }
+        #name{
+            display:inline-block;
+            width:200px;
+            height:20px;         
+            padding:5px 10px;
+            font-size:14px;
+            font-family:"微软雅黑";
+            margin-left:20px;
+        }
+        .fl{
+            float:left;
+        }
+        .fr{
+            float:right;
+        }
+        .clearfix::before,
+        .clearfix::after{
+            content:'';
+            display: block;
+            line-height: 0;
+            height: 0;
+            visibility: hidden;
+            clear: both;
+        }
+        #itemsInfo{
+            width:210px;
+            display:inline-block;
+            margin-left:25px;
+            height:600px;
+            overflow-y:auto;
+        } 
+        #itemsInfo table{
+            display:block;
+            width:190px;
+        }
+        #itemsInfo .trInfo{
+            cursor:pointer;
+        }
+        #itemsInfo .deleteInfo{
+            color:blue;
+            width:40px;
+            text-align:center;
+        }
+        #setSize{
+            display:inline-block;
+        }
+        .main{
+            min-width:1160px;
+            max-width:1660px;
+            overflow:auto;
+        }
+        .bor{
+            border:1px solid red;
+        }
+        .disNone{
+            display:none;
+        }
+        .infoBox{
+            cursor:pointer;
+        }
+        .picBox{
+            margin-left:30px;
+        }
+        .navImg img{
+            width:100px;
+            height:100px;
+        }
+        .navImg li{
+            float:left;
+            border:1px solid red;
+            margin-right: 10px;
+            margin-top: 5px;
+            display:table-cell;
+            text-align:center;
+            cursor:pointer;
+        }
+        .navImg span{
+            display:block;
+        }
+        .navImg{
+            height:200px;
+            width:1500px;
+            overflow-y:scroll;
+            border:1px solid #ddd;
+            margin-top:10px;
+            padding:5px 0;
+        }
+    </style>
+</head>
+<body>
+<div id="need_id" class="disNone">{{store_dict['id']}}</div>
+<div id="need_type" class="disNone">{{store_dict['objtypes']}}</div>
+<div id="need_user" class="disNone">{{store_dict['users']}}</div>
+<div class="flaginfo disNone">{{store_dict['sel_imgname']}}</div>
+<div class="clearfix disNone">
+    {% for store_info in store_dict['storeinfos'] %}
+    <div class="fl bor infoBox">
+        <ul>
+            <li class="workspacename">{{store_info['workspacename']}}</li>
+            <li class="storename">{{store_info['storename']}}</li>
+            <li class="projection">{{store_info['projection']}}</li>
+            <li class="bbox">{{store_info['bbox'][0]}},{{store_info['bbox'][2]}},{{store_info['bbox'][1]}},{{store_info['bbox'][3]}}</li>
+        </ul>
+    </div>
+    {% endfor %}
+</div>
+
+<div class="flag">{{ store_dict['storeinfos'][0]['storename'] }}</div>
+    <div id="menu">
+          <label>几何图形类型：&nbsp;</label>
+          <select id="type">
+            <option value="None" selescted="selected">None</option>
+          </select>
+    </div>
+    <div id="name">
+          <label>用户名：&nbsp;</label>
+          <select id="username">
+            <option value="lijianghua" selected="selected">lijianghua</option>
+          </select>
+    </div>
+    <div id="setSize">
+          <label>宽度：&nbsp;</label>
+          <select id="mapWidth">
+            <option value="1250" selected="selected">1250px</option>
+            <option value="800">800px</option>
+            <option value="900">900px</option>
+            <option value="1000">1000px</option>
+            <option value="1100">1100px</option>
+            <option value="1200">1200px</option>
+            <option value="1300">1300px</option>
+            <option value="1400">1400px</option>
+          </select>
+          <label>长度：&nbsp;</label>
+          <select id="mapHeight">
+            <option value="650" selected="selected">650px</option>
+            <option value="700">700px</option>
+            <option value="750">750px</option>
+            <option value="800">800px</option>
+          </select>
+    </div>
+    <div id="dialog-confirm" title="图形属性信息设置">
+        <label>几何类型:</label>
+        <select id="geoType">
+            <option value="LineString"></option>
+            <option value="Polygon" selected="selected"></option>
+        </select>
+        <br />
+        <label>标记类型:</label>
+        <select id="infoType">
+            
+        </select>
+        <br />
+        <label>图片名称:</label>
+        <input type="text" value="aaa" id="infoname" />
+        <br />
+        <label>workspace:</label>
+        <input type="text" value="{{store_dict['storeinfos'][0]['workspacename']}}" id="workspace" />
+        <br />
+        <!-- <label>用户名:</label>
+        <input type="text" id="fillusername" /> -->
+    </div>
+    <div class="main">
+        <div id="map" > 
+        </div>
+        <div id="itemsInfo">
+            
+        </div>
+    </div>
+    <div class="picBox">
+        <div class="navImg">
+            <ul id="imgs" class="clearfix"></ul>
+        </div>
+    </div>
+    <script type="text/javascript">
+    $(".flag").css("display","none");
+      //改变下拉标记内容  
+    var need_type_arr=$("#need_type").text().slice(9).split(",");
+    var str_type="";
+    for(var arri=0;arri<need_type_arr.length;arri++){
+        
+        str_type+="<option value='"+need_type_arr[arri]+"'>"+need_type_arr[arri]+"</option>";
+    }
+    $("#infoType").html(str_type);
+    //改变下拉用户名
+    var need_user_arr=$("#need_user").text().slice(6).split(",");
+    var str_user="";
+    for(var arrj=0;arrj<need_type_arr.length;arrj++){
+        
+        str_user+="<option value='"+need_user_arr[arrj]+"'>"+need_user_arr[arrj]+"</option>";
+    }
+    $("#username").html(str_user);
+
+    //定义全局变量
+    var extent=[];  
+    var projection; 
+    var change_workspace;
+    var change_storename;
+    var change_projection;
+    var change_bbox=change;
+    var infoBoxLi;
+    //轮播图 
+    
+    function Picture(){
+        var picStorenameArr=document.getElementsByClassName("storename");
+        var picWorkspaceArr=document.getElementsByClassName("workspacename");
+        var dd=0;
+        var str="";
+        for(var d=0;d<picWorkspaceArr.length;d++){
+            
+            
+            $.ajax({
+                url:'http://172.18.77.15:31555/thumbnail&'+picWorkspaceArr[d].innerText,
+                type:'get',
+                dataType:'JSON',
+                success:function(data){
+                    var picStorename=picStorenameArr[dd].innerText; 
+                    var picWorkspace=picWorkspaceArr[dd].innerText;    
+                    for(var ddd=0;ddd<data.length;ddd++){
+                        if(data[ddd].name==picStorename){
+                            str+="<li class='infoBoxLi'><img src='"+data[ddd].url+"' ><span>"+picWorkspace+"</span><span>"+data[ddd].name+"</span></li>";
+                            
+                            $("#imgs").html(str);
+                        }
+                    }
+                    dd++;
+                    /*var infoBoxLi=$(".infoBoxLi");
+                    for(var iii=0;iii<infoBoxLi.length;iii++){
+                        infoBoxLi[iii].index=iii;
+                        infoBoxLi[iii].onclick=function(){
+                            console.log(this.index);
+                        }
+                    }*/
+                    change();
+                }
+
+            })
+
+        }
+
+        
+        
+        
+    }
+    
+    
+
+    var flaginfo=document.getElementsByClassName("flaginfo")[0].innerText;
+    var flagindex;
+    var change_storenameArr1=document.getElementsByClassName("storename");
+    for(var ii=0;ii<change_storenameArr1.length;ii++){
+            if(flaginfo==change_storenameArr1[ii].innerText){
+                flagindex=ii;
+                Picture();
+                change();
+                console.log(ii);
+            }
+    }
+    
+    //console.log(flaginfo);
+    //获取需要更改的信息
+    function change(){
+
+        var change_workspaceArr=document.getElementsByClassName("workspacename");
+        var change_storenameArr=document.getElementsByClassName("storename");
+        var change_projectionArr=document.getElementsByClassName("projection");
+        var change_bboxArr=document.getElementsByClassName("bbox");
+
+        
+
+        change_workspace=change_workspaceArr[flagindex].innerText;
+        change_storename=change_storenameArr[flagindex].innerText;
+        change_projection=change_projectionArr[flagindex].innerText;
+        change_bbox=change_bboxArr[flagindex].innerText.split(",");
+        $('#infoname').val(change_storename);
+        $('#workspace').val(change_workspace);
+        //将字符串转化成数字数组
+        extent=[];
+        for(var bbox=0;bbox<change_bbox.length;bbox++){
+            extent.push(parseFloat(change_bbox[bbox]));
+        }
+        projection=new ol.proj.Projection({//地图投影类型
+            code: change_projection,
+            units:'degrees',
+            extent:extent
+        });
+        featureCoor=ol.extent.getCenter(extent);
+        //获取信息盒子
+        var infoBox=$(".infoBoxLi");
+        //console.log(infoBox);
+        for(var boxi=0;boxi<infoBox.length;boxi++){
+            infoBox[boxi].num = boxi;
+            //每个div绑定点击事件
+            infoBox[boxi].onclick=function(){
+                for(var boxa=0;boxa<infoBox.length;boxa++){
+                    infoBox[boxa].style.border="1px solid red";
+                }
+                this.style.border="1px solid blue";
+                change_workspace=change_workspaceArr[this.num].innerText;
+                change_storename=change_storenameArr[this.num].innerText;
+                change_projection=change_projectionArr[this.num].innerText;
+                change_bbox=change_bboxArr[this.num].innerText.split(",");
+
+                $('#infoname').val(change_storename);
+                $('#workspace').val(change_workspace);
+                //将字符串转化成数字数组
+                extent=[];
+                for(var bbox=0;bbox<change_bbox.length;bbox++){
+                    extent.push(parseFloat(change_bbox[bbox]));
+                }
+                projection=new ol.proj.Projection({//地图投影类型
+                    code: change_projection,
+                    units:'degrees',
+                    extent:extent
+                });
+                var newMap=document.getElementById("map");
+                window.map.removeLayer(vector);
+                source=null;
+                vector.setSource(source);
+                    
+                    //map=null;
+                    featureCoor=ol.extent.getCenter(extent);
+                    zoomFirst=4;
+                    newMap.innerHTML="";
+                    getInfo();  
+                
+
+            }    
+        }
+    }
+    //change();
+    //调用更改信息函数
+
+    
+        var setSize=document.getElementById("setSize");
+        var typeSelect = document.getElementById('type');//绘制类型对象
+        var userNameSelect = document.getElementById('username');
+        var draw; //绘制对象
+        var geoStr = null; // 当前绘制图形的坐标串
+        var currentFeature = null; //当前绘制的几何要素
+
+        var extent=[{{store_dict['storeinfos'][0]['bbox'][0]}},{{store_dict['storeinfos'][0]['bbox'][2]}},{{store_dict['storeinfos'][0]['bbox'][1]}},{{store_dict['storeinfos'][0]['bbox'][3]}}];//BBOX范围值
+
+        var projection=new ol.proj.Projection({//地图投影类型
+            // code:'EPSG:4326',
+            code: '{{store_dict['storeinfos'][0]['projection']}}',
+            units:'degrees',
+            extent:extent
+        });
+
+        var createPolygonStyleFunction = function (feature) {
+            var fillColor = 'red';
+            var strokeColor = 'red';
+            var strokeWidth = 'red';
+            return function (feature, resolution) {
+                var style = new ol.style.Style({
+                    stroke: new ol.style.Stroke({
+                        color: strokeColor,
+                        width: strokeWidth
+                    }),
+                    fill: new ol.style.Fill({
+                        color: fillColor
+                    }),
+                    
+                });
+                return [style];
+            };
+        };
+        //绘制图形
+        function showPaint1(str1,str2){
+         var polygonFeature = new ol.Feature({
+            geometry:new ol.geom.Polygon([str1]),
+            name:str2
+            });
+         return polygonFeature;
+        }
+         
+         var map,source,vector;
+        //实例化Map对象加载地图,默认底图加载MapQuest地图
+
+        /**
+        * 根据绘制类型进行交互绘制图形处理
+        */
+        function addInteraction() {
+            var value = typeSelect.value; //绘制类型        
+            if (value !== 'None') {
+                var geometryFunction, maxPoints,indexName;
+                if (value === 'LineString') {
+                    maxPoints = 2;
+                    geometryFunction = function (coordinates, geometry) {
+                        if (!geometry) {
+                            geometry = new ol.geom.Polygon(null);
+                        }
+
+                        var start = coordinates[0];
+                        var end = coordinates[1];
+
+                        geometry.setCoordinates([
+                            [start, [start[0], end[1]], end, [end[0], start[1]], start]
+                        ]);
+                        return geometry;
+                    };
+                }
+                    //实例化交互绘制类对象并添加到地图容器中
+                    draw = new ol.interaction.Draw({
+                        source: source, //绘制层数据源
+                        type: /** @type {ol.geom.GeometryType} */(value),  //几何图形类型
+                        geometryFunction: geometryFunction,
+                        maxPoints: maxPoints,
+                        name:indexName                    
+                    });
+                    map.addInteraction(draw); 
+                //添加绘制结束事件监听，在绘制结束后保存信息到数据库
+                draw.on('drawend', drawEndCallBack,this);
+                
+                
+            }
+            else {
+                /*source = null;
+                vector.setSource(source);
+                document.getElementById('items').getElementsByTagName("ul")[0].innerHTML = "";
+                arr.splice(0,arr.length);
+                $(function(){
+                    var flag = $(".flag").text();
+                    $.ajax({
+                        url:'http://172.18.77.15:{{store_dict['port_number']}}/poly-labels&remove_annot',
+                        type:'POST',
+                        data:{infoname:'flag'},
+                        dataType:'json',
+                        success:function(response){
+                            alert("删除成功");
+                            var newMap=document.getElementById("map");
+                            window.map.removeLayer(vector);
+                            source=null;
+                            vector.setSource(source);
+            
+                            map=null;
+                            newMap.innerHTML="";
+                            getInfo();
+                        },
+                        error:function(err){
+                            alert("删除失败");
+                        }
+                    });
+                })*/
+            }
+
+            //map.addInteraction(draw);
+
+            //添加绘制结束事件监听，在绘制结束后保存信息到数据库
+            //draw.on('drawend', drawEndCallBack,this);
+        }
+
+        /**
+        * 绘制结束事件的回调函数，
+        * @param {ol.interaction.DrawEvent} evt 绘制结束事件
+        */
+        function drawEndCallBack(evt) {
+            var geoType = $("#type option:selected").val();//绘制图形类型          
+            $("#dialog-confirm").dialog("open"); //打开属性信息设置对话框
+            currentFeature = evt.feature; //当前绘制的要素
+            var geo = currentFeature.getGeometry(); //获取要素的几何信息
+            var coordinates = geo.getCoordinates(); //获取几何坐标
+
+            //将几何坐标拼接为字符串
+            if (geoType == "Polygon") {
+                geoStr = coordinates[0].join(";"); 
+            }
+            else { 
+                geoStr = coordinates.join(";"); 
+            } 
+
+        }
+        /**
+        * 提交数据到后台保存
+        * @param {string} geoType 绘制的几何类型
+        * @param {string} geoData 几何数据
+        * @param {string} attData 属性数据
+        */
+        var zoomFirst=4;
+        function saveData(geoStr,geoType,infoType,infoname,workspace,username) {
+
+            //通过ajax请求将数据传到后台文件进行保存处理
+            $.ajax({
+                url: 'http://172.18.77.15:{{store_dict['port_number']}}/poly-labels&commit_annot', //请求地址
+                type: 'POST',  //请求方式为post
+                data: { 'geoStr':geoStr, 'geoType': geoType, 'infoType': infoType, 'infoname': infoname ,'workspace':workspace, 'username': username}, //传入参数 
+                dataType: 'json', //返回数据格式
+                success: function (response) {
+                    alert("保存成功");
+                    var newMap=document.getElementById("map");
+                    window.map.removeLayer(vector);
+                    source=null;
+                    vector.setSource(source);
+            
+                    //map=null;
+                    newMap.innerHTML="";
+                    getInfo();  
+
+                },
+                error: function (err) {
+                    alert("保存失败");
+                }
+            });
+        }
+        //将提交的数据显示在当前页面上
+        var arr=[];
+        function showData(index){
+            
+                var ul = document.getElementById('items').getElementsByTagName("ul")[0];
+                arr.push(index);
+                ul.innerHTML = "";
+                for(var i=0;i<arr.length;i++){
+                    
+                    ul.innerHTML += '<li>'+
+                                arr[i]+
+                            '</li>';
+                }
+        }
+        /**
+        * 将绘制的几何数据与对话框设置的属性数据提交到后台处理
+        */
+       
+        //获取绘制图形坐标的函数
+        function getCenterOfExtent(Extent){
+            var X = Extent[0] + (Extent[2]-Extent[0])/2;
+            var Y = Extent[1] + (Extent[3]-Extent[1])/2;
+            return [X, Y];
+        }
+
+        var featureCoor;
+        var firstCoor=ol.extent.getCenter(extent);
+        function submitData() {
+            var geoType = $("#geoType").val(); //几何类型
+            var infoType = $("#infoType").val(); //标记类型
+            var infoname = $("#infoname").val(); //图片名称
+            var workspace = $("#workspace").val();//文件夹名称
+            var username = $("#username").val();//用户名
+            if (geoStr != null) {
+                
+                //console.log(typeof geoType,typeof infoType,typeof infoname,typeof workspace,typeof username);
+                saveData(geoStr,geoType,infoType,infoname,workspace,username); //将数据提交到后台处理（保存到数据库中）
+                featureCoor=getCenterOfExtent(currentFeature.getGeometry().getExtent());
+                zoomFirst=map.getView().getZoom();
+
+                currentFeature = null;  //置空当前绘制的几何要素
+                geoStr = null; //置空当前绘制图形的geoStr
+            }
+            else {
+                alert("未得到绘制图形几何信息！");
+                vector.getSource().removeFeature(currentFeature); //删除当前绘制图形
+            }
+        }
+
+        /**
+        * 用户更改绘制类型触发的事件.
+        * @param {Event} e 更改事件
+        */
+        typeSelect.onchange = function (e) {
+            map.removeInteraction(draw); //移除绘制图形
+            addInteraction();//添加交互绘制功能控件
+        };
+        setSize.onchange = function (e) {
+            var mapWidth=$("#mapWidth").val();
+            var mapHeight=$("#mapHeight").val();
+            $("#map").css({"width":mapWidth+"px","height":mapHeight+"px"});
+            map.updateSize();
+        };
+         //添加交互绘制功能控件
+      
+        // 初始化信息设置对话框
+        $("#dialog-confirm").dialog(
+            {
+                modal: true,  // 创建模式对话框
+                autoOpen: false, //默认隐藏对话框
+                //对话框打开时默认设置
+                open: function (event, ui) {
+                    $(".ui-dialog-titlebar-close", $(this).parent()).hide(); //隐藏默认的关闭按钮
+                    //根据绘制图形设置对话框中图形类型与信息类别的值
+                    
+                },
+                //对话框功能按钮
+                buttons: {
+                    "提交": function () {
+                        submitData(); //提交几何与属性信息到后台处理
+                        $(this).dialog('close'); //关闭对话框
+                    },
+                    "取消": function () {
+                        $(this).dialog('close'); //关闭对话框                     
+                        vector.getSource().removeFeature(currentFeature); //删除当前绘制图形
+                    }
+                }
+            });
+        
+ 
+        //声明一个数组，用来装坐标信息数组
+        
+        //页面加载完成，右侧信息栏中动态从数据库获取标记信息
+        function getInfo(){
+            var username = $("#username").val();
+            var flag = $(".flag").text();
+            
+            $.ajax({
+                url:'http://172.18.77.15:{{store_dict['port_number']}}/poly-labels&get_annots',
+                type:'POST',
+                data:{'username':username,'infoname':change_storename},
+                dataType:'json',
+                success:function(data){
+                    //var ul = document.getElementById('items').getElementsByTagName("ul")[0];
+                    var itemsInfo=document.getElementById("itemsInfo");
+                    itemsInfo.innerHTML="";
+                    //ul.innerHTML="";
+                    var bigArr=[];
+                    var paintArr2=[];
+                        
+                        var strInfo="";
+                        strInfo +="<table><thead><tr><th>序号</th><th>内容</th><th>操作</th></tr></thead>";
+                        strInfo +="<tbody>";
+                        if(data.length==0){
+                            strInfo="";
+                        }
+                        for(var i=0;i<data.length;i++){
+                        strInfo += "<tr class='trInfo'><td>"+data[i].annot_id+"</td><td>"+data[i].obj_class+"</td><td class='deleteInfo'>删除</td></tr>";
+                        var coordinateArr=data[i].vertexs.split(";");
+                    
+                        bigArr.push(coordinateArr);
+                        }
+                        strInfo +="</tbody></table>"
+                        itemsInfo.innerHTML=strInfo;
+                        
+                    map = new ol.Map({
+                        layers: [
+                            new ol.layer.Image({
+                                source: new ol.source.ImageWMS({
+                                    url: 'http://172.18.77.15:8089/geoserver/'+change_workspace+'/wms',
+                                    params: {'LAYERS': change_workspace+':'+change_storename,'VERSION':'1.1.0'},
+                                    serverType: 'geoserver'
+                                })  
+                            }),],
+                        target: 'map', //地图容器div的ID
+                        view: new ol.View({
+                        projection:projection,
+                        center: featureCoor, //地图初始中心点
+                        minZoom: 2,
+                        zoom: zoomFirst,
+                        })
+                    });
+
+                    var paintArr1=[];
+                    //console.log(map.getView().getCenter());  //获取地图中心,打印在界面上
+                    var c_obj;
+                    for(var a=0;a<bigArr.length;a++){
+                        var strArr= [];
+                        for(var b=0;b<bigArr[a].length;b++){
+                            var s =bigArr[a][b].split(",")
+                            
+                        
+                            //console.log(s);
+                            var s1=parseFloat(s[0]);
+                            
+                            var s2=parseFloat(s[1]);
+                            var Arr1=[];
+                            Arr1[0]=s1;
+                            Arr1[1]=s2;
+                            strArr.push(Arr1);
+                        
+                        }
+                        //console.log(data[a].annot_id);
+                         c_obj = showPaint1(strArr,data[a].annot_id);  //返回成功
+                        //c_obj = new ol.Feature(new ol.geom.Polygon([strArr]));
+                        // console.log(c);
+                        paintArr1.push(c_obj);           //添加成功
+                        // console.log(paintArr1); 
+                    }
+             
+                    source = new ol.source.Vector({ wrapX: false,
+            // features:[ceshi,ceshi2]
+                        features: paintArr1
+                        });
+                    vector = new ol.layer.Vector({
+                        source: source,
+                        style: new ol.style.Style({
+                        fill: new ol.style.Fill({
+                            color: 'rgba(255, 255, 255, 0.7)'
+                        }),
+                        stroke: new ol.style.Stroke({
+                            color: '#0099ff',
+                            width: 2
+                    }),
+                    image: new ol.style.Circle({
+                        radius: 7,
+                        fill: new ol.style.Fill({
+                        color: '#0099ff'
+                        })
+                    })
+                    })
+                    });
+                    map.addLayer(vector); //将绘制层添加到地图容器中
+                    addInteraction(); 
+
+                    //双击右边列表数据，删除相应的图形  构造函数deleteOne()
+                    
+                    var delArr=document.getElementsByClassName("deleteInfo");
+                    var trInfoArr=document.getElementsByClassName("trInfo");
+                    for(var z=0;z<delArr.length;z++){
+                        delArr[z].delnum=z;
+                        trInfoArr[z].trnum=z;
+                        delArr[z].onclick=function(){
+                            $.ajax({
+                                url:'http://172.18.77.15:{{store_dict['port_number']}}/poly-labels&remove_one_annot',
+                                type:'POST',
+                                data:{annot_id:data[this.delnum].annot_id},
+                                dataType:'json',
+                                success:function(response){
+                                    var newMap=document.getElementById("map");
+                                    window.map.removeLayer(vector);
+                                    source=null;
+                                    vector.setSource(source);
+                                    featureCoor=ol.extent.getCenter(extent);
+                                    zoomFirst=4;
+                                    //map=null;
+                                    newMap.innerHTML="";
+                                    getInfo();
+                                },
+                                error:function(err){
+                                    console.log("删除失败");
+                                }
+                            });
+                        };
+                        trInfoArr[z].onmouseover=function(){
+                            var featuresArr=vector.getSource().getFeatures();
+                            //console.log(featuresArr[0].B.name);
+                            //featuresArr[this.index].setStyle(null);
+                            for(var ll=0;ll<featuresArr.length;ll++){
+                                if(featuresArr[ll].B.name==data[this.trnum].annot_id){
+                                    var highAlpColor = ol.color.asArray('#1fca04');
+                                    highAlpColor = highAlpColor.slice();  
+                                    highAlpColor[3] = 0.9;
+                                    featuresArr[ll].setStyle(new ol.style.Style({
+                                        fill: new ol.style.Fill({
+                                            color: 'rgba(255, 255, 255, 0.7)'
+                                        }),
+                                        stroke: new ol.style.Stroke({
+                                            color: '#FF0000',
+                                            width: 2
+                                        }),
+                                    }));
+                                }
+                            }
+                        }
+                        trInfoArr[z].onmouseout=function(){
+                            var featuresArr=vector.getSource().getFeatures();
+                            for(var y=0;y<delArr.length;y++){
+                                featuresArr[y].setStyle(null);
+
+                            }
+                        }
+                    }
+
+                    
+                },
+                error:function(err){
+                    console.log('错误');
+                }
+            })
+}
+
+        
+        userNameSelect.onchange = function (e) {
+            var newMap=document.getElementById("map");
+            window.map.removeLayer(vector);
+            source=null;
+            vector.setSource(source);
+            //vector=null;
+            //map=null;
+            featureCoor=firstCoor;
+            zoomFirst=4;
+            newMap.innerHTML="";
+            getInfo();
+        
+        };
+        getInfo();
+        
+
+
+
+    </script>
+    <!-- 页面向后台发送请求，动态生成下拉列表里边的长方形、多边形等 -->
+    <script type="text/javascript">
+    $(document).ready(function(){
+        $.ajax({
+            url:'http://172.18.77.15:{{store_dict['port_number']}}/poly-labels&get_geotypes',
+            type:'get',
+            dataType:'json',
+            success:function(data){
+                $('#type').html("<option value='None' selected='selected'>None</option><option value='Polygon' >"+data[0]+"</option><option value='LineString'>"+data[1]+"</option><option value='"+data[2]+"'>"+data[2]+"</option><option value='"+data[3]+"'>"+data[3]+"</optio n><option value='"+data[4]+"'>"+data[4]+"</option>");
+                var str="";
+                for(var i=0;i<data.length;i++){
+                    str += "<option value='"+data[i]+"'>"+data[i]+"</option>";
+                }
+                $('#geoType').html(str);
+            },
+            error:function(err){
+                console.log("err");
+            }
+        });
+
+    })
+    </script>
+    
+</body>
+</html>
