@@ -48,10 +48,13 @@
             word-break:break-all;
             
 	        }
+	        .info{
+	        	width: 1300px;
+				margin:25px auto;
+	        }
 	        .contents{
 	        	width:1300px;
-	        	margin:50px auto;
-	        	border:1px solid red;
+	        	margin:0 auto;
 	        	position:relative;
 	        }
 	        .fl{
@@ -67,81 +70,157 @@
 			}
 			.left{
 				margin:5px;
+				overflow-y:auto;
+				width:220px;
 			}
 			.left ul{
 				width:200px;
 			}
 			.left li{
-				background-color:orange;
+				background-color:#4876FF;
 				margin-bottom:5px;
 				height:58px;
 				overflow:hidden;
 				cursor:pointer;
+				border-radius:5px;
+				padding-left:8px;
+				color:#fff;
 			}
-			.left li:hover{
-				background-color:#fff;
+			.left li div{
+				overflow: hidden;
+
+				white-space: nowrap;
+
+				text-overflow: ellipsis;
 			}
 			.right{
-				width: 1050px;
+				width: 1090px;
 				padding-left:18px;
 				position:absolute;
 				top:0px;
 				left:220px;
-			}
-			.right li{
-				width:100px;
-				height: 136px;
-				float:left;
+				overflow-y:auto;
 				margin:5px;
+			}
+			.imgBox{
+
+			}
+			.right .oneBox{
+				width:100px;
+
+				margin:0 5px;
+				margin-bottom: 5px;
 				cursor:pointer;
             	text-align:center;
-            	word-break:break-all;
 				position:relative;
+				display:inline-block;
+				
 			}
-			.right span{
+			.oneBox span{
 				display:block;
+				width:100px;
+				height:36px;
+				word-wrap: break-word;
+				overflow:hidden;
 			}
 			.infoBox{
 				background-color: skyblue;
 				color:#fff;
-				position:absolute;
 				border-radius:5px;
-				width:90px;
-				top:25px;
-				left:95px;
-				z-index:2;
+				width:980px;
+				height:70px;
+				margin-top:16px;
 				display:none;
+				position:absolute;
+				top:140px;
+				left:0;
 			}
 			.shape{
 				width: 0;
     			height: 0;
-    			border-top: 10px solid transparent;
-    			border-right: 15px solid skyblue;
-    			border-bottom: 10px solid transparent;
+    			border-left: 10px solid transparent;
+    			border-right: 10px solid transparent;
+    			border-bottom: 15px solid skyblue;
     			position:absolute;
-    			top:10px;
-				left:-15px;
+    			top:141px;
+				left:40px;
+				display:none;
+			}
+			.selTime{
+				width:84px;
+			}
+			.select{
+				margin-left: 10px;
+				margin-right: 10px;
+			}
+			#begin{
+				width:90%;
+				height:100%;
+				text-align:center;
+				font-size:60px;
+				color:rgba(0, 0, 255, .7);
+				font-weight:600;
+				margin-top:15px;
+				letter-spacing:20px;
+			}
+			.userBox{
+				float:right;
+			}
+			.empty{
+				background-color:#eee!important;
+				font-size:18px;
+			}
+			.orderInfo{
+				width:900px;
+				margin-bottom:20px;
+				display:none;
 			}
 		</style>
 	</head>
 	
 	<body>
+		<div class="info">
+			<span class="selectUser">
+				<div class="userBox">
+					<span></span>
+					<span>用户名:</span>
+					<span class="userName">{{store_dict['user_name']}}</span>
+					
+					<span>退出登录</span>
+				</div>
+				<span class="select">订单筛选:</span>
+				<select class="selTime" id="selTime">
+					<option value="all" selected="selected">全部</option>
+					<option value="3">过去3天</option>
+					<option value="7">过去7天</option>
+					<option value="30">过去30天</option>
+				</select>
+			</span>
+		</div>
 		<div class="contents clearfix">
+			
 			<div class="left fl">
 				<ul>
 					
 				</ul>
 			</div>
 			<div class="right fl">
-				<ul>
-					
-				</ul>
+				<div class="orderInfo"></div>
+				<div class="clearfix imgBox">
+					<div id="begin">欢迎进入</div>
+					<div id="begin">遥感智能服务系统</div>
+				</div>
+				
 			</div>
 		</div>
 		
 	</body>
 	
 	<script type="text/javascript">
+
+		$(".contents").height($(window).height()-100);
+		$(".left").height($(window).height()-110);
+		$(".right").height($(window).height()-110);
 		function imgInfo(info,index){
 			var str="";
 			var str1="";
@@ -157,39 +236,70 @@
 				var spacename=info[i].workspacename;
 				workspaceArr.push(spacename);
 			}
-			for(var i=0;i<workspaceArr.length;i++){				
+			for(var a=0;a<workspaceArr.length;a++){				
 				$.ajax({
-	                url:'http://172.18.77.15:31555/thumbnail&'+workspaceArr[i],
+	                url:'http://172.18.77.15:{{store_dict['port_number']}}/thumbnail&'+workspaceArr[a],
 	                type:'get',
 	                dataType:'JSON',
 	                success:function(data){
 	                	var flag=storenameArr[j];
-	                	
+	                	dataindex=data.length;
 	                	for(var k=0;k<data.length;k++){
 	                		if(flag==data[k].name){
-	                			str1+='<li>'+
+	                			str1+='<div class="oneBox">'+
 	                			'<img src="'+data[k].url+'">'+
 	                			'<span>'+data[k].name+'</span>'+
-	                			'<div class="infoBox">'+ 
-	                			'<p class="one">单图绘制</p>'+
-	                			'<p class="much">多图绘制</p>'+
+	                			
 	                			'<div class="shape"></div>'+
+	                			'<div class="infoBox">'+
+	                			'<div>是否标注<input type="checkbox"></div>'+'<div class="much">去标注</div>'+
 	                			'</div>'+
-	                			'</li>'
+	                			'</div>'	
 	                		}
 	                	}
-	                	$(".right>ul").html(str1);
-	                	$(".right>ul>li").hover(function(){
-	                		$(this).find(".infoBox").show();
-	                		},function(){
-	                		$(this).find(".infoBox").hide();
-	                		}
-	                	);
-	                	$(".right>ul>li").find(".much").click(function(){
+	                	$(".right .imgBox").html(str1);
+		                $(".right .oneBox").find("img").click(function(){
+		                	var length=$(".oneBox").eq(0).offset().left;
+		                	var current=$(this).parent().offset().left;
+		                	$(this).parent().children("div").toggle();
+		                	$(this).parent().siblings().children('div').hide();
+		                	$(this).parent().css("margin-bottom",100).siblings().css("margin-bottom",5);
+		                	$(this).parent().find(".infoBox").offset({left:length});
+		                	var infoBoxArr=document.getElementsByClassName("infoBox");
+		                	var oneBoxArr=document.getElementsByClassName("oneBox");
+			               	for(var b=0;b<infoBoxArr.length;b++){
+			               		if(infoBoxArr[b].style.display=="none"){
+			               			oneBoxArr[b].style.marginBottom="5px";
+			               		}
+			               	}
+
+		                });
+
+	                	$(".right>.imgBox").find(".much").click(function(){
 	                		var flagtext=$(this).parent().parent().find("span").text();
 	                		window.open('/lblorder-manip&proc-order:'+index+':'+flagtext);
 	                	})
-	                	
+	                	/*$(".right>imgBox").find(".one").click(function(){
+	                		var flagtext=$(this).parent().parent().find("span").text();
+	                		//window.open('/show&'+flagtext);
+	                	})*/
+						//选框选中事件
+						$(".infoBox input").change(function(){
+							var flagText=$(this).parent().parent().parent().find("span").text();
+							var userName=$(".userName").text();
+							$.ajax({
+								url:'http://172.18.77.15:{{store_dict['port_number']}}/user-annot-status&append-img-status',
+								data:{"order_idx":index,"user_name":userName,"img_name":flagText},
+								type:'POST',
+								dataType:'JSON',
+								success:function(data){
+									console.log(data);
+								},
+								error:function(err){
+									console.log("1");
+								}
+							})
+						})
 	                	j++;
 
 
@@ -198,10 +308,132 @@
 
             	})
 			}
+			judgeStatus(index);
+		}
+		//判断订单和图片的状态
+		function judgeStatus(index){
+			var userName=$(".userName").text();
+			$.ajax({
+				url:'http://172.18.77.15:{{store_dict['port_number']}}/user-annot-status&check-order-status',
+				data:{"order_idx":index,"user_name":userName},
+				type:'POST',
+				dataType:'JSON',
+				success:function(data){
+					console.log($(".right .oneBox").find("span").text());
+					//根据返回数据动态设置选框的状态
+					/*$(".infoBox input").prop("checked",true);
+					$(".infoBox input").prop("disabled",true);*/
+				}
+			})
+		}
+		function order_info(info){
+			$(".orderInfo").show();
+			var str="";
+			str+=
+			"<div>标注类型："+info.objtypes.substring(9)+"</div>"+
+			"<div>创建时间："+info.start_time+"</div>"+
+			"<div>标注用户："+info.users+"</div>"+
+			"<div>描述信息："+info.description+"</div>";
+			$(".orderInfo").html(str);
+		}
+		//时间下拉框变化
+		$("#selTime").change(function(){
+			var opt = $(this).find("option:selected");
+			opt.attr("selected",true);	
+			selOrder(userdataArr);
+			$(".right ul").html("");
+			$(".orderInfo").hide();
+		});
+		var info='<option value="all" selected="selected">全部</option>'+
+				'<option value="3">过去3天</option>'+
+				'<option value="7">过去7天</option>'+
+				'<option value="30">过去30天</option>';
+		
+		$("#selTime").html(info);
+		//根据时间显示数据函数
+		function selOrder(dataArr){
+			var value=document.getElementById("selTime").value;
 			
-			
+			if(value=="all"){
+				leftinfo(dataArr);
+			}
+			else{
+				var nowTime=new Date();
+				var ago,agoArr,month;
+				var monthArr=["Jan","Feb","Mar","Apr","May","June","July","Aug","Sep","Otc","Nov","Dec"];
+				var dayArr=[];
+				for(var k=0;k<dataArr.length;k++){
+					ago=dataArr[k].start_time;
+					
+					agoDate=ago.substring(5,25);
+					agoArr=agoDate.split(" ");
+					for(var l=0;l<monthArr.length;l++){
+						if(agoArr[1]==monthArr[l]){
+							month=(l+1);
+							month=month<10?"0"+month:month;
+							agoArr[1]=month.toString();
+						}
+					}
+					var target = new Date(agoArr[2]+"/"+agoArr[1]+"/"+agoArr[0]);
+					var timeSum = nowTime.getTime() - target.getTime();
+					var differday = parseInt(timeSum/1000/60/60/24);
+					//console.log(differday);
+					if(differday<=value){
+						dayArr.push(dataArr[k]);
+					}
+
+				}
+				if(k==dataArr.length){
+					leftinfo(dayArr);
+				}
+			}
 		}
 
+		function leftinfo(data){
+			//判断是否存在数据
+			if(data.length==0){
+
+				$(".left>ul").html("<li class='empty'>暂无数据！</li>");
+				return
+			}
+			var str="";
+			for(var i=0;i<data.length;i++){
+				str+='<li data-index='+data[i].id+'>';
+				str+='<div>订单编号:'+data[i].id+'</div>'+
+					 
+					 '<div>描述信息:<br>'+data[i].description+'</div>'
+				str+='</li>';
+			}
+			
+			$(".left>ul").html(str);
+			var colorFlag="";
+			$(".left>ul>li").mouseenter(function(){
+				color=$(this).css("backgroundColor");
+				$(this).css({"backgroundColor":"rgba(0,0,255,.7)"});
+			});
+			$(".left>ul>li").mouseleave(function(){
+				$(this).css({"backgroundColor":color});
+			});
+			$(".left>ul>li").click(function(){
+				
+				var index=$(this)[0].dataset['index'];
+					$.ajax({
+						url:'http://172.18.77.15:{{store_dict['port_number']}}/lblorder-manip&proc-order:'+index+':json',
+						type:'POST',
+						dataType:'JSON',
+						success:function(info){
+
+							imgInfo(info.storeinfos,index);
+							order_info(info);
+						},
+						error:function(){
+
+						}
+					});
+			});
+		}
+		//定义当前用户数据数组
+		var userdataArr=[];
 		//获取数据函数
 		function show(){
 			$.ajax({
@@ -209,30 +441,21 @@
 				type:'POST',
 				dataType:'JSON',
 				success:function(data){
-					var str="";
-					for(var i=0;i<data.length;i++){
-						str+='<li data-index='+data[i].id+'>';
-						str+='<div>id:'+data[i].id+'</div>'+
-							 
-							 '<div>描述信息:<br>'+data[i].description+'</div>'
-						str+='</li>';
+					
+					var userName=$(".userName").text();
+					
+					//console.log(userName);
+					for(var q=0;q<data.length;q++){
+						var index=data[q].users.slice(6).indexOf(userName);
+						if(index!==-1){
+							userdataArr.push(data[q]);										
+							//showOrder(dataArr);
+						}
 					}
-					$(".left>ul").html(str);
-					$(".left>ul>li").click(function(){
-						var index=$(this)[0].dataset['index'];
-						$.ajax({
-							url:'http://172.18.77.15:{{store_dict['port_number']}}/lblorder-manip&proc-order:'+index+':json',
-							type:'POST',
-							dataType:'JSON',
-							success:function(info){
-
-								imgInfo(info.storeinfos,index);
-							},
-							error:function(){
-
-							}
-						});
-					});
+					if(q==16){
+						leftinfo(userdataArr);
+					}
+					
 					
 				},
 				error:function(err){
@@ -241,45 +464,35 @@
 			})
 		}
 		show();
-		//向下滑动，图片跟随显示
-		function scroll() {  // 开始封装自己的scrollTop
-    		if(window.pageYOffset != null) {  // ie9+ 高版本浏览器
-        // 因为 window.pageYOffset 默认的是  0  所以这里需要判断
-	        	return {
-		            left: window.pageXOffset,
-		            top: window.pageYOffset
-	        	}
-    		}
-    		else if(document.compatMode === "CSS1Compat") {    // 标准浏览器   来判断有没有声明DTD
-        		return {
-		            left: document.documentElement.scrollLeft,
-		            top: document.documentElement.scrollTop
-        		}
-    		}
-		    return {   // 未声明 DTD
-		        left: document.body.scrollLeft,
-		        top: document.body.scrollTop
-		    }
-		}
-		var pic = document.getElementsByClassName("right")[0];
-    	window.onscroll = function() {
-        	animate(pic,scroll().top);
-    	}
-
-	    function animate(obj,target) {
-	        clearInterval(obj.timer);
-	        obj.timer = setInterval(function() {
-	            // 运动公式  leader = leader + (target - leadaer) / 10
-	            var step = (target - obj.offsetTop) / 10;
-	            step = step > 0 ? Math.ceil(step) : Math.floor(step);
-	            obj.style.top = obj.offsetTop + step + "px";
-	            if(target == obj.offsetTop) {
-	                clearInterval(obj.timer);
-	            }
-	        },30)
+		
+	    //输出系统当前时间
+	    function showTime(){
+	    	var time=new Date();
+	    	var year=time.getFullYear();
+	    	var month=time.getMonth();
+	    	var day=time.getDate();
+	    	var week=time.getDay();
+	    	var hour=time.getHours();
+	    	var minutes=time.getMinutes();
+	    	var seconds=time.getSeconds();
+	    	var str="";
+	    	str+="今天是:"+year+"年"+(month+1)+"月"+day+"日";
+	    	$(".userBox span").eq(0).html(str);
 	    }
-	    //点击图片进行跳转
-	    
-	    
+	    showTime();
+	    //退出登录
+	    function logOut(){
+	    	$(".userBox span").eq(3).css("cursor","pointer").click(function(){
+	    		$.ajax({
+	                url:'http://172.18.77.15:{{store_dict['port_number']}}/logout',
+	                type:'GET',
+	                success:function(data){
+	                    window.location.href="http://172.18.77.15:{{store_dict['port_number']}}";
+	                }
+            	})
+	    	});
+
+	    }
+	    logOut();
 	</script>
 </html>

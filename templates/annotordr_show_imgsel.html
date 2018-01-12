@@ -121,9 +121,9 @@
         }
         .navImg li{
             float:left;
-            border:1px solid red;
+            border:2px solid red;
             margin-right: 10px;
-            margin-top: 5px;
+            margin: 5px;
             display:table-cell;
             text-align:center;
             cursor:pointer;
@@ -169,7 +169,7 @@
     <div id="name">
           <label>用户名：&nbsp;</label>
           <select id="username">
-            <option value="lijianghua" selected="selected">lijianghua</option>
+            
           </select>
     </div>
     <div id="setSize">
@@ -235,14 +235,6 @@
         str_type+="<option value='"+need_type_arr[arri]+"'>"+need_type_arr[arri]+"</option>";
     }
     $("#infoType").html(str_type);
-    //改变下拉用户名
-    var need_user_arr=$("#need_user").text().slice(6).split(",");
-    var str_user="";
-    for(var arrj=0;arrj<need_type_arr.length;arrj++){
-        
-        str_user+="<option value='"+need_user_arr[arrj]+"'>"+need_user_arr[arrj]+"</option>";
-    }
-    $("#username").html(str_user);
 
     //定义全局变量
     var extent=[];  
@@ -285,6 +277,8 @@
                         }
                     }*/
                     change();
+                    $("#imgs").children().eq(flagindex).css("border","2px solid blue");
+                    //$("#imgs>li").eq(ii);
                 }
 
             })
@@ -306,7 +300,7 @@
                 flagindex=ii;
                 Picture();
                 change();
-                console.log(ii);
+                
             }
     }
     
@@ -832,7 +826,7 @@
             getInfo();
         
         };
-        getInfo();
+        
         
 
 
@@ -859,6 +853,25 @@
         });
 
     })
+    //当前用户
+        $.ajax({
+            url:'http://172.18.77.15:31555/logstate',
+            type:'POST',
+            dataType:'JSON',
+            success:function(data){
+                console.log(data.value);
+                var str_user="";
+                
+                    
+                str_user+="<option value='"+data.value+"'>"+data.value+"</option>";
+                
+                $("#username").html(str_user);
+                getInfo();
+            },
+            error:function(err){
+                console.log(err);
+            }
+        })
     </script>
     
 </body>

@@ -432,7 +432,6 @@ def folder_traverse(operation):
         wsdir_uri = "/".join([geoserver_url, wsdir_name])
         wsdir_obj = cat.create_workspace(name = wsdir_name, uri = wsdir_uri)
 
-
         return Response(json.dumps({'name': wsdir_obj.name, 'url': wsdir_obj.href}), \
             mimetype='application/json')
 
@@ -482,7 +481,8 @@ def make_thumbnail(workspacename):
         res_url=url%(r.workspace.name,r.workspace.name,r.name,r.native_bbox[0],r.native_bbox[2],\
                  r.native_bbox[1],r.native_bbox[3],r.native_bbox[4] if r.native_bbox[4] is not None \
                  and r.native_bbox[4].startswith('EPSG') else ('EPSG:4326' if float(r.native_bbox[0])<10000 else 'EPSG:2309'))
-        res_list.append({"name":r.name,"url":res_url})
+        # import ipdb; ipdb.set_trace()
+        res_list.append({"name":r.name,"url":res_url, "workspace": workspacename})
 
     return jsonify(res_list)
 
@@ -1058,6 +1058,93 @@ def tempvars_opt(opt_type):
             return 405
 
 
+# 2018-1-12, 9:45, user annotation processing status recording
+# =============================================================
+@app.route('/user-annot-status&<string:opt_type>', methods=['GET', 'POST'])
+def user_annot_status(opt_type):
+    print "Calling the user annotation status processing function."
+    user_name = request.form['user_name'].encode('utf-8')
+    order_idx = request.form['order_idx'].encode('utf-8')
+
+    # import ipdb; ipdb.set_trace()
+
+    cnx_obj = mysql.connector.connect(**mysql_config)
+    db_cursor = cnx_obj.cursor()
+
+    db_cursor.execute("select _id, uname, display_name from user where uname = '%s';" % (user_name))
+    fetch_recs = db_cursor.fetchall()
+    if len(fetch_recs) <= 0:
+        return jsonify({'code': 404, 'error': 'no user found'})
+    else:
+        first_uid = fetch_recs[0][0]
+    cnx_obj.close()
+
+    if opt_type == 'append-img-status':
+        # initialize the annotation status for the specific image in the order
+        annot_imgnm = request.form['img_name'].encode('utf-8')
+
+        cnx_obj = mysql.connector.connect(**mysql_config)
+        db_cursor = cnx_obj.cursor()
+
+        sql_cmd = "select _id, annot_status from user_annot_status " \
+            + "where annot_userid=%s and annot_imgnm='%s';" % (first_uid, annot_imgnm)
+        db_cursor.execute(sql_cmd)
+        db_recs = db_cursor.fetchall()
+        if len(db_recs) > 0:
+            return jsonify({'code': 405, 'comment': 'record already exists.'})
+
+        sql_cmd = "insert into user_annot_status (annot_ordridx, annot_userid, annot_imgnm, annot_status) " \
+            + "values (%s, %s, '%s', 'ongoing');" % (order_idx, first_uid, annot_imgnm)
+        db_cursor.execute("SET SQL_SAFE_UPDATES = 0;"); cnx_obj.commit()
+        db_cursor.execute(sql_cmd); cnx_obj.commit()
+
+        cnx_obj.close()
+
+        return jsonify({'code': 200, 'comment': 'new image labeling record initialized'})
+
+    elif opt_type == 'check-order-status':
+        # first, check the existence of the user-order pairwised records
+        cnx_obj = mysql.connector.connect(**mysql_config)
+        db_cursor = cnx_obj.cursor()
+
+        # insert into the annotation commands in the user_annot_status datatable
+        db_cursor.execute("select annot_imgnm, annot_status, last_annot_time, annot_comment " \
+            + "from user_annot_status where annot_ordridx = %s and annot_userid = %s;" % (order_idx, first_uid))
+
+        ordr_img_status = list()
+        for user_annot_rec in db_cursor.fetchall():
+            user_img_status = {'imgnm': user_annot_rec[0], 'status': user_annot_rec[1], \
+                'last_modif_time': user_annot_rec[2], 'comment': user_annot_rec[3]}
+            ordr_img_status.append(user_img_status)
+
+        cnx_obj.close()
+
+        # second, get and list the related images in the 'user-record' pairs
+        if len(ordr_img_status) <= 0:
+            return jsonify({'code': 404, 'comment': 'no records for current order'})
+        else:
+            return jsonify({'code': 200, 'status_list': order_img_status})
+
+    elif opt_type == 'update-img-status':
+        annot_imgnm = request.form['img_name'].encode('utf-8')
+        annot_status = request.form['annot_status'].encode('utf-8') # ongoing, accomplished
+        annot_comment = request.form['annot_comment'].encode('utf-8')
+
+        cnx_obj = mysql.connector.connect(**mysql_config)
+        db_cursor = cnx_obj.cursor()
+
+        db_cursor.execute("SET SQL_SAFE_UPDATES = 0;")
+        cnx_obj.commit()
+
+        db_cursor.execute("update user_annot_status set annot_status='%s', " % (annot_status) \
+            +"last_annot_time=now(), annot_comment='%s'" % (annot_comment) \
+            + "where annot_userid=%s and annot_ordridx=%s;" % (first_uid, order_idx))
+        cnx_obj.commit()
+        cnx_obj.close()
+
+        return jsonify({'code': 200, 'comment': 'new status updated for %s' % order_idx})
+
+
 # 2017-12-11, 17:46, build / insert the new order records
 # ==========================================================
 def get_taskstorenm(store_name):
@@ -1073,6 +1160,7 @@ def get_taskstorenm(store_name):
     task_status = db_cursor.fetchall()
 
     return task_status[0][0] if len(task_status) > 0 else False
+
 
 def add_taskrecord(task_name, task_info):
     print ">>>> add record >>>>"
