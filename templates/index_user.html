@@ -125,15 +125,16 @@
 			}
 			.infoBox{
 				background-color: skyblue;
-				color:#fff;
+				color:#000;
 				border-radius:5px;
 				width:980px;
-				height:70px;
+				height:80px;
 				margin-top:16px;
 				display:none;
 				position:absolute;
 				top:140px;
 				left:0;
+				padding-top:12px;
 			}
 			.shape{
 				width: 0;
@@ -285,6 +286,16 @@
 			.imgstatus{
 
 			}
+			.infoBox button{
+				box-shadow:0 2px 0 gray;
+				width:50px;
+				border-radius:15px;
+			}
+			
+			.paint2{
+				float:left;
+				margin-left:10px;
+			}
 		</style>
 	</head>
 	
@@ -380,11 +391,14 @@
 	                			'</div>'+
 	                			/*'<div>是否标注<input type="checkbox"></div>'+'<div class="much">去标注</div>'+*/
 	                			'<div class="paint">'+
-	                			'<div class="gopaint">标注</div>'+
 	                			'<div class="switch">'+
 	                			'<div class="ball"></div>'+
 	                			'</div>'+
-	                			'<button>提交</button>'+
+	                			'<button class="btn1">提交</button>'+
+	                			'</div>'+
+	                			'<div class="paint2">'+
+	                			'<button class="btn2">注册</button>'+
+	                			'<div class="gopaint">去标注</div>'+
 	                			'</div>'+
 	                			'</div>'+
 	                			'</div>'	
@@ -450,6 +464,14 @@
 			//judgeStatus(index);
 			
 		}
+		//页面跳转标注界面
+		function goPaint(){
+			
+				var flagtext=$(this).parent().parent().parent().find("span").text();
+	        	//window.open('/show&'+flagtext);
+	        	console.log(flagtext);
+			
+		}
 		//判断订单和图片的状态
 		function judgeStatus(index){
 			var userName=$(".userName").text();
@@ -460,7 +482,7 @@
 				type:'POST',
 				dataType:'JSON',
 				success:function(data){
-					console.log(data);
+					//console.log(data);
 					//将图片信息数据添加到infoBox中
 					//根据返回数据动态设置选框的状态
 					/*$(".infoBox input").prop("checked",true);
@@ -473,10 +495,17 @@
 									if(data.status_list[i].status=="ongoing"){
 										$(".oneBox").eq(j).find(".imgstatus").removeAttr("class").attr("class","ongoing imgstatus");
 										$(".oneBox").eq(j).find(".img_status").text("标注状态：正在进行");
-
+										$(".oneBox").eq(j).find(".switch").css("backgroundColor","green");
+										$(".oneBox").eq(j).find(".ball").css("left","25px");
+										$(".oneBox").eq(j).find(".btn2").css("color","gray");
+										$(".oneBox").eq(j).find(".gopaint").eq(j).click(goPaint);
+										
 									}else{
 										$(".oneBox").eq(j).find(".imgstatus").removeAttr("class").attr("class","finished imgstatus");
 										$(".oneBox").eq(j).find(".img_status").text("标注状态：已完成");
+										$(".oneBox").eq(j).find(".switch").css("backgroundColor","green");
+										$(".oneBox").eq(j).find(".ball").css("left","25px");
+										$(".oneBox").eq(j).find(".btn2").css("color","gray");
 									}
 								}else{
 									if($(".oneBox").eq(j).find(".imgstatus").hasClass('ongoing')||$(".oneBox").eq(j).find(".imgstatus").hasClass('finished')){
@@ -485,6 +514,7 @@
 										$(".oneBox").eq(j).find(".imgstatus").removeAttr("class").attr("class","nodo imgstatus");
 										$(".oneBox").eq(j).find(".img_status").text("标注状态：未标注");
 										$(".oneBox").eq(j).find(".switch").css("backgroundColor","red");
+										$(".oneBox").eq(j).find(".ball").css("left","0");
 									}
 									
 								};
@@ -499,7 +529,8 @@
 						for(var k=0;k<$(".right .oneBox").find("span").length;k++){
 							$(".oneBox").eq(k).find("div").eq(0).removeAttr("class").attr("class","nodo");
 							$(".oneBox").eq(k).find("img_info").text("标注状态：未标注");
-							$(".oneBox").eq(j).find(".switch").css("backgroundColor","red");
+							$(".oneBox").eq(k).find(".switch").css("backgroundColor","red");
+							$(".oneBox .paint").eq(k).find(".ball").css("left","0");
 						}
 					}
 					

@@ -80,7 +80,7 @@
             layers: [
                 new ol.layer.Image({
                     source: new ol.source.ImageWMS({
-                        url: 'http://172.18.77.15:8089/geoserver/{{store_dict['workspacename']}}/wms',
+                        url: 'http://{{store_dict['geoserver_addr']}}/geoserver/{{store_dict['workspacename']}}/wms',
                         params: {'LAYERS': '{{store_dict['workspacename']}}:{{store_dict['storename']}}','VERSION':'1.1.0'},
                         serverType: 'geoserver'
                     })

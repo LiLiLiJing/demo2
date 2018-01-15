@@ -578,7 +578,7 @@
                     var untiled = new ol.layer.Image({
                         source: new ol.source.ImageWMS({
                             ratio: 1,
-                            url: 'http://172.18.77.15:8089/geoserver/globalairports/wms',
+                            url: 'http://{{store_dict['geoserver_addr']}}/geoserver/globalairports/wms',
                             params: {'FORMAT': format,
                                      'VERSION': '1.1.1',  
                                      LAYERS: 'globalairports:hengbing_20171222_09_32_55_681929_AsynPlane',
@@ -589,7 +589,7 @@
                     var tiled = new ol.layer.Tile({
                         visible: false,
                         source: new ol.source.TileWMS({
-                            url: 'http://172.18.77.15:8089/geoserver/globalairports/wms',
+                            url: 'http://{{store_dict['geoserver_addr']}}/geoserver/globalairports/wms',
                             params: {'FORMAT': format, 
                                     'VERSION': '1.1.1',
                                     tiled: true,
@@ -604,7 +604,7 @@
                         layers: [
                             new ol.layer.Image({
                                 source: new ol.source.ImageWMS({
-                                    url: 'http://172.18.77.15:8089/geoserver/{{store_dict['workspacename']}}/wms',
+                                    url: 'http://{{store_dict['geoserver_addr']}}/geoserver/{{store_dict['workspacename']}}/wms',
                                     params: {'LAYERS': '{{store_dict['workspacename']}}:{{store_dict['storename']}}','VERSION':'1.1.0'},
                                     serverType: 'geoserver'
                                 })  

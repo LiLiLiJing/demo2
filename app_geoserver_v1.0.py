@@ -43,11 +43,20 @@ THUMBNAIL_EXTENSION = 'png'
 IGNORED_FILES = set(['.gitignore'])
 
 bootstrap = Bootstrap(app)
-GLOBAL_IP_ADDR='172.18.77.15'
-# GLOBAL_IP_ADDR='159.226.21.10'
 
-GLOBAL_PORT_NUMBER = 31555
-# GLOBAL_PORT_NUMBER = 80
+# ================================
+# addr_lcl_sw = 'local'
+addr_lcl_sw = 'global'
+
+if addr_lcl_sw == 'local':
+    GLOBAL_GEOSERVER_ADDR='172.18.77.15:8089'
+    GLOBAL_IP_ADDR='172.18.77.15'
+    GLOBAL_PORT_NUMBER = 31555
+else:
+    GLOBAL_GEOSERVER_ADDR='159.226.21.10'
+    GLOBAL_IP_ADDR='159.226.21.10'
+    GLOBAL_PORT_NUMBER = 80
+# ================================
 
 # 2017-11-3, the package added for data communication with the geoserver
 from geoserver.catalog import Catalog
@@ -625,7 +634,8 @@ def show(storename):
     resource = cat.get_resource(storename)
     src_proj = resource.projection
 
-    store_dict = {'port_number': GLOBAL_PORT_NUMBER, 'remote_addr': GLOBAL_IP_ADDR}
+    store_dict = {'port_number': GLOBAL_PORT_NUMBER, 'remote_addr': GLOBAL_IP_ADDR, \
+        'geoserver_addr': GLOBAL_GEOSERVER_ADDR}
     special_projs = ['EPSG:404000']
 
     if src_proj in special_projs:
@@ -920,7 +930,8 @@ def labelorder_manip(opt_type):
 
         cur_info = {'storeinfos': cur_strlist, 'objtypes': cur_objtypes, \
                 'users': cur_users, 'description': cur_desc, "start_time": cur_starttime, \
-                'port_number': GLOBAL_PORT_NUMBER, 'remote_addr': GLOBAL_IP_ADDR, 'id': order_id}
+                'port_number': GLOBAL_PORT_NUMBER, 'remote_addr': GLOBAL_IP_ADDR, \
+                'geoserver_addr': GLOBAL_GEOSERVER_ADDR, 'id': order_id}
 
         #import ipdb; ipdb.set_trace()
         if t_return == 'none':
@@ -950,8 +961,10 @@ def showgroup(grp_name):
     store_dict['workspacename'] = workspace_name
     store_dict['storename'] = groupname
     store_dict['projection'] = src_proj
+
     store_dict['port_number'] = GLOBAL_PORT_NUMBER
     store_dict['remote_addr'] = GLOBAL_IP_ADDR
+    store_dict['geoserver_addr'] = GLOBAL_GEOSERVER_ADDR
 
     return render_template('algo_regionsel.html',store_dict=store_dict)
 
@@ -975,6 +988,7 @@ def showgroup_transp(grp_name):
 
     store_dict['port_number'] = GLOBAL_PORT_NUMBER
     store_dict['remote_addr'] = GLOBAL_IP_ADDR
+    store_dict['geoserver_addr'] = GLOBAL_GEOSERVER_ADDR
 
     return render_template('algo_regionsel_transtack.html',store_dict=store_dict)
 
