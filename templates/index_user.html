@@ -168,6 +168,7 @@
 				float:right;
 				color:#000;
 				font-size:14px;
+				margin-top:28px;
 			}
 			.empty{
 				background-color:#eee!important;
@@ -196,7 +197,8 @@
 				color:#fff;
 				font-weight:bold;
 				margin-top:12px;
-				display:inline-block;
+				margin-left:5px;
+				float:left;
 			}
 			.headleft .rightstyle{
 				color:#fff!important;
@@ -208,6 +210,7 @@
 				height:50px;
 				width: 50px;
 				margin-top:5px;
+				float:left;
 			}
 			.ongoing{
 				width:10px;
@@ -238,6 +241,7 @@
 			}
 			.infoBox .imginfo{
 				float:left;
+				margin-left:10px;
 			}
 			.infoBox .comment{
 				float:left;
@@ -267,6 +271,7 @@
 			.infoBox .paint{
 				float:left;
 				margin-left:10px;
+				padding-top:14px;
 			}
 			.infoBox .paint .switch{
 				width:50px;
@@ -291,10 +296,17 @@
 				width:50px;
 				border-radius:15px;
 			}
-			
+			.infoBox .btn1{
+				margin-top:5px;
+			}
 			.paint2{
 				float:left;
-				margin-left:10px;
+				margin-left:60px;
+				padding-top:14px;
+			}
+			.infoBox .gopaint{
+				margin-top:10px;
+				margin-left:5px;
 			}
 		</style>
 	</head>
@@ -303,7 +315,7 @@
 		<div class="header">
 			<div class="headleft">
 			    <img src="static/images/logo.jpg"/>     
-			    <span class="title">Remote Sensing Artificial Intelligence Service 遥感智能服务</span>
+			    <div class="title">Remote Sensing Artificial Intelligence Service 遥感智能服务</div>
 			    <div class="userBox">
 					<span class="rightstyle"></span>
 					<span class="rightstyle">用户名:</span>
@@ -398,7 +410,7 @@
 	                			'</div>'+
 	                			'<div class="paint2">'+
 	                			'<button class="btn2">注册</button>'+
-	                			'<div class="gopaint">去标注</div>'+
+	                			'<div class="gopaint">标注-></div>'+
 	                			'</div>'+
 	                			'</div>'+
 	                			'</div>'	
@@ -468,10 +480,10 @@
 		function goPaint(){
 			
 				var flagtext=$(this).parent().parent().parent().find("span").text();
-	        	//window.open('/show&'+flagtext);
-	        	console.log(flagtext);
-			
+	        	window.open('/show&'+flagtext);
 		}
+		//图片信息注册
+		
 		//判断订单和图片的状态
 		function judgeStatus(index){
 			var userName=$(".userName").text();
@@ -482,7 +494,7 @@
 				type:'POST',
 				dataType:'JSON',
 				success:function(data){
-					//console.log(data);
+					console.log(data);
 					//将图片信息数据添加到infoBox中
 					//根据返回数据动态设置选框的状态
 					/*$(".infoBox input").prop("checked",true);
@@ -498,7 +510,7 @@
 										$(".oneBox").eq(j).find(".switch").css("backgroundColor","green");
 										$(".oneBox").eq(j).find(".ball").css("left","25px");
 										$(".oneBox").eq(j).find(".btn2").css("color","gray");
-										$(".oneBox").eq(j).find(".gopaint").eq(j).click(goPaint);
+										($(".oneBox").eq(j).find(".gopaint"))[0].onclick=goPaint;
 										
 									}else{
 										$(".oneBox").eq(j).find(".imgstatus").removeAttr("class").attr("class","finished imgstatus");
@@ -515,6 +527,28 @@
 										$(".oneBox").eq(j).find(".img_status").text("标注状态：未标注");
 										$(".oneBox").eq(j).find(".switch").css("backgroundColor","red");
 										$(".oneBox").eq(j).find(".ball").css("left","0");
+										$(".oneBox").eq(j).find("textarea").attr(disabled,"disabled");
+										($(".oneBox").eq(j).find(".btn2"))[0].onclick=function() {
+											var parentOneBox=this.parentNode.parentNode.parentNode;
+											var imgName=this.parentNode.parentNode.parentNode.getElementsByTagName("span")[0].innerText;
+											$.ajax({
+												url:'http://{{store_dict['remote_addr']}}:{{store_dict['port_number']}}/user-annot-status&append-img-status',
+												data:{"order_idx":index,"user_name":userName,"img_name":imgName},
+												type:'POST',
+												dataType:'JSON',
+												success:function(data){
+													console.log(data);
+													//console.log(parentOneBox);
+													//console.log($(".oneBox"));
+													//console.log($(parentOneBox));
+													$(parentOneBox).find(".switch").css("backgroundColor","green");
+													$(parentOneBox).find(".ball").css("left","25px");
+												},
+												error:function(){
+													console.log(1);
+												}
+											})
+										};
 									}
 									
 								};

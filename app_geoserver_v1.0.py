@@ -45,8 +45,8 @@ IGNORED_FILES = set(['.gitignore'])
 bootstrap = Bootstrap(app)
 
 # ================================
-# addr_lcl_sw = 'local'
-addr_lcl_sw = 'global'
+addr_lcl_sw = 'local'
+# addr_lcl_sw = 'global'
 
 if addr_lcl_sw == 'local':
     GLOBAL_GEOSERVER_ADDR='172.18.77.15:8089'
@@ -165,12 +165,12 @@ def user_management_api(opt_type):
             sql_cmd = "select user.uname, user.display_name from user;"
             db_cursor.execute(sql_cmd)
 
-            cnx_obj.close()
-
             usrnms_list = list()
             for row in db_cursor.fetchall():
                 usrnms_list.append({'uname': row[0], 'disp_name': row[1]})
             
+            cnx_obj.close()
+
             return jsonify(usrnms_list)
 
 
@@ -201,10 +201,10 @@ def poly_labels_proc(opt_type):
 
             sql_cmd = "select last_insert_id();"
             db_cursor.execute(sql_cmd)            
-            cnx_obj.close()
 
             row = db_cursor.fetchall()
             # print "ID: ", row[0][0]
+            cnx_obj.close()
             return Response(json.dumps({'index': row[0][0]}), mimetype='application/json')
 
         if opt_type == 'remove_annot':
@@ -267,8 +267,7 @@ def poly_labels_proc(opt_type):
                 + "ON aa.objclass = obj_types._id AND aa.geotype = geo_types._id"
 
             db_cursor.execute(sql_cmd)
-            cnx_obj.close()
-
+            
             annot_list = list()
             for row in db_cursor.fetchall():
                 # print row[3]
@@ -276,6 +275,7 @@ def poly_labels_proc(opt_type):
                     'vertexs': make_annot_geostrings(convrt_hexstr_to_doubles(row[3])), \
                     'detailtype': row[4]}
                 annot_list.append(cur_annot)
+            cnx_obj.close()
 
             return Response(json.dumps(annot_list), mimetype='application/json')
 
@@ -312,9 +312,9 @@ def poly_labels_proc(opt_type):
 
             sql_cmd = "select type_name from obj_types;"
             db_cursor.execute(sql_cmd)
-            cnx_obj.close()
 
             types_list = [row[0] for row in db_cursor.fetchall()]
+            cnx_obj.close()
             return Response(json.dumps(types_list), mimetype='application/json')
 
         if opt_type == 'get_geotypes':
@@ -326,9 +326,9 @@ def poly_labels_proc(opt_type):
 
             sql_cmd = "select type_name from geo_types;"
             db_cursor.execute(sql_cmd)
-            cnx_obj.close()
 
             types_list = [row[0] for row in db_cursor.fetchall()]
+            cnx_obj.close()
             return Response(json.dumps(types_list), mimetype='application/json')
 
 
@@ -678,7 +678,7 @@ def listorders_bytype(job_type='bridgemask'):
             + "job.params = 'JobType:%s';" % (job_type)
 
     db_cursor.execute(sql_cmd)
-    cnx_obj.close()
+    
 
     avail_orderlist = list()
     for row in db_cursor.fetchall():
@@ -701,6 +701,7 @@ def listorders_bytype(job_type='bridgemask'):
 
         avail_orderlist.append(cur_orderstatus)
 
+    cnx_obj.close()
     # return Response(json.dumps(avail_orderlist), mimetype='application/json')
     return jsonify(avail_orderlist)
 
@@ -834,7 +835,6 @@ def labelorder_manip(opt_type):
         sql_cmd = "select _id, path, params, start_time, description from job " \
             + "where job.params regexp '^AnnotJob';"
         db_cursor.execute(sql_cmd)
-        cnx_obj.close()
 
         annotjobs_list = list()
         for row in db_cursor.fetchall():
@@ -845,6 +845,7 @@ def labelorder_manip(opt_type):
                 'users': cur_users, 'description': cur_desc, "start_time": cur_starttime}
             annotjobs_list.append(cur_info)
 
+        cnx_obj.close()
         return jsonify(annotjobs_list)
 
     elif opt_type_split[0] == "get-specorder":
@@ -866,7 +867,6 @@ def labelorder_manip(opt_type):
         sql_cmd = "select _id, path, params, start_time, description from job " \
             + "where (job.params regexp '^AnnotJob') and (job.params like '\%%s\%')" % (user_name)
         db_cursor.execute(sql_cmd)
-        cnx_obj.close()
 
         usr_annotjobs_list = list()
         for row in db_cursor.fetchall():
@@ -878,6 +878,7 @@ def labelorder_manip(opt_type):
 
             usr_annotjobs_list.append(cur_info)
 
+        cnx_obj.close()
         return jsonify(usr_annotjobs_list)
 
     elif opt_type_split[0] == "proc-order":
@@ -896,11 +897,11 @@ def labelorder_manip(opt_type):
         sql_cmd = "select path, params, start_time, description from job" \
             + " where job._id = %s;" % order_id
         db_cursor.execute(sql_cmd)
-        cnx_obj.close()
 
         cur_pathstr, cur_params, cur_starttime, cur_desc = db_cursor.fetchall()[0]
         cur_workspace, cur_objtypes = cur_pathstr.split(';')
         cur_users = cur_params.split(';')[1]
+        cnx_obj.close()
 
         # parse the workspace, and collect the coveragestores in it
         cur_wslist = cur_workspace.split(':')[1].split(',')
@@ -1025,7 +1026,6 @@ def index():
         sql_cmd = "select uname, display_name, pwd, utype from user " \
             + "where (uname = '%s') or (display_name = '%s');" % (session['username'], session['username'])
         db_cursor.execute(sql_cmd)
-        cnx_obj.close()
 
         # just get the first row of records from the selectoin result
         req_rows = db_cursor.fetchall(); n_recs = len(req_rows)
@@ -1041,6 +1041,7 @@ def index():
                 return redirect(url_for('login_user', user_name = session['username']))
             elif ('admin' in cur_user_types) and (login_type == 'admin'):
                 return redirect(url_for('login_admin'))
+        cnx_obj.close()
 
     if request.method == 'GET':
         return render_template('login.html')
@@ -1181,10 +1182,10 @@ def get_taskstorenm(store_name):
         % (store_name)
 
     db_cursor.execute(sql_cmd)
-    cnx_obj.close()
 
     task_status = db_cursor.fetchall()
-
+    cnx_obj.close()
+    
     return task_status[0][0] if len(task_status) > 0 else False
 
 
