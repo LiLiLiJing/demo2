@@ -140,7 +140,7 @@
         <div class="main clearfix">
         	<div class="back">
         		<div id="triangle"></div>
-        		<a href="http://172.18.77.15:31555/folder-view"><div id="rectangle">返回</div></a>
+        		<a href="http://{{store_dict['remote_addr']}}:{{store_dict['port_number']}}/folder-view"><div id="rectangle">返回</div></a>
         	</div>
         	
             <div class="mainRight f_l">
@@ -156,7 +156,7 @@
 	var shenzhen=shenzhen;
 		var ajax = new XMLHttpRequest();
 
-		ajax.open('get','http://172.18.77.15:{{store_dict['port_number']}}/thumbnail&'+flag.innerText);
+		ajax.open('get','http://{{store_dict['remote_addr']}}:{{store_dict['port_number']}}/thumbnail&'+flag.innerText);
 
 		//ajax.setRequestHeader("Content-type","application/x-www-form-urlencoded");
 
@@ -174,7 +174,7 @@
 
 			var str ="";
 			/*str +="<div class='title1'>共有"+info.length+"张图</div>";
-			str +="<form action='http://172.18.77.15:{{store_dict['port_number']}}/annot-objs' method='POST'>";
+			str +="<form action='http://{{store_dict['remote_addr']}}:{{store_dict['port_number']}}/annot-objs' method='POST'>";
 			for(var i=0;i<info.length;i++){				
 				str += '<div class="imgList">'+
 				"<img src='"+info[i].url+"' >"+
@@ -195,7 +195,7 @@
 			for(var a=0;a<imgList.length;a++){
 				imgList[a].ondblclick=function(){
 				var address=this.getElementsByTagName('p')[0].innerText;
-				window.location.href="http://172.18.77.15:{{store_dict['port_number']}}/show&"+address;
+				window.location.href="http://{{store_dict['remote_addr']}}:{{store_dict['port_number']}}/show&"+address;
 				}
 			}
 			/*var ipt = document.getElementsByClassName('ipt2')[0];

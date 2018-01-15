@@ -155,14 +155,14 @@
 	function show(){
 	$(document).ready(function(){
 		$.ajax({
-                url: 'http://172.18.77.15:{{store_dict['port_number']}}/folder-traverse&listdirs', //请求地址
+                url: 'http://{{store_dict['remote_addr']}}:{{store_dict['port_number']}}/folder-traverse&listdirs', //请求地址
                 type: 'POST',  //请求方式为post
                 //data: { 'type': geoType, 'geo': geoData, 'att': attData }, //传入参数 
                 dataType: 'json', //返回数据格式
                 //请求成功完成后要执行的方法  
                 success: function (response) {
                     var str="";
-                    str+='<form action="http://172.18.77.15:{{store_dict['port_number']}}/create-lblorder-ui" method="POST">';
+                    str+='<form action="http://{{store_dict['remote_addr']}}:{{store_dict['port_number']}}/create-lblorder-ui" method="POST">';
                     str+='<h3>文件夹列表</h3>';
                     str+='<input class="ipt2 ipt" type="button" value="取消" /><input class="ipt1 ipt" type="submit" value="提交" />';
                     
@@ -193,11 +193,11 @@
 							var name = tag.children[1].innerText;
 				//修改文件夹
 							need[0].onclick=function (){
-								window.location.href="http://172.18.77.15:{{store_dict['port_number']}}/uploadpage&"+name;
+								window.location.href="http://{{store_dict['remote_addr']}}:{{store_dict['port_number']}}/uploadpage&"+name;
 							}
 				//标注文件
 							need[1].onclick=function(){
-								window.location.href="http://172.18.77.15:{{store_dict['port_number']}}/folder-imgsview&"+name;
+								window.location.href="http://{{store_dict['remote_addr']}}:{{store_dict['port_number']}}/folder-imgsview&"+name;
 							}
 				//删除文件夹
 							need[2].onclick=function(){
@@ -206,7 +206,7 @@
 								
 							}
 							need[4].onclick=function(){
-								window.location.href="http://172.18.77.15:{{store_dict['port_number']}}/folder-result&"+name;
+								window.location.href="http://{{store_dict['remote_addr']}}:{{store_dict['port_number']}}/folder-result&"+name;
 							}
 						}
 					}
@@ -218,7 +218,7 @@
 }
 		function creatFiles(filename){
 			$.ajax({
-				url:'http://172.18.77.15:{{store_dict['port_number']}}/folder-traverse&createdir:'+filename,
+				url:'http://{{store_dict['remote_addr']}}:{{store_dict['port_number']}}/folder-traverse&createdir:'+filename,
 				success:function(response){
 					show();
 				},
@@ -231,7 +231,7 @@
 		function delFile(name){
 			
 			$.ajax({
-				url:'http://172.18.77.15:31555/folder-traverse&deletedir:'+name,
+				url:'http://{{store_dict['remote_addr']}}:{{store_dict['port_number']}}/folder-traverse&deletedir:'+name,
 				
 				type:'POST',
 				success:function(data){

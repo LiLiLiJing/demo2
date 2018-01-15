@@ -43,7 +43,11 @@ THUMBNAIL_EXTENSION = 'png'
 IGNORED_FILES = set(['.gitignore'])
 
 bootstrap = Bootstrap(app)
+GLOBAL_IP_ADDR='172.18.77.15'
+# GLOBAL_IP_ADDR='159.226.21.10'
+
 GLOBAL_PORT_NUMBER = 31555
+# GLOBAL_PORT_NUMBER = 80
 
 # 2017-11-3, the package added for data communication with the geoserver
 from geoserver.catalog import Catalog
@@ -323,21 +327,23 @@ def poly_labels_proc(opt_type):
 @app.route("/folder-view", methods=['GET', 'POST'])
 def folder_view():
     print "Calling the folder_view service"
-    store_dict = {'port_number': GLOBAL_PORT_NUMBER}
+    store_dict = {'port_number': GLOBAL_PORT_NUMBER, 'remote_addr': GLOBAL_IP_ADDR}
     return render_template('folder_view.html', store_dict=store_dict)
 
 
 @app.route("/folder-imgsview&<string:ws_name>", methods=['GET', 'POST'])
 def folder_imgsview(ws_name):
     print "Calling the folder_imgsview service"
-    store_dict = {'workspace': ws_name, 'port_number': GLOBAL_PORT_NUMBER}
+    store_dict = {'workspace': ws_name, 'port_number': GLOBAL_PORT_NUMBER, \
+        'remote_addr': GLOBAL_IP_ADDR}
     return render_template('folder_imgsview.html', store_dict=store_dict)
 
 
 @app.route("/folder-result&<string:ws_name>", methods=['GET', 'POST'])
 def folder_result(ws_name):
     print "Calling the folder_imgsview service"
-    store_dict = {'workspace': ws_name, 'port_number': GLOBAL_PORT_NUMBER}
+    store_dict = {'workspace': ws_name, 'port_number': GLOBAL_PORT_NUMBER, \
+        'remote_addr': GLOBAL_IP_ADDR}
     return render_template('folder_result.html', store_dict=store_dict)
 
 
@@ -350,14 +356,14 @@ def basic_test():
 @app.route("/creat-order", methods=['GET', 'POST'])
 def creat_order():
     print "Calling the creat_order service"
-    store_dict = {'port_number': GLOBAL_PORT_NUMBER}
+    store_dict = {'port_number': GLOBAL_PORT_NUMBER, 'remote_addr': GLOBAL_IP_ADDR}
     return render_template('creat_order.html', store_dict=store_dict)
 
 
 @app.route("/order-index", methods=['GET', 'POST'])
 def order_index():
     print "Calling the order_index service"
-    store_dict = {'port_number': GLOBAL_PORT_NUMBER}
+    store_dict = {'port_number': GLOBAL_PORT_NUMBER, 'remote_addr': GLOBAL_IP_ADDR}
     return render_template('orderindex.html', store_dict=store_dict)
 
 
@@ -449,12 +455,12 @@ def folder_traverse(operation):
 
 @app.route('/thumbnail-single&<string:store_name>')
 def make_thumbnail_single(store_name):
-    url='http://172.18.77.15:8089/geoserver/%s/wms?service=WMS&version=1.1.0&' \
+    url='%s/%s/wms?service=WMS&version=1.1.0&' \
         + 'request=GetMap&layers=%s:%s&styles=&bbox=%s,%s,%s,%s&width=80&height=80' \
         + '&srs=%s&format=image/png'
 
     r = cat.get_resource(store_name)
-    res_url=url%(r.workspace.name,r.workspace.name,r.name,r.native_bbox[0],r.native_bbox[2], \
+    res_url=url%(geoserver_url, r.workspace.name,r.workspace.name,r.name,r.native_bbox[0],r.native_bbox[2], \
             r.native_bbox[1],r.native_bbox[3],r.native_bbox[4] if r.native_bbox[4] is not None \
             and r.native_bbox[4].startswith('EPSG') else ('EPSG:4326' if float(r.native_bbox[0])<10000 else 'EPSG:2309'))
 
@@ -463,7 +469,7 @@ def make_thumbnail_single(store_name):
 
 @app.route('/thumbnail&<string:workspacename>',methods=['POST','GET'])
 def make_thumbnail(workspacename):
-    url='http://172.18.77.15:8089/geoserver/%s/wms?service=WMS&version=1.1.0&' \
+    url='%s/%s/wms?service=WMS&version=1.1.0&' \
         + 'request=GetMap&layers=%s:%s&styles=&bbox=%s,%s,%s,%s&width=80&height=80' \
         + '&srs=%s&format=image/png'
 
@@ -478,7 +484,7 @@ def make_thumbnail(workspacename):
         if cur_rsuffix in ignore_suffixs:
             continue
 
-        res_url=url%(r.workspace.name,r.workspace.name,r.name,r.native_bbox[0],r.native_bbox[2],\
+        res_url=url%(geoserver_url,r.workspace.name,r.workspace.name,r.name,r.native_bbox[0],r.native_bbox[2],\
                  r.native_bbox[1],r.native_bbox[3],r.native_bbox[4] if r.native_bbox[4] is not None \
                  and r.native_bbox[4].startswith('EPSG') else ('EPSG:4326' if float(r.native_bbox[0])<10000 else 'EPSG:2309'))
         # import ipdb; ipdb.set_trace()
@@ -619,7 +625,7 @@ def show(storename):
     resource = cat.get_resource(storename)
     src_proj = resource.projection
 
-    store_dict = {'port_number': GLOBAL_PORT_NUMBER}
+    store_dict = {'port_number': GLOBAL_PORT_NUMBER, 'remote_addr': GLOBAL_IP_ADDR}
     special_projs = ['EPSG:404000']
 
     if src_proj in special_projs:
@@ -770,7 +776,7 @@ def create_label_orderui():
 @app.route('/show-lblordrs-ui', methods=['POST', 'GET'])
 def show_label_orderui():
     # the frontend will post the selected list workspace names
-    store_dict = {'port_number': GLOBAL_PORT_NUMBER}
+    store_dict = {'port_number': GLOBAL_PORT_NUMBER, 'remote_addr': GLOBAL_IP_ADDR}
     return render_template('show_lblorder.html', store_dict=store_dict)
 
 
@@ -914,7 +920,7 @@ def labelorder_manip(opt_type):
 
         cur_info = {'storeinfos': cur_strlist, 'objtypes': cur_objtypes, \
                 'users': cur_users, 'description': cur_desc, "start_time": cur_starttime, \
-                'port_number': GLOBAL_PORT_NUMBER, 'id': order_id}
+                'port_number': GLOBAL_PORT_NUMBER, 'remote_addr': GLOBAL_IP_ADDR, 'id': order_id}
 
         #import ipdb; ipdb.set_trace()
         if t_return == 'none':
@@ -944,6 +950,8 @@ def showgroup(grp_name):
     store_dict['workspacename'] = workspace_name
     store_dict['storename'] = groupname
     store_dict['projection'] = src_proj
+    store_dict['port_number'] = GLOBAL_PORT_NUMBER
+    store_dict['remote_addr'] = GLOBAL_IP_ADDR
 
     return render_template('algo_regionsel.html',store_dict=store_dict)
 
@@ -964,6 +972,9 @@ def showgroup_transp(grp_name):
     store_dict['storename2'] = resource.layers[1]
 
     store_dict['projection'] = resrc0_proj
+
+    store_dict['port_number'] = GLOBAL_PORT_NUMBER
+    store_dict['remote_addr'] = GLOBAL_IP_ADDR
 
     return render_template('algo_regionsel_transtack.html',store_dict=store_dict)
 
@@ -1023,12 +1034,13 @@ def index():
 
 @app.route('/login-admin', methods=['GET', 'POST'])
 def login_admin():
-    store_dict={'port_number': GLOBAL_PORT_NUMBER}
+    store_dict={'port_number': GLOBAL_PORT_NUMBER, 'remote_addr': GLOBAL_IP_ADDR}
     return render_template('index.html', store_dict=store_dict)
 
 @app.route('/login-user&<string:user_name>', methods=['GET', 'POST'])
 def login_user(user_name):
-    store_dict={'port_number': GLOBAL_PORT_NUMBER, 'user_name': user_name}
+    store_dict={'port_number': GLOBAL_PORT_NUMBER, 'user_name': user_name, \
+        'remote_addr': GLOBAL_IP_ADDR}
     return render_template('index_user.html', store_dict=store_dict)
 
 @app.route('/uploadpage&<string:ws_name>', methods=['GET', 'POST'])
@@ -1123,7 +1135,7 @@ def user_annot_status(opt_type):
         if len(ordr_img_status) <= 0:
             return jsonify({'code': 404, 'comment': 'no records for current order'})
         else:
-            return jsonify({'code': 200, 'status_list': order_img_status})
+            return jsonify({'code': 200, 'status_list': ordr_img_status})
 
     elif opt_type == 'update-img-status':
         annot_imgnm = request.form['img_name'].encode('utf-8')
@@ -1334,4 +1346,4 @@ def get_procrequest(storename):
         return jsonify({'code': 200, 'order_rslt': addmsk_rslt})
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=GLOBAL_PORT_NUMBER)
+    app.run(debug=True, host=GLOBAL_IP_ADDR, port=GLOBAL_PORT_NUMBER)

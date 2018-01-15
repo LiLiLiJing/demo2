@@ -163,31 +163,148 @@
 				margin-top:15px;
 				letter-spacing:20px;
 			}
-			.userBox{
+			.headleft .userBox{
 				float:right;
+				color:#000;
+				font-size:14px;
 			}
 			.empty{
 				background-color:#eee!important;
-				font-size:18px;
+				font-size:18px!important;
+				color:#000!important;
 			}
 			.orderInfo{
 				width:900px;
 				margin-bottom:20px;
 				display:none;
 			}
+			.header{
+				width:100%;
+				height:60px;
+				background-color:#4c4e5a;
+			}
+			.headleft{
+				width: 1300px;
+				height: 60px;
+				margin:0 auto;
+				
+
+			}
+			.headleft .title{
+				font-size:25px;
+				color:#fff;
+				font-weight:bold;
+				margin-top:12px;
+				display:inline-block;
+			}
+			.headleft .rightstyle{
+				color:#fff!important;
+				font-size:14px;
+				margin-bottom:5px;
+			}
+
+			.headleft img{
+				height:50px;
+				width: 50px;
+				margin-top:5px;
+			}
+			.ongoing{
+				width:10px;
+				height: 10px;
+				border-radius:5px;
+				background-color:green;
+				position:absolute;
+				top:4px;
+				right:4px;
+			}
+			.finished{
+				width:10px;
+				height: 10px;
+				border-radius:5px;
+				background-color:red;
+				position:absolute;
+				top:4px;
+				right:4px;
+			}
+			.nodo{
+				width:10px;
+				height: 10px;
+				border-radius:5px;
+				background-color:#fff;
+				position:absolute;
+				top:4px;
+				right:4px;
+			}
+			.infoBox .imginfo{
+				float:left;
+			}
+			.infoBox .comment{
+				float:left;
+				position:relative;
+				margin-left:10px;
+				width:410px;
+				height:70px;
+			}
+			.infoBox{
+				text-align:left;
+			}
+			.infoBox .commentTitle{
+				position:absolute;
+				top:0px;
+				left:0px;
+				width:80px;
+			}
+			.infoBox textarea{
+				position:absolute;
+				top:18px;
+				left:0;
+				resize: none;
+				outline:none;
+				width:400px;
+				height:48px;
+			}
+			.infoBox .paint{
+				float:left;
+				margin-left:10px;
+			}
+			.infoBox .paint .switch{
+				width:50px;
+				height:25px;
+				background-color:green;
+				position:relative;
+				border-radius:25px;
+			}
+			.infoBox .paint .ball{
+				position:absolute;
+				width:25px;
+				height:25px;
+				border-radius:25px;
+				background-color:#fff;
+				left:25px;
+			}
+			.imgstatus{
+
+			}
 		</style>
 	</head>
 	
 	<body>
+		<div class="header">
+			<div class="headleft">
+			    <img src="static/images/logo.jpg"/>     
+			    <span class="title">Remote Sensing Artificial Intelligence Service 遥感智能服务</span>
+			    <div class="userBox">
+					<span class="rightstyle"></span>
+					<span class="rightstyle">用户名:</span>
+					<span class="userName rightstyle">{{store_dict['user_name']}}</span>
+					
+					<span class="rightstyle">退出登录</span>
+				</div>
+			</div>
+		</div>
 		<div class="info">
 			<span class="selectUser">
-				<div class="userBox">
-					<span></span>
-					<span>用户名:</span>
-					<span class="userName">{{store_dict['user_name']}}</span>
-					
-					<span>退出登录</span>
-				</div>
+				
 				<span class="select">订单筛选:</span>
 				<select class="selTime" id="selTime">
 					<option value="all" selected="selected">全部</option>
@@ -238,7 +355,7 @@
 			}
 			for(var a=0;a<workspaceArr.length;a++){				
 				$.ajax({
-	                url:'http://172.18.77.15:{{store_dict['port_number']}}/thumbnail&'+workspaceArr[a],
+	                url:'http://{{store_dict['remote_addr']}}:{{store_dict['port_number']}}/thumbnail&'+workspaceArr[a],
 	                type:'get',
 	                dataType:'JSON',
 	                success:function(data){
@@ -248,21 +365,38 @@
 	                		if(flag==data[k].name){
 	                			str1+='<div class="oneBox">'+
 	                			'<img src="'+data[k].url+'">'+
-	                			'<span>'+data[k].name+'</span>'+
-	                			
+	                			'<span class="imgname">'+data[k].name+'</span>'+
+	                			'<div class="imgstatus"></div>'+
 	                			'<div class="shape"></div>'+
 	                			'<div class="infoBox">'+
-	                			'<div>是否标注<input type="checkbox"></div>'+'<div class="much">去标注</div>'+
+	                			'<div class="imginfo">'+
+	                			'<div class="imgnm"></div>'+
+	                			'<div class="img_status"></div>'+
+	                			'<div class="imgmodify"></div>'+
+	                			'</div>'+
+	                			'<div class="comment">'+
+	                			'<div class="commentTitle">描述信息：</div>'+
+	                			'<textarea></textarea>'+
+	                			'</div>'+
+	                			/*'<div>是否标注<input type="checkbox"></div>'+'<div class="much">去标注</div>'+*/
+	                			'<div class="paint">'+
+	                			'<div class="gopaint">标注</div>'+
+	                			'<div class="switch">'+
+	                			'<div class="ball"></div>'+
+	                			'</div>'+
+	                			'<button>提交</button>'+
+	                			'</div>'+
 	                			'</div>'+
 	                			'</div>'	
+	                			
 	                		}
 	                	}
 	                	$(".right .imgBox").html(str1);
 		                $(".right .oneBox").find("img").click(function(){
 		                	var length=$(".oneBox").eq(0).offset().left;
 		                	var current=$(this).parent().offset().left;
-		                	$(this).parent().children("div").toggle();
-		                	$(this).parent().siblings().children('div').hide();
+		                	$(this).parent().children(".shape,.infoBox").toggle();
+		                	$(this).parent().siblings().children('.shape,.infoBox').hide();
 		                	$(this).parent().css("margin-bottom",100).siblings().css("margin-bottom",5);
 		                	$(this).parent().find(".infoBox").offset({left:length});
 		                	var infoBoxArr=document.getElementsByClassName("infoBox");
@@ -274,11 +408,15 @@
 			               	}
 
 		                });
-
-	                	$(".right>.imgBox").find(".much").click(function(){
-	                		var flagtext=$(this).parent().parent().find("span").text();
-	                		window.open('/lblorder-manip&proc-order:'+index+':'+flagtext);
-	                	})
+		                function linkPaint(index){
+		                	$(".right>.imgBox").find(".much").click(function(){
+		                		if($(this).parent().find("input").prop("checked")){
+		                			var flagtext=$(this).parent().parent().find("span").text();
+		                			window.open('/lblorder-manip&proc-order:'+index+':'+flagtext);
+		                		}
+		                	});
+	                	}
+	                	linkPaint(index);
 	                	/*$(".right>imgBox").find(".one").click(function(){
 	                		var flagtext=$(this).parent().parent().find("span").text();
 	                		//window.open('/show&'+flagtext);
@@ -287,13 +425,14 @@
 						$(".infoBox input").change(function(){
 							var flagText=$(this).parent().parent().parent().find("span").text();
 							var userName=$(".userName").text();
+							$(this).prop("disabled",true);
 							$.ajax({
-								url:'http://172.18.77.15:{{store_dict['port_number']}}/user-annot-status&append-img-status',
+								url:'http://{{store_dict['remote_addr']}}:{{store_dict['port_number']}}/user-annot-status&append-img-status',
 								data:{"order_idx":index,"user_name":userName,"img_name":flagText},
 								type:'POST',
 								dataType:'JSON',
 								success:function(data){
-									console.log(data);
+									
 								},
 								error:function(err){
 									console.log("1");
@@ -302,27 +441,71 @@
 						})
 	                	j++;
 
-
+	                	judgeStatus(index);
 	                	
 	                }
 
             	})
 			}
-			judgeStatus(index);
+			//judgeStatus(index);
+			
 		}
 		//判断订单和图片的状态
 		function judgeStatus(index){
 			var userName=$(".userName").text();
+			var imgstatus;
 			$.ajax({
-				url:'http://172.18.77.15:{{store_dict['port_number']}}/user-annot-status&check-order-status',
+				url:'http://{{store_dict['remote_addr']}}:{{store_dict['port_number']}}/user-annot-status&check-order-status',
 				data:{"order_idx":index,"user_name":userName},
 				type:'POST',
 				dataType:'JSON',
 				success:function(data){
-					console.log($(".right .oneBox").find("span").text());
+					console.log(data);
+					//将图片信息数据添加到infoBox中
 					//根据返回数据动态设置选框的状态
 					/*$(".infoBox input").prop("checked",true);
 					$(".infoBox input").prop("disabled",true);*/
+					if(data.code==200){
+						for(var i=0;i<data.status_list.length;i++){
+							for(var j=0;j<$(".right .oneBox").find("span").length;j++){
+								if(data.status_list[i].imgnm==$(".right .oneBox").find("span").eq(j).text()){
+									//给图片添加状态样式
+									if(data.status_list[i].status=="ongoing"){
+										$(".oneBox").eq(j).find(".imgstatus").removeAttr("class").attr("class","ongoing imgstatus");
+										$(".oneBox").eq(j).find(".img_status").text("标注状态：正在进行");
+
+									}else{
+										$(".oneBox").eq(j).find(".imgstatus").removeAttr("class").attr("class","finished imgstatus");
+										$(".oneBox").eq(j).find(".img_status").text("标注状态：已完成");
+									}
+								}else{
+									if($(".oneBox").eq(j).find(".imgstatus").hasClass('ongoing')||$(".oneBox").eq(j).find(".imgstatus").hasClass('finished')){
+											
+									}else{
+										$(".oneBox").eq(j).find(".imgstatus").removeAttr("class").attr("class","nodo imgstatus");
+										$(".oneBox").eq(j).find(".img_status").text("标注状态：未标注");
+										$(".oneBox").eq(j).find(".switch").css("backgroundColor","red");
+									}
+									
+								};
+							};
+							//将图片信息数据添加到infoBox中
+							/*$(".infoBox .imginfo").find(".imgnm").eq(i).text("图片名称："+data.status_list[i].imgnm);*/
+							$(".infoBox .imginfo").find(".imgmodify").eq(i).text("更改时间："+data.status_list[i].last_modif_time);
+								
+						}
+					}
+					if(data.code==404){
+						for(var k=0;k<$(".right .oneBox").find("span").length;k++){
+							$(".oneBox").eq(k).find("div").eq(0).removeAttr("class").attr("class","nodo");
+							$(".oneBox").eq(k).find("img_info").text("标注状态：未标注");
+							$(".oneBox").eq(j).find(".switch").css("backgroundColor","red");
+						}
+					}
+					
+				},
+				error:function(){
+					console.log("1")
 				}
 			})
 		}
@@ -418,7 +601,7 @@
 				
 				var index=$(this)[0].dataset['index'];
 					$.ajax({
-						url:'http://172.18.77.15:{{store_dict['port_number']}}/lblorder-manip&proc-order:'+index+':json',
+						url:'http://{{store_dict['remote_addr']}}:{{store_dict['port_number']}}/lblorder-manip&proc-order:'+index+':json',
 						type:'POST',
 						dataType:'JSON',
 						success:function(info){
@@ -437,11 +620,10 @@
 		//获取数据函数
 		function show(){
 			$.ajax({
-				url:'http://172.18.77.15:{{store_dict['port_number']}}/lblorder-manip&get-orders',
+				url:'http://{{store_dict['remote_addr']}}:{{store_dict['port_number']}}/lblorder-manip&get-orders',
 				type:'POST',
 				dataType:'JSON',
 				success:function(data){
-					
 					var userName=$(".userName").text();
 					
 					//console.log(userName);
@@ -452,9 +634,9 @@
 							//showOrder(dataArr);
 						}
 					}
-					if(q==16){
+
 						leftinfo(userdataArr);
-					}
+					
 					
 					
 				},
@@ -484,10 +666,10 @@
 	    function logOut(){
 	    	$(".userBox span").eq(3).css("cursor","pointer").click(function(){
 	    		$.ajax({
-	                url:'http://172.18.77.15:{{store_dict['port_number']}}/logout',
+	                url:'http://{{store_dict['remote_addr']}}:{{store_dict['port_number']}}/logout',
 	                type:'GET',
 	                success:function(data){
-	                    window.location.href="http://172.18.77.15:{{store_dict['port_number']}}";
+	                    window.location.href="http://{{store_dict['remote_addr']}}:{{store_dict['port_number']}}";
 	                }
             	})
 	    	});

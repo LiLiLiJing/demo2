@@ -302,15 +302,15 @@
         function saveData(geoType,geoData, attData) {
             //通过ajax请求将数据传到后台文件进行保存处理
             $.ajax({
-                url: 'http://172.18.77.15:{{store_dict['port_number']}}/procrequest/{{ store_dict["storename1"] }}', //请求地址
+                url: 'http://{{store_dict['remote_addr']}}:{{store_dict['port_number']}}/procrequest/{{ store_dict["storename1"] }}', //请求地址
                 type: 'POST',  //请求方式为post
                 data: { 'type': geoType, 'geo': geoData, 'att': attData }, //传入参数 
                 dataType: 'text', //返回数据格式
                 //请求成功完成后要执行的方法  
                 success: function (response) {
-                    window.location.href = 'http://172.18.77.15:{{store_dict['port_number']}}/order-index';
+                    window.location.href = 'http://{{store_dict['remote_addr']}}:{{store_dict['port_number']}}/order-index';
                     /*alert(response);
-                    window.open('http://172.18.77.15:{{store_dict['port_number']}}/' + response)*/
+                    window.open('http://{{store_dict['remote_addr']}}:{{store_dict['port_number']}}/' + response)*/
                 },
                 error: function (err) {
                     alert("执行失败");

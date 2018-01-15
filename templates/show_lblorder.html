@@ -131,7 +131,7 @@
 	<script type="text/javascript">
 		function show(){
 			$.ajax({
-				url:'http://172.18.77.15:{{store_dict['port_number']}}/lblorder-manip&get-orders',
+				url:'http://{{store_dict['remote_addr']}}:{{store_dict['port_number']}}/lblorder-manip&get-orders',
 				type:"POST",
 				dataType:'JSON',
 				success:function(data){
@@ -155,13 +155,13 @@
 						dealArr[j].onclick=function(){
 							var flag=this.dataset['index'];
 							/*$.ajax({
-								url:"http://172.18.77.15:{{store_dict['port_number']}}/lblorder-manip&proc-order",
+								url:"http://{{store_dict['remote_addr']}}:{{store_dict['port_number']}}/lblorder-manip&proc-order",
 								data: {'id': flag},
 								datatype:'JSON',
 								type:'POST',
 								success:function(data){
 									console.log(data);*/
-									window.location.href="http://172.18.77.15:{{store_dict['port_number']}}/lblorder-manip&proc-order:"+flag;
+									window.location.href="http://{{store_dict['remote_addr']}}:{{store_dict['port_number']}}/lblorder-manip&proc-order:"+flag;
 								/*},*/
 								/*error:function(err){
 
@@ -195,13 +195,13 @@
 							dealArr[j].onclick=function(){
 								var flag=this.dataset['index'];
 								/*$.ajax({
-									url:"http://172.18.77.15:{{store_dict['port_number']}}/lblorder-manip&proc-order",
+									url:"http://{{store_dict['remote_addr']}}:{{store_dict['port_number']}}/lblorder-manip&proc-order",
 									data: {'id': flag},
 									datatype:'JSON',
 									type:'POST',
 									success:function(data){
 										console.log(data);*/
-										window.location.href="http://172.18.77.15:{{store_dict['port_number']}}/lblorder-manip&proc-order:"+flag;
+										window.location.href="http://{{store_dict['remote_addr']}}:{{store_dict['port_number']}}/lblorder-manip&proc-order:"+flag;
 									/*},*/
 									/*error:function(err){
 

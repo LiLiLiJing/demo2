@@ -140,7 +140,7 @@
     var str="";
     function getInfo(){
         $.ajax({
-            url:'http://172.18.77.15:{{store_dict['port_number']}}/listorders&all',
+            url:'http://{{store_dict['remote_addr']}}:{{store_dict['port_number']}}/listorders&all',
             type:'get',
             dataType:'json',
             success:function(data){
@@ -170,7 +170,7 @@
                     linkArr[k].onclick=function(){
                         var index=this.parentNode.dataset['index'];
                         var workspace=data[index].workspace;
-                        window.location.href="http://172.18.77.15:{{store_dict['port_number']}}/showgroup/"+workspace+":"+data[index].order_result;
+                        window.location.href="http://{{store_dict['remote_addr']}}:{{store_dict['port_number']}}/showgroup/"+workspace+":"+data[index].order_result;
                         //console.log(this.parentNode.dataset['index']);
                     }
                 }
@@ -182,7 +182,7 @@
                         var storenm=data[index].order_param.save_storenm;
                         document.getElementById("contents").innerHTML="";
                         $.ajax({
-                            url:'http://172.18.77.15:{{store_dict['port_number']}}/deleteorder&'+storenm,
+                            url:'http://{{store_dict['remote_addr']}}:{{store_dict['port_number']}}/deleteorder&'+storenm,
                             type:"POST",
                             success:function(data){ 
                                 //console.log(data);
@@ -198,7 +198,7 @@
                     seclinkArr[e].onclick=function(){
                         var index=this.parentNode.dataset['index'];
                         var workspace=data[index].workspace;
-                        window.location.href="http://172.18.77.15:{{store_dict['port_number']}}/showgroup-transp/"+workspace+":"+data[index].order_result;
+                        window.location.href="http://{{store_dict['remote_addr']}}:{{store_dict['port_number']}}/showgroup-transp/"+workspace+":"+data[index].order_result;
                         //console.log(this.parentNode.dataset['index']);
                     }
                 }                     

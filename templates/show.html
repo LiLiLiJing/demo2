@@ -311,7 +311,7 @@
                 $(function(){
                     var flag = $(".flag").text();
                     $.ajax({
-                        url:'http://172.18.77.15:{{store_dict['port_number']}}/poly-labels&remove_annot',
+                        url:'http://{{store_dict['remote_addr']}}:{{store_dict['port_number']}}/poly-labels&remove_annot',
                         type:'POST',
                         data:{infoname:'flag'},
                         dataType:'json',
@@ -371,7 +371,7 @@
             
             //通过ajax请求将数据传到后台文件进行保存处理
             $.ajax({
-                url: 'http://172.18.77.15:{{store_dict['port_number']}}/poly-labels&commit_annot', //请求地址
+                url: 'http://{{store_dict['remote_addr']}}:{{store_dict['port_number']}}/poly-labels&commit_annot', //请求地址
                 type: 'POST',  //请求方式为post
                 data: { 'geoStr':geoStr, 'geoType': geoType, 'infoType': infoType, 'infoname': infoname ,'workspace':workspace, 'username': username}, //传入参数 
                 dataType: 'json', //返回数据格式
@@ -485,7 +485,7 @@
         //获取用户名添加到页面下拉列表中
         function getName(){
             $.ajax({
-                url:'http://172.18.77.15:{{store_dict['port_number']}}/user-manage&get-usrnames',
+                url:'http://{{store_dict['remote_addr']}}:{{store_dict['port_number']}}/user-manage&get-usrnames',
                 type:'GET',
                 datatype:'json',
                 success:function(data){
@@ -519,7 +519,7 @@
               //当触发时判断newobj的值是否为空，为空则不修改，并返回oldhtml
             element.innerHTML = this.value ? this.value : oldhtml;
             $.ajax({
-                url:'http://172.18.77.15:{{store_dict['port_number']}}/poly-labels&add_desc',
+                url:'http://{{store_dict['remote_addr']}}:{{store_dict['port_number']}}/poly-labels&add_desc',
                 type:'POST',
                 data:{"id":up_id,"detailtype":element.innerHTML},
                 dataType:'json',
@@ -542,7 +542,7 @@
             var flag = $(".flag").text();
             
             $.ajax({
-                url:'http://172.18.77.15:{{store_dict['port_number']}}/poly-labels&get_annots',
+                url:'http://{{store_dict['remote_addr']}}:{{store_dict['port_number']}}/poly-labels&get_annots',
                 type:'POST',
                 data:{'username':username,'infoname':flag},
                 dataType:'json',
@@ -646,8 +646,6 @@
                         bindInputs('#layer'+i, layer);//调用绑定图层显示样式控件的处理函数
                     });*/
 
-
-
                     var paintArr1=[];
                     //console.log(map.getView().getCenter());  //获取地图中心,打印在界面上
                     var c_obj
@@ -665,7 +663,6 @@
                             Arr1[0]=s1;
                             Arr1[1]=s2;
                             strArr.push(Arr1);
-                        
                         }
                         //console.log(data[a].annot_id);
                          c_obj = showPaint1(strArr,data[a].annot_id);  //返回成功
@@ -700,10 +697,6 @@
                     map.addLayer(vector); //将绘制层添加到地图容器中
                     addInteraction(); 
 
-                
-        
-
-
                     //双击右边列表数据，删除相应的图形  构造函数deleteOne()
                     
                     var delArr=document.getElementsByClassName("deleteInfo");
@@ -722,7 +715,7 @@
 
                         delArr[z].onclick=function(){
                             $.ajax({
-                                url:'http://172.18.77.15:{{store_dict['port_number']}}/poly-labels&remove_one_annot',
+                                url:'http://{{store_dict['remote_addr']}}:{{store_dict['port_number']}}/poly-labels&remove_one_annot',
                                 type:'POST',
                                 data:{'annot_id':data[this.delnum].annot_id},
                                 dataType:'json',
@@ -801,7 +794,7 @@
     <script type="text/javascript">
     $(document).ready(function(){
         $.ajax({
-            url:'http://172.18.77.15:{{store_dict['port_number']}}/poly-labels&get_geotypes',
+            url:'http://{{store_dict['remote_addr']}}:{{store_dict['port_number']}}/poly-labels&get_geotypes',
             type:'get',
             dataType:'json',
             success:function(data){
@@ -835,7 +828,7 @@
     <script type="text/javascript">
     $(document).ready(function(){
         $.ajax({
-            url:'http://172.18.77.15:{{store_dict['port_number']}}/poly-labels&get_objclass',
+            url:'http://{{store_dict['remote_addr']}}:{{store_dict['port_number']}}/poly-labels&get_objclass',
             type:'get',
             dataType:'json',
             success:function(data){
