@@ -158,7 +158,7 @@
 		//获取目标类型的函数
 		function getType(){
 			$.ajax({
-	                url: 'http://{{store_dict['remote_addr']}}:{{store_dict['port_number']}}/poly-labels&get_objclass', //请求地址
+	                url: "http://{{store_dict['remote_addr']}}:{{store_dict['port_number']}}/poly-labels&get_objclass", //请求地址
 	                type: 'GET',     
 	                dataType: 'JSON', //返回数据格式
 	                //请求成功完成后要执行的方法  
@@ -178,7 +178,7 @@
 		//获取用户名
 		function getName(){
 			$.ajax({
-				url:'http://{{store_dict['remote_addr']}}:{{store_dict['port_number']}}/user-manage&get-usrnames',
+				url:"http://{{store_dict['remote_addr']}}:{{store_dict['port_number']}}/user-manage&get-usrnames",
 				type:'GET',
 				dayaType:'JSON',
 				success:function(response){
@@ -190,7 +190,7 @@
 	                thiDes.html(str);
 				},
 				error:function(){
-					console.log();
+					console.log(1);
 				}
 			})
 		}
@@ -222,7 +222,7 @@
 		}
 		function show(){
 			$.ajax({
-				url:'http://{{store_dict['remote_addr']}}:{{store_dict['port_number']}}/lblorder-manip&get-orders',
+				url:"http://{{store_dict['remote_addr']}}:{{store_dict['port_number']}}/lblorder-manip&get-orders",
 				type:"POST",
 				dataType:'JSON',
 				success:function(data){

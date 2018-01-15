@@ -50,7 +50,7 @@ addr_lcl_sw = 'local'
 
 if addr_lcl_sw == 'local':
     GLOBAL_GEOSERVER_ADDR='172.18.77.15:8089'
-    GLOBAL_IP_ADDR='172.18.77.15'
+    GLOBAL_IP_ADDR="172.18.77.15"
     GLOBAL_PORT_NUMBER = 31555
 else:
     GLOBAL_GEOSERVER_ADDR='159.226.21.10'
@@ -365,6 +365,7 @@ def basic_test():
 @app.route("/creat-order", methods=['GET', 'POST'])
 def creat_order():
     print "Calling the creat_order service"
+
     store_dict = {'port_number': GLOBAL_PORT_NUMBER, 'remote_addr': GLOBAL_IP_ADDR}
     return render_template('creat_order.html', store_dict=store_dict)
 
@@ -657,7 +658,7 @@ def asynmask_select(storename):
     resource = cat.get_resource(storename)
     src_proj = resource.projection
 
-    store_dict = {'port_number': GLOBAL_PORT_NUMBER}
+    store_dict = {'port_number': GLOBAL_PORT_NUMBER, 'remote_addr': GLOBAL_IP_ADDR}
     store_dict['bbox'] = resource.latlon_bbox
     store_dict['workspacename'] = resource.workspace.name
     store_dict['storename'] = storename
@@ -780,7 +781,8 @@ def create_label_orderui():
     f = request.form
 
     sel_wslist = f.getlist(f.keys()[0])
-    store_dict = {'ws_list': sel_wslist, 'port_number': GLOBAL_PORT_NUMBER}
+    store_dict = {'ws_list': sel_wslist, 'port_number': GLOBAL_PORT_NUMBER, \
+        'remote_addr': GLOBAL_IP_ADDR}
     return render_template('creat_order.html', store_dict=store_dict)
 
 
@@ -1061,8 +1063,7 @@ def login_user(user_name):
 @app.route('/uploadpage&<string:ws_name>', methods=['GET', 'POST'])
 def uploadpage(ws_name=""):
     print '((((((((((((((((((((uploadpage))))))))))))))))))))))'
-
-    store_dict={'workspace': ws_name, 'port_number': GLOBAL_PORT_NUMBER}
+    store_dict={'workspace': ws_name, 'port_number': GLOBAL_PORT_NUMBER, 'remote_addr': GLOBAL_IP_ADDR}
     return render_template('upload.html', store_dict=store_dict)
 
 
@@ -1114,7 +1115,7 @@ def user_annot_status(opt_type):
         db_cursor = cnx_obj.cursor()
 
         sql_cmd = "select _id, annot_status from user_annot_status " \
-            + "where annot_userid=%s and annot_imgnm='%s';" % (first_uid, annot_imgnm)
+            + "where annot_userid=%s and annot_imgnm='%s' and annot_ordridx=%s;" % (first_uid, annot_imgnm, order_idx)
         db_cursor.execute(sql_cmd)
         db_recs = db_cursor.fetchall()
         if len(db_recs) > 0:

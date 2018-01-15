@@ -481,8 +481,12 @@
 			
 				var flagtext=$(this).parent().parent().parent().find("span").text();
 	        	window.open('/show&'+flagtext);
+	        	//window.open('/lblorder-manip&proc-order:'+index)
 		}
-		//图片信息注册
+		//提交信息函数
+		function subInfo(){
+
+		}
 		
 		//判断订单和图片的状态
 		function judgeStatus(index){
@@ -511,6 +515,7 @@
 										$(".oneBox").eq(j).find(".ball").css("left","25px");
 										$(".oneBox").eq(j).find(".btn2").css("color","gray");
 										($(".oneBox").eq(j).find(".gopaint"))[0].onclick=goPaint;
+										($(".oneBox").eq(j).find(".btn1"))[0].addEventListener("click",subInfo);
 										
 									}else{
 										$(".oneBox").eq(j).find(".imgstatus").removeAttr("class").attr("class","finished imgstatus");
@@ -519,7 +524,8 @@
 										$(".oneBox").eq(j).find(".ball").css("left","25px");
 										$(".oneBox").eq(j).find(".btn2").css("color","gray");
 									}
-								}else{
+								}
+								else{
 									if($(".oneBox").eq(j).find(".imgstatus").hasClass('ongoing')||$(".oneBox").eq(j).find(".imgstatus").hasClass('finished')){
 											
 									}else{
@@ -527,10 +533,12 @@
 										$(".oneBox").eq(j).find(".img_status").text("标注状态：未标注");
 										$(".oneBox").eq(j).find(".switch").css("backgroundColor","red");
 										$(".oneBox").eq(j).find(".ball").css("left","0");
-										$(".oneBox").eq(j).find("textarea").attr(disabled,"disabled");
+										$(".oneBox").eq(j).find("textarea").attr("disabled","disabled");
+										($(".oneBox").eq(j).find(".btn1"))[0].removeEventListener("click",subInfo);
 										($(".oneBox").eq(j).find(".btn2"))[0].onclick=function() {
 											var parentOneBox=this.parentNode.parentNode.parentNode;
 											var imgName=this.parentNode.parentNode.parentNode.getElementsByTagName("span")[0].innerText;
+											console.log(index,userName,imgName);
 											$.ajax({
 												url:'http://{{store_dict['remote_addr']}}:{{store_dict['port_number']}}/user-annot-status&append-img-status',
 												data:{"order_idx":index,"user_name":userName,"img_name":imgName},
@@ -543,6 +551,9 @@
 													//console.log($(parentOneBox));
 													$(parentOneBox).find(".switch").css("backgroundColor","green");
 													$(parentOneBox).find(".ball").css("left","25px");
+													$(parentOneBox).find("textarea").removeAttr("disabled");
+													($(parentOneBox).find(".gopaint"))[0].onclick=goPaint;
+													$(parentOneBox).find(".btn2").css("color","gray");
 												},
 												error:function(){
 													console.log(1);
@@ -565,6 +576,31 @@
 							$(".oneBox").eq(k).find("img_info").text("标注状态：未标注");
 							$(".oneBox").eq(k).find(".switch").css("backgroundColor","red");
 							$(".oneBox .paint").eq(k).find(".ball").css("left","0");
+							($(".oneBox").eq(k).find(".btn2"))[0].onclick=function() {
+								var parentOneBox=this.parentNode.parentNode.parentNode;
+								var imgName=this.parentNode.parentNode.parentNode.getElementsByTagName("span")[0].innerText;
+								console.log(index,userName,imgName);
+								$.ajax({
+									url:'http://{{store_dict['remote_addr']}}:{{store_dict['port_number']}}/user-annot-status&append-img-status',
+									data:{"order_idx":index,"user_name":userName,"img_name":imgName},
+									type:'POST',
+									dataType:'JSON',
+									success:function(data){
+										console.log(data);
+										//console.log(parentOneBox);
+										//console.log($(".oneBox"));
+										//console.log($(parentOneBox));
+										$(parentOneBox).find(".switch").css("backgroundColor","green");
+										$(parentOneBox).find(".ball").css("left","25px");
+										$(parentOneBox).find("textarea").removeAttr("disabled");
+										($(parentOneBox).find(".gopaint"))[0].onclick=goPaint;
+										$(parentOneBox).find(".btn2").css("color","gray");
+									},
+									error:function(){
+										console.log(1);
+									}
+								})
+							};
 						}
 					}
 					
