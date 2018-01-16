@@ -48,6 +48,8 @@ bootstrap = Bootstrap(app)
 addr_lcl_sw = 'local'
 # addr_lcl_sw = 'global'
 
+GLOBAL_APP_PREFIX='RSISS'
+
 if addr_lcl_sw == 'local':
     GLOBAL_GEOSERVER_ADDR='172.18.77.15:8089'
     GLOBAL_IP_ADDR="172.18.77.15"
@@ -64,7 +66,8 @@ geoserver_url = "http://172.18.77.15:8089/geoserver"
 cat = Catalog(geoserver_url + "/rest", username="admin", password="geoserver")
 
 # 2017-12-6, 17:28, the connection configurations for the mysql user-job management
-mysql_config = {'user': 'root', 'password': 'weiguang123', 'database': 'RSISS'}
+mysql_config = {'user': 'root', 'password': 'weiguang123', 'database': 'RSISS', \
+    'charset': 'utf8', 'use_unicode': True}
 
 
 def allowed_file(filename):
@@ -1156,7 +1159,7 @@ def user_annot_status(opt_type):
     elif opt_type == 'update-img-status':
         annot_imgnm = request.form['img_name'].encode('utf-8')
         annot_status = request.form['annot_status'].encode('utf-8') # ongoing, accomplished
-        annot_comment = request.form['annot_comment'].encode('utf-8')
+        annot_comment = request.form['annot_comment']
 
         cnx_obj = mysql.connector.connect(**mysql_config)
         db_cursor = cnx_obj.cursor()
@@ -1164,9 +1167,11 @@ def user_annot_status(opt_type):
         db_cursor.execute("SET SQL_SAFE_UPDATES = 0;")
         cnx_obj.commit()
 
-        db_cursor.execute("update user_annot_status set annot_status='%s', " % (annot_status) \
-            +"last_annot_time=now(), annot_comment='%s'" % (annot_comment) \
-            + "where annot_userid=%s and annot_ordridx=%s;" % (first_uid, order_idx))
+        sql_cmd = "update user_annot_status set annot_status=\"%s\", " % (annot_status) \
+            +"last_annot_time=now(), annot_comment=\"%s\" " % (annot_comment) \
+            + "where annot_userid=%s and annot_ordridx=%s and annot_imgnm=\"%s\";" % (first_uid, order_idx, annot_imgnm)
+
+        db_cursor.execute(sql_cmd)
         cnx_obj.commit()
         cnx_obj.close()
 

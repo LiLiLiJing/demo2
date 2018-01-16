@@ -77,14 +77,16 @@
 				width:200px;
 			}
 			.left li{
-				background-color:#4876FF;
+				background-color:#4876FF; 
 				margin-bottom:5px;
 				height:58px;
 				overflow:hidden;
 				cursor:pointer;
 				border-radius:5px;
 				padding-left:8px;
+				border-bottom:;
 				color:#fff;
+				border:3px solid #bbb;
 			}
 			.left li div{
 				overflow: hidden;
@@ -127,14 +129,16 @@
 				background-color: skyblue;
 				color:#000;
 				border-radius:5px;
-				width:980px;
+				width:1000px;
 				height:80px;
 				margin-top:16px;
 				display:none;
 				position:absolute;
 				top:140px;
 				left:0;
-				padding-top:12px;
+				padding-top:8px;
+				z-index:10;
+				cursor:default;
 			}
 			.shape{
 				width: 0;
@@ -296,17 +300,36 @@
 				width:50px;
 				border-radius:15px;
 			}
-			.infoBox .btn1{
+			.infoBox .btn2{
 				margin-top:5px;
 			}
-			.paint2{
+			.infoBox .paint2{
 				float:left;
 				margin-left:60px;
 				padding-top:14px;
 			}
 			.infoBox .gopaint{
-				margin-top:10px;
-				margin-left:5px;
+				margin-top:30px;
+				
+				font-size:18px;
+			}
+			.infoBox select{
+				display:block;
+				border-radius:2px;
+				border:none;
+				margin-bottom:9px;
+				background-color:#eee;
+			}
+			.infoBox .paint3{
+				width:88px;
+				height:88px;
+				position:absolute;
+				background-color:orange;
+				right:0;
+				top:0;
+				border-radius:5px;
+				text-align:center;
+				cursor:pointer;
 			}
 		</style>
 	</head>
@@ -361,6 +384,18 @@
 		$(".contents").height($(window).height()-100);
 		$(".left").height($(window).height()-110);
 		$(".right").height($(window).height()-110);
+		//数组去重
+		function unique(arr){
+	        var result = [];
+	        for(var i=0;i<arr.length;i++){
+	            if(result.indexOf(arr[i])==-1){
+	                result.push(arr[i])
+	            }
+	        }
+	        return result;
+	    }
+	    
+		//加载右边图片
 		function imgInfo(info,index){
 			var str="";
 			var str1="";
@@ -376,16 +411,16 @@
 				var spacename=info[i].workspacename;
 				workspaceArr.push(spacename);
 			}
+			workspaceArr=unique(workspaceArr);
 			for(var a=0;a<workspaceArr.length;a++){				
 				$.ajax({
 	                url:'http://{{store_dict['remote_addr']}}:{{store_dict['port_number']}}/thumbnail&'+workspaceArr[a],
 	                type:'get',
 	                dataType:'JSON',
 	                success:function(data){
-	                	var flag=storenameArr[j];
 	                	dataindex=data.length;
 	                	for(var k=0;k<data.length;k++){
-	                		if(flag==data[k].name){
+	                			
 	                			str1+='<div class="oneBox">'+
 	                			'<img src="'+data[k].url+'">'+
 	                			'<span class="imgname">'+data[k].name+'</span>'+
@@ -406,16 +441,21 @@
 	                			'<div class="switch">'+
 	                			'<div class="ball"></div>'+
 	                			'</div>'+
-	                			'<button class="btn1">提交</button>'+
+	                			'<button class="btn2">注册</button>'+
 	                			'</div>'+
 	                			'<div class="paint2">'+
-	                			'<button class="btn2">注册</button>'+
+	                			
+	                			'<select>'+
+	                			'<option value="accomplished">已完成</option>'+
+	                			'<option value="ongoing" selected="selected">未完成</option>'+
+	                			'</select>'+
+	                			'<button class="btn1">提交</button>'+
+	                			'</div>'+
+	                			'<div class="paint3">'+
 	                			'<div class="gopaint">标注-></div>'+
 	                			'</div>'+
 	                			'</div>'+
-	                			'</div>'	
-	                			
-	                		}
+	                			'</div>'		
 	                	}
 	                	$(".right .imgBox").html(str1);
 		                $(".right .oneBox").find("img").click(function(){
@@ -434,38 +474,6 @@
 			               	}
 
 		                });
-		                function linkPaint(index){
-		                	$(".right>.imgBox").find(".much").click(function(){
-		                		if($(this).parent().find("input").prop("checked")){
-		                			var flagtext=$(this).parent().parent().find("span").text();
-		                			window.open('/lblorder-manip&proc-order:'+index+':'+flagtext);
-		                		}
-		                	});
-	                	}
-	                	linkPaint(index);
-	                	/*$(".right>imgBox").find(".one").click(function(){
-	                		var flagtext=$(this).parent().parent().find("span").text();
-	                		//window.open('/show&'+flagtext);
-	                	})*/
-						//选框选中事件
-						$(".infoBox input").change(function(){
-							var flagText=$(this).parent().parent().parent().find("span").text();
-							var userName=$(".userName").text();
-							$(this).prop("disabled",true);
-							$.ajax({
-								url:'http://{{store_dict['remote_addr']}}:{{store_dict['port_number']}}/user-annot-status&append-img-status',
-								data:{"order_idx":index,"user_name":userName,"img_name":flagText},
-								type:'POST',
-								dataType:'JSON',
-								success:function(data){
-									
-								},
-								error:function(err){
-									console.log("1");
-								}
-							})
-						})
-	                	j++;
 
 	                	judgeStatus(index);
 	                	
@@ -476,18 +484,41 @@
 			//judgeStatus(index);
 			
 		}
-		//页面跳转标注界面
+		//页面跳转标注界面单个图片，多张图片
 		function goPaint(){
 			
 				var flagtext=$(this).parent().parent().parent().find("span").text();
 	        	window.open('/show&'+flagtext);
 	        	//window.open('/lblorder-manip&proc-order:'+index)
 		}
+		function linkPaint(index){
+        	$(".right>.imgBox").find(".much").click(function(){
+        		if($(this).parent().find("input").prop("checked")){
+        			var flagtext=$(this).parent().parent().find("span").text();
+        			window.open('/lblorder-manip&proc-order:'+index+':'+flagtext);
+        		}
+        	});
+    	}
 		//提交信息函数
-		function subInfo(){
+		function subInfo(text,select,userName,imgnm,index){
+			
+			$.ajax({
+				url:'http://{{store_dict['remote_addr']}}:{{store_dict['port_number']}}/user-annot-status&update-img-status',
+				data:{"order_idx":index,"user_name":userName,"img_name":imgnm,'annot_status':select,'annot_comment':text},
+				type:'POST',
+				dataType:'JSON',
+				success:function(data){
+					alert("保存成功!");
+					console.log(data);
+				},
+				error:function(){
+					console.log(1);
+				}
+			})
+		}
+		function subInfoAgo(){
 
 		}
-		
 		//判断订单和图片的状态
 		function judgeStatus(index){
 			var userName=$(".userName").text();
@@ -498,11 +529,6 @@
 				type:'POST',
 				dataType:'JSON',
 				success:function(data){
-					console.log(data);
-					//将图片信息数据添加到infoBox中
-					//根据返回数据动态设置选框的状态
-					/*$(".infoBox input").prop("checked",true);
-					$(".infoBox input").prop("disabled",true);*/
 					if(data.code==200){
 						for(var i=0;i<data.status_list.length;i++){
 							for(var j=0;j<$(".right .oneBox").find("span").length;j++){
@@ -513,16 +539,27 @@
 										$(".oneBox").eq(j).find(".img_status").text("标注状态：正在进行");
 										$(".oneBox").eq(j).find(".switch").css("backgroundColor","green");
 										$(".oneBox").eq(j).find(".ball").css("left","25px");
-										$(".oneBox").eq(j).find(".btn2").css("color","gray");
+										$(".oneBox").eq(j).find(".btn2").css({"color":"gray","cursor":"default"});
 										($(".oneBox").eq(j).find(".gopaint"))[0].onclick=goPaint;
-										($(".oneBox").eq(j).find(".btn1"))[0].addEventListener("click",subInfo);
 										
+										($(".oneBox").eq(j).find(".btn1"))[0].onclick=function(){
+											console.log(1);
+											var text=$(this).parent().parent().parent().find("textarea").val();
+											var select=$(this).parent().parent().parent().find("select").val();
+											var userName=$(".userName").text();
+											var imgnm=$(this).parent().parent().parent().find("span").text();
+											subInfo(text,select,userName,imgnm,index);
+										};
+										$(".oneBox").eq(j).find("textarea").removeAttr("disabled","disabled");
+
 									}else{
 										$(".oneBox").eq(j).find(".imgstatus").removeAttr("class").attr("class","finished imgstatus");
 										$(".oneBox").eq(j).find(".img_status").text("标注状态：已完成");
 										$(".oneBox").eq(j).find(".switch").css("backgroundColor","green");
 										$(".oneBox").eq(j).find(".ball").css("left","25px");
 										$(".oneBox").eq(j).find(".btn2").css("color","gray");
+										$(".oneBox").eq(j).find("select").find("option[text='已完成']").attr("selected",true);
+										$(".oneBox").eq(j).find("select").find("option[text='未完成']").attr("selected",false);
 									}
 								}
 								else{
@@ -535,25 +572,31 @@
 										$(".oneBox").eq(j).find(".ball").css("left","0");
 										$(".oneBox").eq(j).find("textarea").attr("disabled","disabled");
 										($(".oneBox").eq(j).find(".btn1"))[0].removeEventListener("click",subInfo);
+										$(".oneBox").eq(j).find(".btn2").css({"cursor":"pointer"});
+										
 										($(".oneBox").eq(j).find(".btn2"))[0].onclick=function() {
 											var parentOneBox=this.parentNode.parentNode.parentNode;
 											var imgName=this.parentNode.parentNode.parentNode.getElementsByTagName("span")[0].innerText;
-											console.log(index,userName,imgName);
 											$.ajax({
 												url:'http://{{store_dict['remote_addr']}}:{{store_dict['port_number']}}/user-annot-status&append-img-status',
 												data:{"order_idx":index,"user_name":userName,"img_name":imgName},
 												type:'POST',
 												dataType:'JSON',
 												success:function(data){
-													console.log(data);
-													//console.log(parentOneBox);
-													//console.log($(".oneBox"));
-													//console.log($(parentOneBox));
+													$(parentOneBox).find(".imgstatus").removeAttr("class").attr("class","ongoing imgstatus");
 													$(parentOneBox).find(".switch").css("backgroundColor","green");
 													$(parentOneBox).find(".ball").css("left","25px");
 													$(parentOneBox).find("textarea").removeAttr("disabled");
 													($(parentOneBox).find(".gopaint"))[0].onclick=goPaint;
-													$(parentOneBox).find(".btn2").css("color","gray");
+													$(parentOneBox).find(".btn2").css({"color":"gray","cursor":"default"});
+													($(".oneBox").eq(j).find(".btn1"))[0].onclick=function(){
+														console.log(1);
+														var text=$(this).parent().parent().parent().find("textarea").val();
+														var select=$(this).parent().parent().parent().find("select").val();
+														var userName=$(".userName").text();
+														var imgnm=$(this).parent().parent().parent().find("span").text();
+														subInfo(text,select,userName,imgnm,index);
+													};
 												},
 												error:function(){
 													console.log(1);
@@ -572,29 +615,36 @@
 					}
 					if(data.code==404){
 						for(var k=0;k<$(".right .oneBox").find("span").length;k++){
-							$(".oneBox").eq(k).find("div").eq(0).removeAttr("class").attr("class","nodo");
+							$(".oneBox").eq(k).find(".imgstatus").removeAttr("class").attr("class","nodo imgstatus");
 							$(".oneBox").eq(k).find("img_info").text("标注状态：未标注");
 							$(".oneBox").eq(k).find(".switch").css("backgroundColor","red");
+							$(".oneBox").eq(k).find("textarea").attr("disabled","disabled");
+							$(".oneBox").eq(k).find(".btn2").css({"cursor":"pointer"});
 							$(".oneBox .paint").eq(k).find(".ball").css("left","0");
 							($(".oneBox").eq(k).find(".btn2"))[0].onclick=function() {
 								var parentOneBox=this.parentNode.parentNode.parentNode;
 								var imgName=this.parentNode.parentNode.parentNode.getElementsByTagName("span")[0].innerText;
-								console.log(index,userName,imgName);
 								$.ajax({
 									url:'http://{{store_dict['remote_addr']}}:{{store_dict['port_number']}}/user-annot-status&append-img-status',
 									data:{"order_idx":index,"user_name":userName,"img_name":imgName},
 									type:'POST',
 									dataType:'JSON',
 									success:function(data){
-										console.log(data);
-										//console.log(parentOneBox);
-										//console.log($(".oneBox"));
-										//console.log($(parentOneBox));
+										$(parentOneBox).find(".imgstatus").removeAttr("class").attr("class","imgstatus ongoing");
 										$(parentOneBox).find(".switch").css("backgroundColor","green");
 										$(parentOneBox).find(".ball").css("left","25px");
 										$(parentOneBox).find("textarea").removeAttr("disabled");
 										($(parentOneBox).find(".gopaint"))[0].onclick=goPaint;
-										$(parentOneBox).find(".btn2").css("color","gray");
+										$(parentOneBox).find(".btn2").css({"color":"gray","cursor":"default"});
+										$(parentOneBox).find(".imgstatus").removeAttr("class").attr("class","ongoing imgstatus");
+										($(".oneBox").eq(j).find(".btn1"))[0].onclick=function(){
+											console.log(1);
+											var text=$(this).parent().parent().parent().find("textarea").val();
+											var select=$(this).parent().parent().parent().find("select").val();
+											var userName=$(".userName").text();
+											var imgnm=$(this).parent().parent().parent().find("span").text();
+											subInfo(text,select,userName,imgnm,index);
+										};
 									},
 									error:function(){
 										console.log(1);
@@ -661,7 +711,6 @@
 					var target = new Date(agoArr[2]+"/"+agoArr[1]+"/"+agoArr[0]);
 					var timeSum = nowTime.getTime() - target.getTime();
 					var differday = parseInt(timeSum/1000/60/60/24);
-					//console.log(differday);
 					if(differday<=value){
 						dayArr.push(dataArr[k]);
 					}
@@ -726,8 +775,7 @@
 				dataType:'JSON',
 				success:function(data){
 					var userName=$(".userName").text();
-					
-					//console.log(userName);
+
 					for(var q=0;q<data.length;q++){
 						var index=data[q].users.slice(6).indexOf(userName);
 						if(index!==-1){
@@ -736,7 +784,7 @@
 						}
 					}
 
-						leftinfo(userdataArr);
+					leftinfo(userdataArr);
 					
 					
 					
