@@ -97,10 +97,10 @@
 			}
 			.right{
 				width: 1090px;
-				padding-left:18px;
+				
 				position:absolute;
 				top:0px;
-				left:220px;
+				left:238px;
 				overflow-y:auto;
 				margin:5px;
 			}
@@ -129,16 +129,17 @@
 				background-color: skyblue;
 				color:#000;
 				border-radius:5px;
-				width:1000px;
-				height:80px;
+				width:980px;
+				height:108px;
 				margin-top:16px;
 				display:none;
 				position:absolute;
 				top:140px;
 				left:0;
-				padding-top:8px;
+				padding:5px 0;
 				z-index:10;
 				cursor:default;
+				text-align:left;
 			}
 			.shape{
 				width: 0;
@@ -220,7 +221,7 @@
 				width:10px;
 				height: 10px;
 				border-radius:5px;
-				background-color:green;
+				background-color:red;
 				position:absolute;
 				top:4px;
 				right:4px;
@@ -229,7 +230,7 @@
 				width:10px;
 				height: 10px;
 				border-radius:5px;
-				background-color:red;
+				background-color:green;
 				position:absolute;
 				top:4px;
 				right:4px;
@@ -244,7 +245,6 @@
 				right:4px;
 			}
 			.infoBox .imginfo{
-				float:left;
 				margin-left:10px;
 			}
 			.infoBox .comment{
@@ -253,9 +253,6 @@
 				margin-left:10px;
 				width:410px;
 				height:70px;
-			}
-			.infoBox{
-				text-align:left;
 			}
 			.infoBox .commentTitle{
 				position:absolute;
@@ -309,9 +306,10 @@
 				padding-top:14px;
 			}
 			.infoBox .gopaint{
-				margin-top:30px;
-				
-				font-size:18px;
+				margin-top:46px;
+				color:#fff;
+				font-size:20px;
+				font-weight:bold;
 			}
 			.infoBox select{
 				display:block;
@@ -322,11 +320,11 @@
 			}
 			.infoBox .paint3{
 				width:88px;
-				height:88px;
+				height:118px;
 				position:absolute;
-				background-color:orange;
+				background-color:rgba(255,165,0,0.8);
 				right:0;
-				top:0;
+				bottom:0;
 				border-radius:5px;
 				text-align:center;
 				cursor:pointer;
@@ -372,6 +370,7 @@
 				<div class="clearfix imgBox">
 					<div id="begin">欢迎进入</div>
 					<div id="begin">遥感智能服务系统</div>
+
 				</div>
 				
 			</div>
@@ -380,7 +379,10 @@
 	</body>
 	
 	<script type="text/javascript">
-
+		//定义当前用户数据数组
+		var userdataArr=[];
+		//定义存储图片数组
+		var imgdataArr=[];
 		$(".contents").height($(window).height()-100);
 		$(".left").height($(window).height()-110);
 		$(".right").height($(window).height()-110);
@@ -403,6 +405,7 @@
 			var workspaceArr=[];
 			var j=0;
 			var oneArr;
+			imgdataArr=[];
 			for(var i=0;i<info.length;i++){
 				var storename=info[i].storename;
 				storenameArr.push(storename);
@@ -418,13 +421,14 @@
 	                type:'get',
 	                dataType:'JSON',
 	                success:function(data){
-	                	dataindex=data.length;
+	                	imgdataArr.push(data);
 	                	for(var k=0;k<data.length;k++){
-	                			
-	                			str1+='<div class="oneBox">'+
+	                			j++;
+	                			str1+='<div class="oneBox" data-index="'+j+'">'+
 	                			'<img src="'+data[k].url+'">'+
 	                			'<span class="imgname">'+data[k].name+'</span>'+
 	                			'<div class="imgstatus"></div>'+
+
 	                			'<div class="shape"></div>'+
 	                			'<div class="infoBox">'+
 	                			'<div class="imginfo">'+
@@ -436,7 +440,6 @@
 	                			'<div class="commentTitle">描述信息：</div>'+
 	                			'<textarea></textarea>'+
 	                			'</div>'+
-	                			/*'<div>是否标注<input type="checkbox"></div>'+'<div class="much">去标注</div>'+*/
 	                			'<div class="paint">'+
 	                			'<div class="switch">'+
 	                			'<div class="ball"></div>'+
@@ -458,23 +461,9 @@
 	                			'</div>'		
 	                	}
 	                	$(".right .imgBox").html(str1);
-		                $(".right .oneBox").find("img").click(function(){
-		                	var length=$(".oneBox").eq(0).offset().left;
-		                	var current=$(this).parent().offset().left;
-		                	$(this).parent().children(".shape,.infoBox").toggle();
-		                	$(this).parent().siblings().children('.shape,.infoBox').hide();
-		                	$(this).parent().css("margin-bottom",100).siblings().css("margin-bottom",5);
-		                	$(this).parent().find(".infoBox").offset({left:length});
-		                	var infoBoxArr=document.getElementsByClassName("infoBox");
-		                	var oneBoxArr=document.getElementsByClassName("oneBox");
-			               	for(var b=0;b<infoBoxArr.length;b++){
-			               		if(infoBoxArr[b].style.display=="none"){
-			               			oneBoxArr[b].style.marginBottom="5px";
-			               		}
-			               	}
-
-		                });
-
+	                	
+		                
+	                	clickImg();
 	                	judgeStatus(index);
 	                	
 	                }
@@ -499,6 +488,29 @@
         		}
         	});
     	}
+
+    	//点击事件
+    	function clickImg(){
+    		$(".right .oneBox").find("img").on("click",function(){
+            	var length=$(".oneBox").eq(0).offset().left;
+            	var current=$(this).parent().offset().left;
+            	$(this).parent().children(".shape,.infoBox").toggle();
+            	$(this).parent().siblings().children('.shape,.infoBox').hide();
+            	
+            	$(this).parent().css("margin-bottom",140).siblings().css("margin-bottom",5);
+            	$(this).parent().find(".infoBox").offset({left:length});
+            	var infoBoxArr=document.getElementsByClassName("infoBox");
+            	var oneBoxArr=document.getElementsByClassName("oneBox");
+               	for(var b=0;b<infoBoxArr.length;b++){
+               		if(infoBoxArr[b].style.display=="none"){
+               			oneBoxArr[b].style.marginBottom="5px";
+               		}
+               	}
+
+            });
+    	}
+
+
 		//提交信息函数
 		function subInfo(text,select,userName,imgnm,index){
 			
@@ -516,13 +528,12 @@
 				}
 			})
 		}
-		function subInfoAgo(){
-
-		}
-		//判断订单和图片的状态
+		
+		//判断订单和图片的状态,文件夹级别向后台送请求，因为订单里边存放的是文件夹信息
 		function judgeStatus(index){
 			var userName=$(".userName").text();
-			var imgstatus;
+
+			//var imgstatus;
 			$.ajax({
 				url:'http://{{store_dict['remote_addr']}}:{{store_dict['port_number']}}/user-annot-status&check-order-status',
 				data:{"order_idx":index,"user_name":userName},
@@ -590,7 +601,7 @@
 													($(parentOneBox).find(".gopaint"))[0].onclick=goPaint;
 													$(parentOneBox).find(".btn2").css({"color":"gray","cursor":"default"});
 													($(".oneBox").eq(j).find(".btn1"))[0].onclick=function(){
-														console.log(1);
+
 														var text=$(this).parent().parent().parent().find("textarea").val();
 														var select=$(this).parent().parent().parent().find("select").val();
 														var userName=$(".userName").text();
@@ -637,8 +648,8 @@
 										($(parentOneBox).find(".gopaint"))[0].onclick=goPaint;
 										$(parentOneBox).find(".btn2").css({"color":"gray","cursor":"default"});
 										$(parentOneBox).find(".imgstatus").removeAttr("class").attr("class","ongoing imgstatus");
-										($(".oneBox").eq(j).find(".btn1"))[0].onclick=function(){
-											console.log(1);
+										($(parentOneBox).find(".btn1"))[0].onclick=function(){
+
 											var text=$(this).parent().parent().parent().find("textarea").val();
 											var select=$(this).parent().parent().parent().find("select").val();
 											var userName=$(".userName").text();
@@ -654,12 +665,80 @@
 						}
 					}
 					
+					
+
 				},
 				error:function(){
 					console.log("1")
 				}
 			})
+			
 		}
+		
+		//根据图片标注状态进行分类
+		function sortImg(){
+			var imgOngoingData=[];//存储正在标注图片的索引值
+			var imgFinishedData=[];//存储已完成图片的索引值
+			var imgNodoData=[];//存储未标注图片的索引值
+			for(var i=0;i<$(".imgBox").find(".imgstatus").length;i++){
+				if($(".imgBox").find(".imgstatus").eq(i).hasClass("ongoing")){
+					imgOngoingData.push(i);
+				}else if($(".imgBox").find(".imgstatus").eq(i).hasClass("finished")){
+					imgFinishedData.push(i);
+				}else{
+					imgNodoData.push(i);
+				}
+			}
+			//console.log(imgOngoingData,imgFinishedData,imgNodoData);
+			//console.log(($(".oneBox").eq(0))[0]);
+			//$(".imgBox").html("");
+			var abc="";
+			var def;
+			var ongoingArr=[],finishedArr=[],nodoArr=[];
+			for(var a=0;a<imgOngoingData.length;a++){
+				var index=imgOngoingData[a];
+				def=$(".oneBox").eq(index);
+				ongoingArr.push(def);
+			}
+			for(var b=0;b<imgFinishedData.length;b++){
+				var index=imgFinishedData[b];
+				def=$(".oneBox").eq(index);
+				finishedArr.push(def);
+			}
+			for(var c=0;c<imgNodoData.length;c++){
+				var index=imgNodoData[c];
+				def=$(".oneBox").eq(index);
+				nodoArr.push(def);
+			}
+			abc+='<div class="ongoingBox"></div>'+
+			'<div class="finishedBox"></div>'+
+			'<div class="nodoBox"></div>'
+			$(".imgBox").html(abc);
+			for(var a1=0;a1<ongoingArr.length;a1++){
+				$(".imgBox").find(".ongoingBox").append(ongoingArr[a1]);
+			}
+			for(var b1=0;b1<finishedArr.length;b1++){
+				$(".imgBox").find(".finishedBox").append(finishedArr[b1]);
+			}
+			for(var c1=0;c1<nodoArr.length;c1++){
+				$(".imgBox").find(".nodoBox").append(nodoArr[c1]);
+			}
+			
+		}
+		function orginSort(){
+			var orginArr=[];
+			for(var i=0;i<$(".imgBox").find(".imgstatus").length;i++){
+				orginArr.push(($(".oneBox").eq(i))[0]);
+			}
+			orginArr.sort(function(a,b){
+				return a.dataset['index']-b.dataset['index'];
+			});			
+			$(".imgBox").html("");
+			for(var d=0;d<orginArr.length;d++){
+				$(".imgBox").append(orginArr[d]);
+			}
+		}
+
 		function order_info(info){
 			$(".orderInfo").show();
 			var str="";
@@ -667,12 +746,26 @@
 			"<div>标注类型："+info.objtypes.substring(9)+"</div>"+
 			"<div>创建时间："+info.start_time+"</div>"+
 			"<div>标注用户："+info.users+"</div>"+
-			"<div>描述信息："+info.description+"</div>";
+			"<div>描述信息："+info.description+"</div>"+
+			"<select class='sortImg' id='sortImg'>"+
+			"<option selected='selected'>默认排序</option>"+
+			"<option>按标注状态排序</option>"
+			"</select>";
 			$(".orderInfo").html(str);
+			$(".sortImg").change(function(){
+				var infoSort=$(this).val();
+				if(infoSort=="默认排序"){
+					orginSort();
+					clickImg();
+				}else{
+					sortImg();
+					clickImg();
+				}
+			});
 		}
 		//时间下拉框变化
 		$("#selTime").change(function(){
-			var opt = $(this).find("option:selected");
+			var opt = $(this).find("opti on:selected");
 			opt.attr("selected",true);	
 			selOrder(userdataArr);
 			$(".right ul").html("");
@@ -716,9 +809,9 @@
 					}
 
 				}
-				if(k==dataArr.length){
-					leftinfo(dayArr);
-				}
+				
+				leftinfo(dayArr);
+				
 			}
 		}
 
@@ -747,6 +840,9 @@
 			$(".left>ul>li").mouseleave(function(){
 				$(this).css({"backgroundColor":color});
 			});
+
+
+
 			$(".left>ul>li").click(function(){
 				
 				var index=$(this)[0].dataset['index'];
@@ -765,8 +861,7 @@
 					});
 			});
 		}
-		//定义当前用户数据数组
-		var userdataArr=[];
+		
 		//获取数据函数
 		function show(){
 			$.ajax({

@@ -66,8 +66,7 @@ geoserver_url = "http://172.18.77.15:8089/geoserver"
 cat = Catalog(geoserver_url + "/rest", username="admin", password="geoserver")
 
 # 2017-12-6, 17:28, the connection configurations for the mysql user-job management
-mysql_config = {'user': 'root', 'password': 'weiguang123', 'database': 'RSISS', \
-    'charset': 'utf8', 'use_unicode': True}
+mysql_config = {'user': 'root', 'password': 'weiguang123', 'database': 'RSISS', 'charset': 'utf8', 'use_unicode': True}
 
 
 def allowed_file(filename):
