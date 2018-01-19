@@ -529,14 +529,12 @@ def generate_tfw(infile,tfw_name):
 @app.route("/upload", methods=['GET', 'POST'])
 def upload():
     print "<<<<<<< Entering upload(), with ", request.method
-    # import ipdb; ipdb.set_trace()
 
     if request.method == 'POST' and (not 'operation' in request.form.keys()):
         files = request.files['file']
 
         if files:
             filename = secure_filename(files.filename)
-            # filename = gen_file_name(filename)
             mime_type = files.content_type
 
             if not allowed_file(files.filename):
@@ -1061,6 +1059,14 @@ def login_user(user_name):
     store_dict={'port_number': GLOBAL_PORT_NUMBER, 'user_name': user_name, \
         'remote_addr': GLOBAL_IP_ADDR}
     return render_template('index_user.html', store_dict=store_dict)
+
+#2018/1/19   10:20
+#user_files.html
+@app.route('/user_files&<string:ws_name>', methods=['GET', 'POST'])
+def user_files(ws_name=""):
+    store_dict={'workspace': ws_name, 'port_number': GLOBAL_PORT_NUMBER, 'remote_addr': GLOBAL_IP_ADDR}
+    return render_template('user_files.html', store_dict=store_dict)
+
 
 @app.route('/uploadpage&<string:ws_name>', methods=['GET', 'POST'])
 def uploadpage(ws_name=""):

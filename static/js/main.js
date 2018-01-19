@@ -14,7 +14,7 @@
 $(function () {
     'use strict';
     var workspace_name = document.getElementsByClassName('flag')[0].innerText;
-    console.log(">>>## Flag content:" + workspace_name);
+
 
     // Initialize the jQuery File Upload widget:
     $('#fileupload').fileupload({
@@ -33,7 +33,7 @@ $(function () {
     //     type: 'GET'
     // });
 
-    console.log(">>>## passed fileupload:" + workspace_name);
+
 
     // Enable iframe cross-domain access via redirect option:
     $('#fileupload').fileupload(
@@ -93,7 +93,7 @@ $(function () {
                 .call(this, $.Event('done'), {result: result});
         });
 
-        console.log(">>>*** upload param initialize:" + workspace_name);
+
     }
 
 });

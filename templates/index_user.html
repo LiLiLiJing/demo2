@@ -82,7 +82,7 @@
 				height:58px;
 				overflow:hidden;
 				cursor:pointer;
-				border-radius:5px;
+				border-radius:20px;
 				padding-left:8px;
 				border-bottom:;
 				color:#fff;
@@ -329,6 +329,22 @@
 				text-align:center;
 				cursor:pointer;
 			}
+			h3{
+				font-size:20px;
+				font-weight:800;
+				color:gray;
+				width:100px;
+				border-radius:14px;
+				border:2px solid gray;
+				border-bottom:none;
+				padding-left:5px;
+			}
+			hr{
+				width:980px;
+				border:none;
+				border-top:2px solid gray;
+				margin-bottom:10px;
+			}
 		</style>
 	</head>
 	
@@ -398,7 +414,7 @@
 	    }
 	    
 		//加载右边图片
-		function imgInfo(info,index){
+		function imgInfo(info,index,Sinfo){
 			var str="";
 			var str1="";
 			var storenameArr=[];
@@ -448,7 +464,7 @@
 	                			'</div>'+
 	                			'<div class="paint2">'+
 	                			
-	                			'<select>'+
+	                			'<select class="sortStatus">'+
 	                			'<option value="accomplished">已完成</option>'+
 	                			'<option value="ongoing" selected="selected">未完成</option>'+
 	                			'</select>'+
@@ -464,7 +480,8 @@
 	                	
 		                
 	                	clickImg();
-	                	judgeStatus(index);
+
+	                	judgeStatus(index,Sinfo);
 	                	
 	                }
 
@@ -496,8 +513,11 @@
             	var current=$(this).parent().offset().left;
             	$(this).parent().children(".shape,.infoBox").toggle();
             	$(this).parent().siblings().children('.shape,.infoBox').hide();
-            	
-            	$(this).parent().css("margin-bottom",140).siblings().css("margin-bottom",5);
+            	if($(".sortImg").val()==1){
+            		
+            		$(this).parent().parent().siblings().find('.shape,.infoBox').hide();
+            	}
+            	$(this).parent().css("margin-bottom",140).siblings(".oneBox").css("margin-bottom",5);
             	$(this).parent().find(".infoBox").offset({left:length});
             	var infoBoxArr=document.getElementsByClassName("infoBox");
             	var oneBoxArr=document.getElementsByClassName("oneBox");
@@ -512,7 +532,7 @@
 
 
 		//提交信息函数
-		function subInfo(text,select,userName,imgnm,index){
+		function subInfo(text,select,userName,imgnm,index,Sinfo){
 			
 			$.ajax({
 				url:'http://{{store_dict['remote_addr']}}:{{store_dict['port_number']}}/user-annot-status&update-img-status',
@@ -521,7 +541,11 @@
 				dataType:'JSON',
 				success:function(data){
 					alert("保存成功!");
-					console.log(data);
+					judgeStatus(index,Sinfo);
+
+					order_info(Sinfo);
+					
+
 				},
 				error:function(){
 					console.log(1);
@@ -530,7 +554,7 @@
 		}
 		
 		//判断订单和图片的状态,文件夹级别向后台送请求，因为订单里边存放的是文件夹信息
-		function judgeStatus(index){
+		function judgeStatus(index,Sinfo){
 			var userName=$(".userName").text();
 
 			//var imgstatus;
@@ -544,6 +568,8 @@
 						for(var i=0;i<data.status_list.length;i++){
 							for(var j=0;j<$(".right .oneBox").find("span").length;j++){
 								if(data.status_list[i].imgnm==$(".right .oneBox").find("span").eq(j).text()){
+									$(".infoBox .imginfo").find(".imgmodify").eq(j).text("更改时间："+data.status_list[i].last_modif_time);
+									$(".infoBox .comment").find("textarea").eq(j).val(""+data.status_list[i].comment);
 									//给图片添加状态样式
 									if(data.status_list[i].status=="ongoing"){
 										$(".oneBox").eq(j).find(".imgstatus").removeAttr("class").attr("class","ongoing imgstatus");
@@ -554,23 +580,35 @@
 										($(".oneBox").eq(j).find(".gopaint"))[0].onclick=goPaint;
 										
 										($(".oneBox").eq(j).find(".btn1"))[0].onclick=function(){
-											console.log(1);
+											
 											var text=$(this).parent().parent().parent().find("textarea").val();
 											var select=$(this).parent().parent().parent().find("select").val();
 											var userName=$(".userName").text();
 											var imgnm=$(this).parent().parent().parent().find("span").text();
-											subInfo(text,select,userName,imgnm,index);
+											subInfo(text,select,userName,imgnm,index,Sinfo);
 										};
 										$(".oneBox").eq(j).find("textarea").removeAttr("disabled","disabled");
 
 									}else{
 										$(".oneBox").eq(j).find(".imgstatus").removeAttr("class").attr("class","finished imgstatus");
 										$(".oneBox").eq(j).find(".img_status").text("标注状态：已完成");
+										$(".sortStatus").eq(j).val("accomplished");
 										$(".oneBox").eq(j).find(".switch").css("backgroundColor","green");
 										$(".oneBox").eq(j).find(".ball").css("left","25px");
 										$(".oneBox").eq(j).find(".btn2").css("color","gray");
-										$(".oneBox").eq(j).find("select").find("option[text='已完成']").attr("selected",true);
-										$(".oneBox").eq(j).find("select").find("option[text='未完成']").attr("selected",false);
+										($(".oneBox").eq(j).find(".btn2"))[0].onclick=function(){
+											
+										}
+										$(".oneBox").eq(j).find("textarea").removeAttr("disabled","disabled");
+										($(".oneBox").eq(j).find(".btn1"))[0].onclick=function(){
+											
+											var text=$(this).parent().parent().parent().find("textarea").val();
+											var select=$(this).parent().parent().parent().find("select").val();
+											var userName=$(".userName").text();
+											var imgnm=$(this).parent().parent().parent().find("span").text();
+											subInfo(text,select,userName,imgnm,index,Sinfo);
+										};
+										($(".oneBox").eq(j).find(".gopaint"))[0].onclick=goPaint;
 									}
 								}
 								else{
@@ -620,8 +658,8 @@
 							};
 							//将图片信息数据添加到infoBox中
 							/*$(".infoBox .imginfo").find(".imgnm").eq(i).text("图片名称："+data.status_list[i].imgnm);*/
-							$(".infoBox .imginfo").find(".imgmodify").eq(i).text("更改时间："+data.status_list[i].last_modif_time);
-								
+							/*
+							$(".infoBox .comment").find("textarea").eq(i).val(+data.status_list[i].comment);*/
 						}
 					}
 					if(data.code==404){
@@ -710,20 +748,42 @@
 				def=$(".oneBox").eq(index);
 				nodoArr.push(def);
 			}
-			abc+='<div class="ongoingBox"></div>'+
-			'<div class="finishedBox"></div>'+
-			'<div class="nodoBox"></div>'
+			abc+='<div class="ongoingBox">'+
+			'<h3>正在进行：</h3>'+
+			'<hr />'+
+			'</div>'+
+			'<div class="finishedBox">'+
+			'<h3>已完成：</h3>'+
+			'<hr />'+
+			'</div>'+
+			'<div class="nodoBox">'+
+			'<h3>未进行：</h3>'+
+			'<hr />'+
+			'</div>'
 			$(".imgBox").html(abc);
-			for(var a1=0;a1<ongoingArr.length;a1++){
-				$(".imgBox").find(".ongoingBox").append(ongoingArr[a1]);
-			}
-			for(var b1=0;b1<finishedArr.length;b1++){
-				$(".imgBox").find(".finishedBox").append(finishedArr[b1]);
-			}
-			for(var c1=0;c1<nodoArr.length;c1++){
-				$(".imgBox").find(".nodoBox").append(nodoArr[c1]);
+			if(ongoingArr.length==0){
+				$(".imgBox").find(".ongoingBox").hide();
+			}else{
+				for(var a1=0;a1<ongoingArr.length;a1++){
+					$(".imgBox").find(".ongoingBox").append(ongoingArr[a1]);
+				}
 			}
 			
+			if(finishedArr.length==0){
+				$(".imgBox").find(".finishedBox").hide();
+			}else{
+				for(var b1=0;b1<finishedArr.length;b1++){
+					$(".imgBox").find(".finishedBox").append(finishedArr[b1]);
+				}
+			}
+			
+			if(nodoArr.length==0){
+				$(".imgBox").find(".nodoBox").hide();
+			}else{
+				for(var c1=0;c1<nodoArr.length;c1++){
+					$(".imgBox").find(".nodoBox").append(nodoArr[c1]);
+				}
+			}
 		}
 		function orginSort(){
 			var orginArr=[];
@@ -748,13 +808,15 @@
 			"<div>标注用户："+info.users+"</div>"+
 			"<div>描述信息："+info.description+"</div>"+
 			"<select class='sortImg' id='sortImg'>"+
-			"<option selected='selected'>默认排序</option>"+
-			"<option>按标注状态排序</option>"
+			"<option selected='selected' value=0>默认排序</option>"+
+			"<option value=1>按标注状态排序</option>"
 			"</select>";
 			$(".orderInfo").html(str);
 			$(".sortImg").change(function(){
+				$(".infoBox,.shape").hide();
+				$(".oneBox").css("marginBottom","5px");
 				var infoSort=$(this).val();
-				if(infoSort=="默认排序"){
+				if(infoSort==0){
 					orginSort();
 					clickImg();
 				}else{
@@ -762,6 +824,7 @@
 					clickImg();
 				}
 			});
+			$(".sortImg").change();
 		}
 		//时间下拉框变化
 		$("#selTime").change(function(){
@@ -771,12 +834,12 @@
 			$(".right ul").html("");
 			$(".orderInfo").hide();
 		});
-		var info='<option value="all" selected="selected">全部</option>'+
+		var infoTime='<option value="all" selected="selected">全部</option>'+
 				'<option value="3">过去3天</option>'+
 				'<option value="7">过去7天</option>'+
 				'<option value="30">过去30天</option>';
 		
-		$("#selTime").html(info);
+		$("#selTime").html(infoTime);
 		//根据时间显示数据函数
 		function selOrder(dataArr){
 			var value=document.getElementById("selTime").value;
@@ -832,27 +895,19 @@
 			}
 			
 			$(".left>ul").html(str);
-			var colorFlag="";
-			$(".left>ul>li").mouseenter(function(){
-				color=$(this).css("backgroundColor");
-				$(this).css({"backgroundColor":"rgba(0,0,255,.7)"});
-			});
-			$(".left>ul>li").mouseleave(function(){
-				$(this).css({"backgroundColor":color});
-			});
-
-
-
+			
 			$(".left>ul>li").click(function(){
-				
+				var color=$(this).css("backgroundColor");
+				$(this).css("backgroundColor","rgba(0,0,255,.7)");
+				$(this).siblings().css("backgroundColor",color);
 				var index=$(this)[0].dataset['index'];
 					$.ajax({
 						url:'http://{{store_dict['remote_addr']}}:{{store_dict['port_number']}}/lblorder-manip&proc-order:'+index+':json',
 						type:'POST',
 						dataType:'JSON',
 						success:function(info){
-
-							imgInfo(info.storeinfos,index);
+							var Sinfo=info;
+							imgInfo(info.storeinfos,index,Sinfo);
 							order_info(info);
 						},
 						error:function(){
