@@ -2,6 +2,7 @@
 <html lang="en">
     <head>
         <meta charset="utf-8">
+        <script src="../static/libs/jquery-1.11.2.min.js" type="text/javascript"></script>
         <style type="text/css">
 			body,div,img,span,input,a,button,table,td,th,tr,ul{
 	            padding: 0;
@@ -96,6 +97,30 @@
 				color:#fff;
 				font-size:20px;
 			}
+			.imgList{
+				width:1050px;
+				overflow:hidden;
+			}
+			.imgList li{
+				float:left;
+				width:100px;
+				margin:5px;
+			}
+			.imgList li img{
+				width:100px;
+				height:100px;
+				cursor:pointer;
+			}
+			.imgList span{
+				display:block;
+				word-wrap:break-word;
+            	word-break:break-all;
+            	height:20px;
+            	text-overflow: ellipsis;
+            	overflow:hidden;
+            	white-space:nowrap;
+            	text-align:center;
+			}
         </style>
     </head>
     <body>
@@ -120,6 +145,29 @@
 					<li><a href="">查看图像</a></li>
 				</ul>
 			</div>
+			<div class="right fl">
+				<ul class="imgList"></ul>
+			</div>
 		</div>
     </body>
+    <script type="text/javascript">
+    	$(function(){
+    		var username=$('.userName').text();
+    		$.ajax({
+    			url:'http://{{store_dict['remote_addr']}}:{{store_dict['port_number']}}/thumbnail&username',
+    			datatype:'JSON',
+    			type:'POST',
+    			success:function(data){
+    				//console.log(data);
+    				var str="";
+    				for(var i=0;i<data.length;i++){
+    					str+="<li><img src='"+data[i].url+"'title='"+data[i].name+"'>"+
+    					"<span>"+data[i].name+"</span>"+
+    					"</li>"
+    				}
+    				$(".imgList").html(str);
+    			}
+    		})
+    	})
+    </script>
 </html>

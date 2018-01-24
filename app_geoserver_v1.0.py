@@ -341,7 +341,6 @@ def folder_view():
     store_dict = {'port_number': GLOBAL_PORT_NUMBER, 'remote_addr': GLOBAL_IP_ADDR}
     return render_template('folder_view.html', store_dict=store_dict)
 
-
 @app.route("/folder-imgsview&<string:ws_name>", methods=['GET', 'POST'])
 def folder_imgsview(ws_name):
     print "Calling the folder_imgsview service"
@@ -537,9 +536,14 @@ def upload():
             filename = secure_filename(files.filename)
             mime_type = files.content_type
 
-            if not allowed_file(files.filename):
-                result = uploadfile(name=filename, type=mime_type, size=0, not_allowed_msg="File type not allowed")
+            # 2018-1-24, 11:25, check for the duplicated datastore - remove duplication
+            geo_robj = cat.get_resource(filename)
+            if geo_robj:
+                result = uploadfile(name=filename, type=mime_type, size=0, not_allowed_msg="File already exists")
 
+            elif not allowed_file(files.filename):
+                result = uploadfile(name=filename, type=mime_type, size=0, not_allowed_msg="File type not allowed")
+                
             else:
                 # save file to disk
                 uploaded_file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
@@ -1039,12 +1043,13 @@ def index():
             cur_user_types = [item.strip() for item in user_type.split(',')]
 
             # import ipdb; ipdb.set_trace()
-            if ('annotator' in cur_user_types) and (login_type == 'annotator'):
-                return redirect(url_for('login_annotator', user_name = session['username']))
+            if ('user' in cur_user_types) and (login_type == 'user'):
+                return redirect(url_for('login_user', ws_name = session['username']))
             elif ('admin' in cur_user_types) and (login_type == 'admin'):
-                return redirect(url_for('login_admin', user_name = session['username']))
-            elif ('user' in cur_users_types) and (login_type == 'user'):
-                return redirect(url_for('login_user', user_name = session['username']))
+                return redirect(url_for('login_admin'))
+            elif ('annotator' in cur_user_types) and (login_type == 'annotator'):
+                return redirect(url_for('login_annotator', user_name = session['username']))
+
         cnx_obj.close()
 
     if request.method == 'GET':
@@ -1064,14 +1069,12 @@ def login_annotator(user_name):
     return render_template('index_user.html', store_dict=store_dict)
 
 
-#2018/1/19   10:20
-#user_files.html
-@app.route('/login-user&<string:user_name>', methods=['GET', 'POST'])
-def login_user(user_name):
-    store_dict={'workspace': user_name, 'port_number': GLOBAL_PORT_NUMBER, \
-        'remote_addr': GLOBAL_IP_ADDR, 'user_name': user_name}
+#2018/1/19, 10:20, user_files.html
+@app.route('/login-user&<string:ws_name>', methods=['GET', 'POST'])
+def login_user(ws_name):
+    store_dict={'workspace': ws_name, 'port_number': GLOBAL_PORT_NUMBER, \
+        'remote_addr': GLOBAL_IP_ADDR, 'user_name': ws_name}
     return render_template('user_files.html', store_dict=store_dict)
-
 
 @app.route('/view_orderImg', methods=['POST', 'GET'])
 def view_order():
@@ -1079,6 +1082,11 @@ def view_order():
     store_dict = {'port_number': GLOBAL_PORT_NUMBER, 'remote_addr': GLOBAL_IP_ADDR}
     return render_template('view_orderImg.html', store_dict=store_dict)
 
+@app.route('/sub_img', methods=['POST', 'GET'])
+def sub_img():
+    # the frontend will post the selected list workspace names
+    store_dict = {'port_number': GLOBAL_PORT_NUMBER, 'remote_addr': GLOBAL_IP_ADDR}
+    return render_template('subImgOrder.html', store_dict=store_dict)
 
 
 
