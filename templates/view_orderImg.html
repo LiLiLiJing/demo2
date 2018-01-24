@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>查看订单</title>
+        <style type="text/css">
+			body,div,img,span,input,a,button,table,td,th,tr,ul{
+	            padding: 0;
+	            margin: 0;
+				font: 14px "微软雅黑";
+        	}
+        	body{
+				background-color:#eee;
+				}
+			ul,ol{
+				list-style:none;
+			}
+			a{
+				text-decoration:none;
+			}
+			.header{
+				width:100%;
+				height:60px;
+				background-color:#4c4e5a;
+			}
+			.headleft{
+				width: 1300px;
+				height: 60px;
+				margin:0 auto;
+			}
+			.headleft .title{
+				font-size:25px;
+				color:#fff;
+				font-weight:bold;
+				margin-top:12px;
+				margin-left:5px;
+				float:left;
+			}
+			.headleft .rightstyle{
+				color:#fff!important;
+				font-size:14px;
+				margin-bottom:5px;
+			}
+
+			.headleft img{
+				height:50px;
+				width: 50px;
+				margin-top:5px;
+				float:left;
+			}
+			.headleft .userBox{
+				float:right;
+				color:#000;
+				font-size:14px;
+				margin-top:28px;
+			}
+			.contents{
+	        	width:1300px;
+	        	margin:0 auto;
+	        	position:relative;
+	        }
+			.fl{
+	        	float:left;
+	        }
+	        .fr{
+	        	float:right;
+	        }
+	        .clearfix:after{
+				content:'';
+				display:block;
+				clear:both;
+			}
+			.left{
+				margin:5px;
+				overflow-y:auto;
+				width:220px;
+			}
+			.left ul{
+				width:175px;
+				margin-top:100px;
+			}
+			.left li{
+				background-color:#4876FF; 
+				margin-bottom:50px;
+				height:40px;
+				overflow:hidden;
+				cursor:pointer;
+				border-radius:20px;
+				color:#fff;
+				border:3px solid #bbb;
+				line-height:40px;
+				text-align:center;
+				font-size:20px;
+				letter-spacing:6px;
+			}
+			.left li a{
+				color:#fff;
+				font-size:20px;
+			}
+			.right{
+				width:1050px;
+				margin-top:30px;
+			}
+			table {
+	            border-collapse: collapse;
+	            border-spacing: 0;
+	            border: 1px solid #c0c0c0;
+	            width: 95%;
+	            margin-bottom:15px;
+				}
+	        table:hover{
+	            background-color: #fafafa;
+	        }
+	        table div{
+            font-size:14px;
+            font-weight:bold;
+        	}
+	        th,
+	        td {
+	            border: 1px solid #d0d0d0;
+	            color: #404060;
+	            padding: 10px;
+	        }
+	        td{          
+            word-break:break-all;
+	        }
+	        .deal{
+	        	cursor:pointer;
+	        	min-width:40px;
+	        }
+			.save_storenm{
+            	width:28%;
+	        }
+	        .img_url{
+	            width:28%;
+	        }
+	        .server_url{
+	            width:28%;
+	        }
+	        .status{
+            	text-align:center;
+            	cursor:pointer;
+        	}
+        	.status span{
+            	margin-bottom:6px;
+        	}
+        	.titleSty{
+	            font-weight:bold;
+	            font-size:14px;
+	            margin-right:12px;
+        	}
+
+			td{
+            word-wrap:break-word;
+            word-break:break-all;   
+        	}
+        </style>
+        <script src="../static/libs/jquery-1.11.2.min.js" type="text/javascript"></script>
+    </head>
+    <body>
+	    <div class="header">
+			<div class="headleft">
+			    <img src="static/images/logo.jpg"/>     
+			    <div class="title">Remote Sensing Artificial Intelligence Service 遥感智能服务</div>
+			    <div class="userBox">
+					<span class="rightstyle"></span>
+					<span class="rightstyle">用户名:</span>
+					<span class="userName rightstyle">{{store_dict['user_name']}}</span>
+					
+					<span class="rightstyle">退出登录</span>
+				</div>
+			</div>
+		</div>
+		<div class="contents clearfix">	
+			<div class="left fl">
+				<ul>
+					<li><a href="">上传文件</a></li>
+					<li><a href="">提交订单</a></li>
+					<li><a href="">查看图像</a></li>
+				</ul>
+			</div>
+			<div class="right fl">
+
+			</div>
+		</div>
+    </body>
+    <script type="text/javascript">
+    	var str="";
+	    function getInfo(){
+	        $.ajax({
+	            url:'http://{{store_dict['remote_addr']}}:{{store_dict['port_number']}}/listorders&all',
+	            type:'get',
+	            dataType:'json',
+	            success:function(data){
+	                //console.log(data);
+	                str="";
+	                for(var i=0;i<data.length;i++){
+	                    str +='<table>';
+	                    str +='<tr><td colspan="4"><span class="orderNum titleSty">订单编号：</span><span class="creatTime titleSty">创建时间：</span></td></tr>';
+	                    str+= '<tr><td class="save_storenm"><div>save_storenm:</div>'+data[i].order_param.save_storenm+'</td><td class="img_url"><div>img_url:</div>'+data[i].order_param.img_url+'</td><td class="server_url"><div>server_url:</div>'+data[i].order_param.server_url+'</td><td class="status" data-index='+i+'>'+data[i].status+'</td></tr>'; 
+	                    str+='</table>';
+	                };
+	                $('.right').html(str);
+	                var status = document.getElementsByClassName('status');
+	                for(var j=0;j<$('.status').length;j++){
+	                    //console.log(status[j].innerText);
+	                    if(status[j].innerHTML=="0"){
+	                        status[j].innerText="未处理";
+	                    }else{
+	                        status[j].innerHTML='<span style="display:block">已完成</span><span style="display:block" class="link">点击跳转</span><span style="display:block" class="seclink">透明度</span><span style="display:block" class="delinfo">删除</span>';
+	                    }
+	                };
+	                    
+
+	                var linkArr=document.getElementsByClassName('link');
+	                for(var k = 0;k<linkArr.length;k++){
+	                        
+	                    linkArr[k].onclick=function(){
+	                        var index=this.parentNode.dataset['index'];
+	                        var workspace=data[index].workspace;
+	                        window.location.href="http://{{store_dict['remote_addr']}}:{{store_dict['port_number']}}/showgroup/"+workspace+":"+data[index].order_result;
+	                        //console.log(this.parentNode.dataset['index']);
+	                    }
+	                }
+	                var delinfo=$(".delinfo")     
+	                for(var i=0;i<delinfo.length;i++){
+	                    
+	                    delinfo[i].onclick=function(){
+	                        var index=this.parentNode.dataset['index'];
+	                        var storenm=data[index].order_param.save_storenm;
+	                        document.getElementById("contents").innerHTML="";
+	                        $.ajax({
+	                            url:'http://{{store_dict['remote_addr']}}:{{store_dict['port_number']}}/deleteorder&'+storenm,
+	                            type:"POST",
+	                            success:function(data){ 
+	                                //console.log(data);
+	                                getInfo();
+	                            },
+	                            
+	                        });
+	                    }
+	                }
+	                var seclinkArr=document.getElementsByClassName('seclink');
+	                for(var e = 0;e<seclinkArr.length;e++){
+	                        
+	                    seclinkArr[e].onclick=function(){
+	                        var index=this.parentNode.dataset['index'];
+	                        var workspace=data[index].workspace;
+	                        window.location.href="http://{{store_dict['remote_addr']}}:{{store_dict['port_number']}}/showgroup-transp/"+workspace+":"+data[index].order_result;
+	                        //console.log(this.parentNode.dataset['index']);
+	                    }
+	                }                     
+	            },
+	            error:function(){
+	                console.log("有错误");
+	            }
+	        });
+	    }
+	    
+    	window.onload=function(){
+	    	showTime();
+	    	logOut();
+	    	getInfo();
+	    }
+    //获取当前日期
+    	function showTime(){
+	    	var time=new Date();
+	    	var year=time.getFullYear();
+	    	var month=time.getMonth();
+	    	var day=time.getDate();
+	    	var week=time.getDay();
+	    	var hour=time.getHours();
+	    	var minutes=time.getMinutes();
+	    	var seconds=time.getSeconds();
+	    	var str="";
+	    	str+="今天是:"+year+"年"+(month+1)+"月"+day+"日";
+	    	$(".userBox span").eq(0).html(str);
+	    }
+	//退出登录
+		function logOut(){
+	    	$(".userBox span").eq(3).css("cursor","pointer").click(function(){
+	    		$.ajax({
+	                url:'http://{{store_dict['remote_addr']}}:{{store_dict['port_number']}}/logout',
+	                type:'GET',
+	                success:function(data){
+	                    window.location.href="http://{{store_dict['remote_addr']}}:{{store_dict['port_number']}}";
+	                }
+            	})
+	    	});
+	    }
+    </script>
+</html>

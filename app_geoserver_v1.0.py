@@ -1039,10 +1039,12 @@ def index():
             cur_user_types = [item.strip() for item in user_type.split(',')]
 
             # import ipdb; ipdb.set_trace()
-            if ('user' in cur_user_types) and (login_type == 'user'):
-                return redirect(url_for('login_user', user_name = session['username']))
+            if ('annotator' in cur_user_types) and (login_type == 'annotator'):
+                return redirect(url_for('login_annotator', user_name = session['username']))
             elif ('admin' in cur_user_types) and (login_type == 'admin'):
-                return redirect(url_for('login_admin'))
+                return redirect(url_for('login_admin', user_name = session['username']))
+            elif ('user' in cur_users_types) and (login_type == 'user'):
+                return redirect(url_for('login_user', user_name = session['username']))
         cnx_obj.close()
 
     if request.method == 'GET':
@@ -1054,18 +1056,30 @@ def login_admin():
     store_dict={'port_number': GLOBAL_PORT_NUMBER, 'remote_addr': GLOBAL_IP_ADDR}
     return render_template('index.html', store_dict=store_dict)
 
-@app.route('/login-user&<string:user_name>', methods=['GET', 'POST'])
-def login_user(user_name):
+
+@app.route('/login-annotator&<string:user_name>', methods=['GET', 'POST'])
+def login_annotator(user_name):
     store_dict={'port_number': GLOBAL_PORT_NUMBER, 'user_name': user_name, \
         'remote_addr': GLOBAL_IP_ADDR}
     return render_template('index_user.html', store_dict=store_dict)
 
+
 #2018/1/19   10:20
 #user_files.html
-@app.route('/user_files&<string:ws_name>', methods=['GET', 'POST'])
-def user_files(ws_name=""):
-    store_dict={'workspace': ws_name, 'port_number': GLOBAL_PORT_NUMBER, 'remote_addr': GLOBAL_IP_ADDR}
+@app.route('/login-user&<string:user_name>', methods=['GET', 'POST'])
+def login_user(user_name):
+    store_dict={'workspace': user_name, 'port_number': GLOBAL_PORT_NUMBER, \
+        'remote_addr': GLOBAL_IP_ADDR, 'user_name': user_name}
     return render_template('user_files.html', store_dict=store_dict)
+
+
+@app.route('/view_orderImg', methods=['POST', 'GET'])
+def view_order():
+    # the frontend will post the selected list workspace names
+    store_dict = {'port_number': GLOBAL_PORT_NUMBER, 'remote_addr': GLOBAL_IP_ADDR}
+    return render_template('view_orderImg.html', store_dict=store_dict)
+
+
 
 
 @app.route('/uploadpage&<string:ws_name>', methods=['GET', 'POST'])
